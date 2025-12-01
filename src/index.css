@@ -1,0 +1,22 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================
+   BASE TYPOGRAPHY - MOBILE FIRST
+   ============================================ */
+html {
+  font-size: 16px; /* Base font size for desktop */
+}
+
+@media (max-width: 768px) {
+  html {
+    font-size: 14px; /* Slightly smaller for tablets */
+  }
+}
+
+@media (max-width: 480px) {
+  html {
+    font-size: 13px; /* Even smaller for phones */
+  }
+}
