@@ -3,25 +3,24 @@ import ProtectedRoute from "../components/common/ProtectedRoute";
 import { useAuth } from "../contexts/AuthContext";
 
 // Auth Pages
-// import Login from "../pages/auth/Login";
-// import Register from "../pages/auth/Register";
-// import ForgotPassword from "../pages/auth/ForgotPassword";
-// import Unauthorized from "../pages/Unauthorized";
-// import NotFound from "../pages/NotFound";
+import Login from "../pages/auth/Login";
+import Register from "../pages/auth/Register";
+import ForgotPassword from "../pages/auth/ForgotPassword";
+import Unauthorized from "../pages/Unauthorized";
+import NotFound from "../pages/NotFound";
 
 // Admin Pages
-// import AdminDashboard from "../pages/admin/Dashboard";
-// import AdminUsers from "../pages/admin/Users";
-// import AdminOrders from "../pages/admin/Orders";
+import AdminDashboard from "../pages/admin/AdminDashboard";
 
 // Agent Pages
-// import AgentDashboard from "../pages/agent/Dashboard";
-// import AgentOrders from "../pages/agent/Orders";
-// import AgentStores from "../pages/agent/Stores";
+import AgentDashboard from "../pages/agent/AgentDashboard";
+import AgentOrdersList from "../pages/agent/AgentOrdersList";
+import AgentCreateOrder from "../pages/agent/AgentCreateOrder";
+import AgentOrderDetail from "../pages/agent/AgentOrderDetail";
+import AgentStoresList from "../pages/agent/AgentStoresList";
 
 // Dispatcher Pages
-// import DispatcherDashboard from "../pages/dispatcher/Dashboard";
-// import DispatcherTrips from "../pages/dispatcher/Trips";
+import DispatcherDashboard from "../pages/dispatcher/DispatcherDashboard";
 
 const AppRoutes = () => {
   const { isAuthenticated } = useAuth();
@@ -40,21 +39,20 @@ const AppRoutes = () => {
       {/* Admin Routes */}
       <Route element={<ProtectedRoute allowedRoles={["Admin"]} />}>
         <Route path="/admin/dashboard" element={<AdminDashboard />} />
-        <Route path="/admin/users" element={<AdminUsers />} />
-        <Route path="/admin/orders" element={<AdminOrders />} />
       </Route>
 
       {/* Agent Routes */}
       <Route element={<ProtectedRoute allowedRoles={["Agent"]} />}>
         <Route path="/agent/dashboard" element={<AgentDashboard />} />
-        <Route path="/agent/orders" element={<AgentOrders />} />
-        <Route path="/agent/stores" element={<AgentStores />} />
+        <Route path="/agent/orders" element={<AgentOrdersList />} />
+        <Route path="/agent/orders/create" element={<AgentCreateOrder />} />
+        <Route path="/agent/orders/:id" element={<AgentOrderDetail />} />
+        <Route path="/agent/stores" element={<AgentStoresList />} />
       </Route>
 
       {/* Dispatcher Routes */}
       <Route element={<ProtectedRoute allowedRoles={["Dispatcher"]} />}>
         <Route path="/dispatcher/dashboard" element={<DispatcherDashboard />} />
-        <Route path="/dispatcher/trips" element={<DispatcherTrips />} />
       </Route>
 
       {/* Fallback Routes */}
