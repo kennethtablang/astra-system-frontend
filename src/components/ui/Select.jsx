@@ -3,7 +3,7 @@ export const Select = ({ label, options, error, className = "", ...props }) => {
   return (
     <div className={className}>
       {label && (
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label className="block text-sm text-gray-700 dark:text-gray-200 mb-2">
           {label}
         </label>
       )}

@@ -1,20 +1,8 @@
+// src/pages/admin/AdminUsers.jsx
 import { useState, useEffect } from "react";
-import {
-  Users,
-  Search,
-  Plus,
-  Edit,
-  Trash2,
-  Filter,
-  X,
-  Mail,
-  Phone,
-  MapPin,
-  Eye,
-  EyeOff,
-} from "lucide-react";
+import { Users, Search, Plus, Edit, Trash2, Phone, MapPin } from "lucide-react";
 import DashboardLayout from "../../components/layouts/DashboardLayout";
-import { Card, CardHeader, CardContent } from "../../components/ui/Card";
+import { Card, CardContent } from "../../components/ui/Card";
 import {
   Table,
   TableHeader,
@@ -25,10 +13,11 @@ import {
 } from "../../components/ui/Table";
 import { Badge } from "../../components/ui/Badge";
 import { Button } from "../../components/ui/Button";
-import { Input } from "../../components/ui/Input";
 import { Select } from "../../components/ui/Select";
 import { LoadingSpinner } from "../../components/ui/Loading";
-import { Modal } from "../../components/ui/Modal";
+import { UserManagementAddModal } from "../../components/modals/AdminUser/UserManagementAddModal";
+import { UserManagementEditModal } from "../../components/modals/AdminUser/UserManagementEditModal";
+import { UserManagementDeleteModal } from "../../components/modals/AdminUser/UserManagementDeleteModal";
 import api from "../../api/axios";
 import { toast } from "react-hot-toast";
 
@@ -46,21 +35,6 @@ const AdminUsers = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
-  const [showPassword, setShowPassword] = useState(false);
-
-  // Form State for Add/Edit User
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-    fullName: "",
-    phoneNumber: "",
-    role: "Agent",
-    address: "",
-    city: "",
-    province: "",
-    postalCode: "",
-    isActive: true,
-  });
 
   // Fetch Users
   useEffect(() => {
@@ -77,20 +51,9 @@ const AdminUsers = () => {
         sortDescending: true,
       };
 
-      // Add search parameter if search term exists
-      if (searchTerm) {
-        params.searchTerm = searchTerm;
-      }
-
-      // Add role filter if not "All"
-      if (filterRole !== "All") {
-        params.role = filterRole;
-      }
-
-      // Add status filter if not "All"
-      if (filterStatus !== "All") {
-        params.isActive = filterStatus === "Active";
-      }
+      if (searchTerm) params.searchTerm = searchTerm;
+      if (filterRole !== "All") params.role = filterRole;
+      if (filterStatus !== "All") params.isActive = filterStatus === "Active";
 
       const { data } = await api.get("/users", { params });
 
@@ -107,14 +70,12 @@ const AdminUsers = () => {
   };
 
   // Handle Add User
-  const handleAddUser = async () => {
+  const handleAddUser = async (formData) => {
     try {
       const { data } = await api.post("/users", formData);
-
       if (data.success) {
         toast.success("User added successfully");
         setShowAddModal(false);
-        resetForm();
         fetchUsers();
       }
     } catch (error) {
@@ -123,14 +84,13 @@ const AdminUsers = () => {
   };
 
   // Handle Edit User
-  const handleEditUser = async () => {
+  const handleEditUser = async (formData) => {
     try {
       const { data } = await api.put(`/users/${selectedUser.id}`, formData);
-
       if (data.success) {
         toast.success("User updated successfully");
         setShowEditModal(false);
-        resetForm();
+        setSelectedUser(null);
         fetchUsers();
       }
     } catch (error) {
@@ -142,7 +102,6 @@ const AdminUsers = () => {
   const handleDeleteUser = async () => {
     try {
       const { data } = await api.delete(`/users/${selectedUser.id}`);
-
       if (data.success) {
         toast.success("User deleted successfully");
         setShowDeleteModal(false);
@@ -157,18 +116,6 @@ const AdminUsers = () => {
   // Open Edit Modal
   const openEditModal = (user) => {
     setSelectedUser(user);
-    setFormData({
-      email: user.email,
-      password: "", // Don't populate password for security
-      fullName: user.fullName,
-      phoneNumber: user.phoneNumber || "",
-      role: user.role,
-      address: user.address || "",
-      city: user.city || "",
-      province: user.province || "",
-      postalCode: user.postalCode || "",
-      isActive: user.isActive,
-    });
     setShowEditModal(true);
   };
 
@@ -176,33 +123,6 @@ const AdminUsers = () => {
   const openDeleteModal = (user) => {
     setSelectedUser(user);
     setShowDeleteModal(true);
-  };
-
-  // Reset Form
-  const resetForm = () => {
-    setFormData({
-      email: "",
-      password: "",
-      fullName: "",
-      phoneNumber: "",
-      role: "Agent",
-      address: "",
-      city: "",
-      province: "",
-      postalCode: "",
-      isActive: true,
-    });
-    setSelectedUser(null);
-    setShowPassword(false);
-  };
-
-  // Handle Input Change
-  const handleInputChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? checked : value,
-    }));
   };
 
   // Pagination Calculations
@@ -231,7 +151,7 @@ const AdminUsers = () => {
     );
   };
 
-  // Role Options
+  // Options
   const roleOptions = [
     { value: "All", label: "All Roles" },
     { value: "Admin", label: "Admin" },
@@ -241,19 +161,17 @@ const AdminUsers = () => {
     { value: "Accountant", label: "Accountant" },
   ];
 
-  // Status Options
   const statusOptions = [
     { value: "All", label: "All Status" },
     { value: "Active", label: "Active" },
     { value: "Inactive", label: "Inactive" },
   ];
 
-  // Page Size Options
   const pageSizeOptions = [
-    { value: "10", label: "10 per page" },
-    { value: "25", label: "25 per page" },
-    { value: "50", label: "50 per page" },
-    { value: "100", label: "100 per page" },
+    { value: "10", label: "10" },
+    { value: "25", label: "25" },
+    { value: "50", label: "50" },
+    { value: "100", label: "100" },
   ];
 
   return (
@@ -278,46 +196,46 @@ const AdminUsers = () => {
           </Button>
         </div>
 
-        {/* Filters and Search */}
+        {/* Compact Filters */}
         <Card>
-          <CardContent className="p-4">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              {/* Search */}
-              <div className="md:col-span-2">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                  <input
-                    type="text"
-                    placeholder="Search by name, email, or phone..."
-                    value={searchTerm}
-                    onChange={(e) => {
-                      setSearchTerm(e.target.value);
-                      setCurrentPage(1);
-                    }}
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                  />
-                </div>
+          <CardContent className="p-0">
+            <div className="flex flex-col sm:flex-row gap-3">
+              {/* Search - Takes more space on larger screens */}
+              <div className="flex-1 relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search users..."
+                  value={searchTerm}
+                  onChange={(e) => {
+                    setSearchTerm(e.target.value);
+                    setCurrentPage(1);
+                  }}
+                  className="w-full pl-9 pr-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                />
               </div>
 
-              {/* Role Filter */}
-              <Select
-                value={filterRole}
-                onChange={(e) => {
-                  setFilterRole(e.target.value);
-                  setCurrentPage(1);
-                }}
-                options={roleOptions}
-              />
-
-              {/* Status Filter */}
-              <Select
-                value={filterStatus}
-                onChange={(e) => {
-                  setFilterStatus(e.target.value);
-                  setCurrentPage(1);
-                }}
-                options={statusOptions}
-              />
+              {/* Compact Filters */}
+              <div className="flex gap-2">
+                <Select
+                  value={filterRole}
+                  onChange={(e) => {
+                    setFilterRole(e.target.value);
+                    setCurrentPage(1);
+                  }}
+                  options={roleOptions}
+                  className="w-36"
+                />
+                <Select
+                  value={filterStatus}
+                  onChange={(e) => {
+                    setFilterStatus(e.target.value);
+                    setCurrentPage(1);
+                  }}
+                  options={statusOptions}
+                  className="w-32"
+                />
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -413,10 +331,10 @@ const AdminUsers = () => {
                   </Table>
                 </div>
 
-                {/* Pagination */}
-                <div className="border-t border-gray-200 dark:border-gray-700 px-6 py-4">
-                  <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                    <div className="flex items-center gap-4">
+                {/* Compact Pagination */}
+                <div className="border-t border-gray-200 dark:border-gray-700 px-4 py-3">
+                  <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+                    <div className="flex items-center gap-2 text-sm">
                       <Select
                         value={pageSize.toString()}
                         onChange={(e) => {
@@ -424,10 +342,10 @@ const AdminUsers = () => {
                           setCurrentPage(1);
                         }}
                         options={pageSizeOptions}
-                        className="w-40"
+                        className="w-20"
                       />
-                      <span className="text-sm text-gray-700 dark:text-gray-300">
-                        Showing {startIndex} to {endIndex} of {totalUsers} users
+                      <span className="text-gray-700 dark:text-gray-300 whitespace-nowrap">
+                        {startIndex}-{endIndex} of {totalUsers}
                       </span>
                     </div>
 
@@ -493,296 +411,32 @@ const AdminUsers = () => {
         </Card>
       </div>
 
-      {/* Add User Modal */}
-      <Modal
+      {/* Modals */}
+      <UserManagementAddModal
         isOpen={showAddModal}
-        onClose={() => {
-          setShowAddModal(false);
-          resetForm();
-        }}
-        title="Add New User"
-        size="lg"
-      >
-        <div className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Input
-              label="Full Name"
-              name="fullName"
-              value={formData.fullName}
-              onChange={handleInputChange}
-            />
-            <Input
-              label="Email"
-              name="email"
-              type="email"
-              value={formData.email}
-              onChange={handleInputChange}
-            />
-          </div>
+        onClose={() => setShowAddModal(false)}
+        onSubmit={handleAddUser}
+      />
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="relative">
-              <Input
-                label="Password"
-                name="password"
-                type={showPassword ? "text" : "password"}
-                value={formData.password}
-                onChange={handleInputChange}
-              />
-              <button
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-9 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-              >
-                {showPassword ? (
-                  <EyeOff className="h-5 w-5" />
-                ) : (
-                  <Eye className="h-5 w-5" />
-                )}
-              </button>
-            </div>
-            <Input
-              label="Phone Number"
-              name="phoneNumber"
-              value={formData.phoneNumber}
-              onChange={handleInputChange}
-            />
-          </div>
-
-          <Select
-            label="Role"
-            name="role"
-            value={formData.role}
-            onChange={handleInputChange}
-            options={[
-              { value: "Agent", label: "Agent" },
-              { value: "Dispatcher", label: "Dispatcher" },
-              { value: "Accountant", label: "Accountant" },
-              { value: "DistributorAdmin", label: "Distributor Admin" },
-              { value: "Admin", label: "Admin" },
-            ]}
-          />
-
-          <Input
-            label="Address"
-            name="address"
-            value={formData.address}
-            onChange={handleInputChange}
-          />
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Input
-              label="City"
-              name="city"
-              value={formData.city}
-              onChange={handleInputChange}
-            />
-            <Input
-              label="Province"
-              name="province"
-              value={formData.province}
-              onChange={handleInputChange}
-            />
-            <Input
-              label="Postal Code"
-              name="postalCode"
-              value={formData.postalCode}
-              onChange={handleInputChange}
-            />
-          </div>
-
-          <div className="flex items-center">
-            <input
-              type="checkbox"
-              id="isActive"
-              name="isActive"
-              checked={formData.isActive}
-              onChange={handleInputChange}
-              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-            />
-            <label
-              htmlFor="isActive"
-              className="ml-2 text-sm text-gray-700 dark:text-gray-300"
-            >
-              Active User
-            </label>
-          </div>
-
-          <div className="flex justify-end gap-3 pt-4">
-            <Button
-              variant="outline"
-              onClick={() => {
-                setShowAddModal(false);
-                resetForm();
-              }}
-            >
-              Cancel
-            </Button>
-            <Button onClick={handleAddUser}>Add User</Button>
-          </div>
-        </div>
-      </Modal>
-
-      {/* Edit User Modal */}
-      <Modal
+      <UserManagementEditModal
         isOpen={showEditModal}
         onClose={() => {
           setShowEditModal(false);
-          resetForm();
+          setSelectedUser(null);
         }}
-        title="Edit User"
-        size="lg"
-      >
-        <div className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Input
-              label="Full Name"
-              name="fullName"
-              value={formData.fullName}
-              onChange={handleInputChange}
-            />
-            <Input
-              label="Email"
-              name="email"
-              type="email"
-              value={formData.email}
-              onChange={handleInputChange}
-            />
-          </div>
+        onSubmit={handleEditUser}
+        selectedUser={selectedUser}
+      />
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="relative">
-              <Input
-                label="Password (leave blank to keep current)"
-                name="password"
-                type={showPassword ? "text" : "password"}
-                value={formData.password}
-                onChange={handleInputChange}
-              />
-              <button
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-9 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-              >
-                {showPassword ? (
-                  <EyeOff className="h-5 w-5" />
-                ) : (
-                  <Eye className="h-5 w-5" />
-                )}
-              </button>
-            </div>
-            <Input
-              label="Phone Number"
-              name="phoneNumber"
-              value={formData.phoneNumber}
-              onChange={handleInputChange}
-            />
-          </div>
-
-          <Select
-            label="Role"
-            name="role"
-            value={formData.role}
-            onChange={handleInputChange}
-            options={[
-              { value: "Agent", label: "Agent" },
-              { value: "Dispatcher", label: "Dispatcher" },
-              { value: "Accountant", label: "Accountant" },
-              { value: "DistributorAdmin", label: "Distributor Admin" },
-              { value: "Admin", label: "Admin" },
-            ]}
-          />
-
-          <Input
-            label="Address"
-            name="address"
-            value={formData.address}
-            onChange={handleInputChange}
-          />
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Input
-              label="City"
-              name="city"
-              value={formData.city}
-              onChange={handleInputChange}
-            />
-            <Input
-              label="Province"
-              name="province"
-              value={formData.province}
-              onChange={handleInputChange}
-            />
-            <Input
-              label="Postal Code"
-              name="postalCode"
-              value={formData.postalCode}
-              onChange={handleInputChange}
-            />
-          </div>
-
-          <div className="flex items-center">
-            <input
-              type="checkbox"
-              id="isActiveEdit"
-              name="isActive"
-              checked={formData.isActive}
-              onChange={handleInputChange}
-              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-            />
-            <label
-              htmlFor="isActiveEdit"
-              className="ml-2 text-sm text-gray-700 dark:text-gray-300"
-            >
-              Active User
-            </label>
-          </div>
-
-          <div className="flex justify-end gap-3 pt-4">
-            <Button
-              variant="outline"
-              onClick={() => {
-                setShowEditModal(false);
-                resetForm();
-              }}
-            >
-              Cancel
-            </Button>
-            <Button onClick={handleEditUser}>Update User</Button>
-          </div>
-        </div>
-      </Modal>
-
-      {/* Delete Confirmation Modal */}
-      <Modal
+      <UserManagementDeleteModal
         isOpen={showDeleteModal}
         onClose={() => {
           setShowDeleteModal(false);
           setSelectedUser(null);
         }}
-        title="Delete User"
-        size="sm"
-      >
-        <div className="space-y-4">
-          <p className="text-gray-600 dark:text-gray-400">
-            Are you sure you want to delete{" "}
-            <strong>{selectedUser?.fullName}</strong>? This action cannot be
-            undone.
-          </p>
-          <div className="flex justify-end gap-3">
-            <Button
-              variant="outline"
-              onClick={() => {
-                setShowDeleteModal(false);
-                setSelectedUser(null);
-              }}
-            >
-              Cancel
-            </Button>
-            <Button variant="danger" onClick={handleDeleteUser}>
-              Delete
-            </Button>
-          </div>
-        </div>
-      </Modal>
+        onConfirm={handleDeleteUser}
+        selectedUser={selectedUser}
+      />
     </DashboardLayout>
   );
 };
