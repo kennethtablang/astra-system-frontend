@@ -19,7 +19,7 @@ export const AdminSettingsGeneral = () => {
           <CardContent className="py-12">
             <div className="text-center">
               <Settings className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900">
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white">
                 General Settings
               </h3>
               <p className="text-gray-500 mt-2">Coming soon...</p>
