@@ -132,7 +132,7 @@ const AdminDashboard = () => {
           {/* Recent Orders */}
           <Card className="lg:col-span-2">
             <CardHeader>
-              <h3 className="text-lg font-medium text-gray-900">
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white">
                 Recent Orders
               </h3>
             </CardHeader>
@@ -180,7 +180,9 @@ const AdminDashboard = () => {
           {/* Quick Stats */}
           <Card>
             <CardHeader>
-              <h3 className="text-lg font-medium text-gray-900">Quick Stats</h3>
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+                Quick Stats
+              </h3>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center justify-between">
@@ -189,11 +191,15 @@ const AdminDashboard = () => {
                     <Package className="h-5 w-5 text-blue-600" />
                   </div>
                   <div className="ml-3">
-                    <p className="text-sm font-medium text-gray-900">Pending</p>
-                    <p className="text-xs text-gray-500">Orders</p>
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">
+                      Pending
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      Orders
+                    </p>
                   </div>
                 </div>
-                <span className="text-lg font-semibold text-gray-900">
+                <span className="text-lg font-semibold text-gray-900 dark:text-white">
                   {stats?.pendingOrders || 0}
                 </span>
               </div>
@@ -204,13 +210,15 @@ const AdminDashboard = () => {
                     <Truck className="h-5 w-5 text-purple-600" />
                   </div>
                   <div className="ml-3">
-                    <p className="text-sm font-medium text-gray-900">
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">
                       Confirmed
                     </p>
-                    <p className="text-xs text-gray-500">Orders</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      Orders
+                    </p>
                   </div>
                 </div>
-                <span className="text-lg font-semibold text-gray-900">
+                <span className="text-lg font-semibold text-gray-900 dark:text-white">
                   {stats?.confirmedOrders || 0}
                 </span>
               </div>
@@ -221,13 +229,15 @@ const AdminDashboard = () => {
                     <TrendingUp className="h-5 w-5 text-green-600" />
                   </div>
                   <div className="ml-3">
-                    <p className="text-sm font-medium text-gray-900">
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">
                       Delivered
                     </p>
-                    <p className="text-xs text-gray-500">Today</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      Today
+                    </p>
                   </div>
                 </div>
-                <span className="text-lg font-semibold text-gray-900">
+                <span className="text-lg font-semibold text-gray-900 dark:text-white">
                   {stats?.deliveredToday || 0}
                 </span>
               </div>
@@ -238,11 +248,15 @@ const AdminDashboard = () => {
                     <Package className="h-5 w-5 text-yellow-600" />
                   </div>
                   <div className="ml-3">
-                    <p className="text-sm font-medium text-gray-900">Packed</p>
-                    <p className="text-xs text-gray-500">Ready for dispatch</p>
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">
+                      Packed
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      Ready for dispatch
+                    </p>
                   </div>
                 </div>
-                <span className="text-lg font-semibold text-gray-900">
+                <span className="text-lg font-semibold text-gray-900 dark:text-white">
                   {stats?.packedOrders || 0}
                 </span>
               </div>
@@ -256,8 +270,10 @@ const AdminDashboard = () => {
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">On-Time Delivery</p>
-                  <p className="text-2xl font-bold text-gray-900 mt-1">
+                  <p className="text-sm text-gray-600 dark:text-white">
+                    On-Time Delivery
+                  </p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
                     {stats?.onTimeDeliveryRate?.toFixed(1) || 0}%
                   </p>
                 </div>
@@ -272,8 +288,10 @@ const AdminDashboard = () => {
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">Outstanding AR</p>
-                  <p className="text-2xl font-bold text-gray-900 mt-1">
+                  <p className="text-sm text-gray-600 dark:text-white">
+                    Outstanding AR
+                  </p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
                     ₱{stats?.outstandingAR?.toLocaleString() || 0}
                   </p>
                 </div>
@@ -288,8 +306,10 @@ const AdminDashboard = () => {
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">Avg Order Value</p>
-                  <p className="text-2xl font-bold text-gray-900 mt-1">
+                  <p className="text-sm text-gray-600 dark:text-white">
+                    Avg Order Value
+                  </p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
                     ₱{stats?.averageOrderValue?.toLocaleString() || 0}
                   </p>
                 </div>

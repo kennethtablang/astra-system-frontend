@@ -1,4 +1,4 @@
-// Updated src/App.jsx (with ThemeProvider)
+// Updated src/App.jsx (with bottom-right toast position)
 import { BrowserRouter } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 import { AuthProvider } from "../src/contexts/AuthContext";
@@ -12,7 +12,7 @@ function App() {
         <AuthProvider>
           <AppRoutes />
           <Toaster
-            position="top-right"
+            position="bottom-right"
             toastOptions={{
               duration: 3000,
               style: {
