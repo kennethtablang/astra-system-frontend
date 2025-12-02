@@ -1,4 +1,8 @@
 // src/pages/admin/AdminSettingsGeneral.jsx
+import DashboardLayout from "../../components/layouts/DashboardLayout";
+import { Card, CardContent } from "../../components/ui/Card";
+import { Settings } from "lucide-react";
+
 export const AdminSettingsGeneral = () => {
   return (
     <DashboardLayout>

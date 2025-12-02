@@ -1,4 +1,6 @@
 // src/pages/admin/AdminSettingsNotifications.jsx
+import DashboardLayout from "../../components/layouts/DashboardLayout";
+import { Card, CardContent } from "../../components/ui/Card";
 import { Bell } from "lucide-react";
 
 export const AdminSettingsNotifications = () => {

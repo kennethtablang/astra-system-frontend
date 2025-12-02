@@ -1,4 +1,6 @@
 // src/pages/admin/AdminSalesReports.jsx
+import DashboardLayout from "../../components/layouts/DashboardLayout";
+import { Card, CardContent } from "../../components/ui/Card";
 import { TrendingUp } from "lucide-react";
 
 export const AdminSalesReports = () => {

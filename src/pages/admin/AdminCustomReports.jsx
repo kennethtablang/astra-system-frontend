@@ -1,4 +1,6 @@
 // src/pages/admin/AdminCustomReports.jsx
+import DashboardLayout from "../../components/layouts/DashboardLayout";
+import { Card, CardContent } from "../../components/ui/Card";
 import { FileSpreadsheet } from "lucide-react";
 
 export const AdminCustomReports = () => {

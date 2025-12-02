@@ -1,4 +1,6 @@
 // src/pages/admin/AdminPerformance.jsx
+import DashboardLayout from "../../components/layouts/DashboardLayout";
+import { Card, CardContent } from "../../components/ui/Card";
 import { Activity } from "lucide-react";
 
 export const AdminPerformance = () => {

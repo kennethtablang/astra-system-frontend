@@ -1,4 +1,6 @@
 // src/pages/admin/AdminTransactions.jsx
+import DashboardLayout from "../../components/layouts/DashboardLayout";
+import { Card, CardContent } from "../../components/ui/Card";
 import { CreditCard } from "lucide-react";
 
 export const AdminTransactions = () => {

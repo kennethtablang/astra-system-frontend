@@ -1,4 +1,6 @@
 // src/pages/admin/AdminSettingsSecurity.jsx
+import DashboardLayout from "../../components/layouts/DashboardLayout";
+import { Card, CardContent } from "../../components/ui/Card";
 import { Shield } from "lucide-react";
 
 export const AdminSettingsSecurity = () => {
