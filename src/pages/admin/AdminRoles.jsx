@@ -1,0 +1,35 @@
+// src/pages/admin/AdminRoles.jsx
+import DashboardLayout from "../../components/layouts/DashboardLayout";
+import { Shield } from "lucide-react";
+import { Card, CardHeader, CardContent } from "../../components/ui/Card";
+
+const AdminRoles = () => {
+  return (
+    <DashboardLayout>
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">
+            Roles & Permissions
+          </h1>
+          <p className="text-gray-600 mt-1">
+            Manage user roles and permissions
+          </p>
+        </div>
+
+        <Card>
+          <CardContent className="py-12">
+            <div className="text-center">
+              <Shield className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900">
+                Roles & Permissions
+              </h3>
+              <p className="text-gray-500 mt-2">Coming soon...</p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </DashboardLayout>
+  );
+};
+
+export default AdminRoles;

@@ -14,6 +14,14 @@ import {
   X,
   Bell,
   Search,
+  ShoppingCart,
+  BarChart3,
+  MapPin,
+  UserCog,
+  Tag,
+  Warehouse,
+  TrendingUp,
+  Shield,
 } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
 
@@ -26,12 +34,94 @@ const DashboardLayout = ({ children }) => {
   const navigation = {
     Admin: [
       { name: "Dashboard", href: "/admin/dashboard", icon: Home },
-      { name: "Users", href: "/admin/users", icon: Users },
-      { name: "Orders", href: "/admin/orders", icon: Package },
-      { name: "Trips", href: "/admin/trips", icon: Truck },
-      { name: "Stores", href: "/admin/stores", icon: Store },
-      { name: "Products", href: "/admin/products", icon: Package },
-      { name: "Reports", href: "/admin/reports", icon: FileText },
+      {
+        name: "User Management",
+        href: "/admin/users",
+        icon: Users,
+        subItems: [
+          { name: "All Users", href: "/admin/users" },
+          { name: "Roles & Permissions", href: "/admin/roles" },
+        ],
+      },
+      {
+        name: "Order Management",
+        href: "/admin/orders",
+        icon: ShoppingCart,
+        subItems: [
+          { name: "All Orders", href: "/admin/orders" },
+          { name: "Pending Orders", href: "/admin/orders/pending" },
+          { name: "Order History", href: "/admin/orders/history" },
+        ],
+      },
+      {
+        name: "Trip Management",
+        href: "/admin/trips",
+        icon: Truck,
+        subItems: [
+          { name: "All Trips", href: "/admin/trips" },
+          { name: "Active Trips", href: "/admin/trips/active" },
+          { name: "Trip History", href: "/admin/trips/history" },
+        ],
+      },
+      {
+        name: "Store Management",
+        href: "/admin/stores",
+        icon: Store,
+        subItems: [
+          { name: "All Stores", href: "/admin/stores" },
+          { name: "Store Categories", href: "/admin/stores/categories" },
+        ],
+      },
+      {
+        name: "Product Management",
+        href: "/admin/products",
+        icon: Package,
+        subItems: [
+          { name: "All Products", href: "/admin/products" },
+          { name: "Categories", href: "/admin/products/categories" },
+          { name: "Inventory", href: "/admin/products/inventory" },
+        ],
+      },
+      {
+        name: "Distributor Management",
+        href: "/admin/distributors",
+        icon: Warehouse,
+      },
+      {
+        name: "Route Management",
+        href: "/admin/routes",
+        icon: MapPin,
+      },
+      {
+        name: "Financial Management",
+        href: "/admin/finance",
+        icon: DollarSign,
+        subItems: [
+          { name: "Payments", href: "/admin/finance/payments" },
+          { name: "Invoices", href: "/admin/finance/invoices" },
+          { name: "Transactions", href: "/admin/finance/transactions" },
+        ],
+      },
+      {
+        name: "Reports & Analytics",
+        href: "/admin/reports",
+        icon: BarChart3,
+        subItems: [
+          { name: "Sales Reports", href: "/admin/reports/sales" },
+          { name: "Performance", href: "/admin/reports/performance" },
+          { name: "Custom Reports", href: "/admin/reports/custom" },
+        ],
+      },
+      {
+        name: "System Settings",
+        href: "/admin/settings",
+        icon: Settings,
+        subItems: [
+          { name: "General", href: "/admin/settings/general" },
+          { name: "Notifications", href: "/admin/settings/notifications" },
+          { name: "Security", href: "/admin/settings/security" },
+        ],
+      },
     ],
     Agent: [
       { name: "Dashboard", href: "/agent/dashboard", icon: Home },

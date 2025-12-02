@@ -36,15 +36,24 @@ const AdminDashboard = () => {
     try {
       setLoading(true);
 
-      // Fetch stats - adjust endpoint based on your backend
-      const { data: statsData } = await api.get("/dashboard/stats");
-      setStats(statsData.data);
+      // Fetch stats using the correct endpoint
+      const { data: statsData } = await api.get("/reports/dashboard-stats");
+      if (statsData.success) {
+        setStats(statsData.data);
+      }
 
       // Fetch recent orders
       const { data: ordersData } = await api.get("/orders", {
-        params: { pageSize: 5, pageNumber: 1 },
+        params: {
+          pageSize: 5,
+          pageNumber: 1,
+          sortBy: "createdAt",
+          sortDescending: true,
+        },
       });
-      setRecentOrders(ordersData.data.items || []);
+      if (ordersData.success) {
+        setRecentOrders(ordersData.data.items || []);
+      }
     } catch (error) {
       toast.error("Failed to load dashboard data");
       console.error(error);
@@ -90,35 +99,27 @@ const AdminDashboard = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <StatCard
             title="Total Orders"
-            value={stats?.totalOrders || "0"}
+            value={stats?.totalOrders?.toString() || "0"}
             icon={Package}
             color="blue"
-            trend="up"
-            trendValue="+12% from last month"
           />
           <StatCard
             title="Active Trips"
-            value={stats?.activeTrips || "0"}
+            value={stats?.activeTrips?.toString() || "0"}
             icon={Truck}
             color="purple"
-            trend="up"
-            trendValue="+5% from last week"
           />
           <StatCard
-            title="Total Users"
-            value={stats?.totalUsers || "0"}
+            title="Active Stores"
+            value={stats?.activeStores?.toString() || "0"}
             icon={Users}
             color="green"
-            trend="up"
-            trendValue="+3 new this week"
           />
           <StatCard
             title="Revenue"
             value={`₱${stats?.totalRevenue?.toLocaleString() || "0"}`}
             icon={DollarSign}
             color="yellow"
-            trend="up"
-            trendValue="+18% from last month"
           />
         </div>
 
@@ -200,13 +201,13 @@ const AdminDashboard = () => {
                   </div>
                   <div className="ml-3">
                     <p className="text-sm font-medium text-gray-900">
-                      In Transit
+                      Confirmed
                     </p>
-                    <p className="text-xs text-gray-500">Deliveries</p>
+                    <p className="text-xs text-gray-500">Orders</p>
                   </div>
                 </div>
                 <span className="text-lg font-semibold text-gray-900">
-                  {stats?.inTransitOrders || 0}
+                  {stats?.confirmedOrders || 0}
                 </span>
               </div>
 
@@ -229,52 +230,72 @@ const AdminDashboard = () => {
 
               <div className="flex items-center justify-between">
                 <div className="flex items-center">
-                  <div className="p-2 bg-red-100 rounded-lg">
-                    <AlertCircle className="h-5 w-5 text-red-600" />
+                  <div className="p-2 bg-yellow-100 rounded-lg">
+                    <Package className="h-5 w-5 text-yellow-600" />
                   </div>
                   <div className="ml-3">
-                    <p className="text-sm font-medium text-gray-900">Issues</p>
-                    <p className="text-xs text-gray-500">Requiring attention</p>
+                    <p className="text-sm font-medium text-gray-900">Packed</p>
+                    <p className="text-xs text-gray-500">Ready for dispatch</p>
                   </div>
                 </div>
                 <span className="text-lg font-semibold text-gray-900">
-                  {stats?.issues || 0}
+                  {stats?.packedOrders || 0}
                 </span>
               </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Alerts/Notifications */}
-        {stats?.alerts && stats.alerts.length > 0 && (
+        {/* Performance Metrics */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <Card>
-            <CardHeader>
-              <h3 className="text-lg font-medium text-gray-900">
-                System Alerts
-              </h3>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {stats.alerts.map((alert, index) => (
-                  <div
-                    key={index}
-                    className="flex items-start p-3 bg-yellow-50 border border-yellow-200 rounded-lg"
-                  >
-                    <AlertCircle className="h-5 w-5 text-yellow-600 mt-0.5 mr-3 flex-shrink-0" />
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-yellow-800">
-                        {alert.title}
-                      </p>
-                      <p className="text-sm text-yellow-700 mt-1">
-                        {alert.message}
-                      </p>
-                    </div>
-                  </div>
-                ))}
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600">On-Time Delivery</p>
+                  <p className="text-2xl font-bold text-gray-900 mt-1">
+                    {stats?.onTimeDeliveryRate?.toFixed(1) || 0}%
+                  </p>
+                </div>
+                <div className="p-3 bg-blue-100 rounded-full">
+                  <TrendingUp className="h-6 w-6 text-blue-600" />
+                </div>
               </div>
             </CardContent>
           </Card>
-        )}
+
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600">Outstanding AR</p>
+                  <p className="text-2xl font-bold text-gray-900 mt-1">
+                    ₱{stats?.outstandingAR?.toLocaleString() || 0}
+                  </p>
+                </div>
+                <div className="p-3 bg-yellow-100 rounded-full">
+                  <DollarSign className="h-6 w-6 text-yellow-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600">Avg Order Value</p>
+                  <p className="text-2xl font-bold text-gray-900 mt-1">
+                    ₱{stats?.averageOrderValue?.toLocaleString() || 0}
+                  </p>
+                </div>
+                <div className="p-3 bg-green-100 rounded-full">
+                  <Package className="h-6 w-6 text-green-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </DashboardLayout>
   );

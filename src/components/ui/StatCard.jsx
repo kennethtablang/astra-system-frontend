@@ -1,8 +1,11 @@
 // src/components/ui/StatCard.jsx
+import { Card, CardContent } from "./Card";
+
 export const StatCard = ({
   title,
   value,
-  icon: trend,
+  icon: Icon,
+  trend,
   trendValue,
   color = "blue",
 }) => {
@@ -16,11 +19,11 @@ export const StatCard = ({
 
   return (
     <Card>
-      <CardContent className="flex items-center justify-between">
+      <CardContent className="flex items-center justify-between p-6">
         <div>
           <p className="text-sm font-medium text-gray-600">{title}</p>
           <p className="text-2xl font-bold text-gray-900 mt-1">{value}</p>
-          {trend && (
+          {trend && trendValue && (
             <p
               className={`text-sm mt-2 ${
                 trend === "up" ? "text-green-600" : "text-red-600"
@@ -30,9 +33,11 @@ export const StatCard = ({
             </p>
           )}
         </div>
-        <div className={`p-3 rounded-full ${colorClasses[color]}`}>
-          <Icon className="h-6 w-6 text-white" />
-        </div>
+        {Icon && (
+          <div className={`p-3 rounded-full ${colorClasses[color]}`}>
+            <Icon className="h-6 w-6 text-white" />
+          </div>
+        )}
       </CardContent>
     </Card>
   );
