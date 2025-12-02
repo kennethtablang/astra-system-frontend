@@ -1,17 +1,17 @@
 // src/pages/admin/AdminRoles.jsx
 import DashboardLayout from "../../components/layouts/DashboardLayout";
 import { Shield } from "lucide-react";
-import { Card, CardHeader, CardContent } from "../../components/ui/Card";
+import { Card, CardContent } from "../../components/ui/Card";
 
 const AdminRoles = () => {
   return (
     <DashboardLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
             Roles & Permissions
           </h1>
-          <p className="text-gray-600 mt-1">
+          <p className="text-gray-600 dark:text-gray-400 mt-1">
             Manage user roles and permissions
           </p>
         </div>
@@ -19,11 +19,13 @@ const AdminRoles = () => {
         <Card>
           <CardContent className="py-12">
             <div className="text-center">
-              <Shield className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900">
+              <Shield className="h-12 w-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white">
                 Roles & Permissions
               </h3>
-              <p className="text-gray-500 mt-2">Coming soon...</p>
+              <p className="text-gray-500 dark:text-gray-400 mt-2">
+                Coming soon...
+              </p>
             </div>
           </CardContent>
         </Card>
