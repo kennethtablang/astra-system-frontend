@@ -2,21 +2,42 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ============================================
-   BASE TYPOGRAPHY - MOBILE FIRST
-   ============================================ */
+/* Base Typography - MOBILE FIRST */
 html {
-  font-size: 16px; /* Base font size for desktop */
+  font-size: 16px;
 }
 
 @media (max-width: 768px) {
   html {
-    font-size: 14px; /* Slightly smaller for tablets */
+    font-size: 14px;
   }
 }
 
 @media (max-width: 480px) {
   html {
-    font-size: 13px; /* Even smaller for phones */
+    font-size: 13px;
   }
+}
+
+/* Dark Mode Variables */
+:root {
+  --toast-bg: #363636;
+  --toast-color: #fff;
+}
+
+.dark {
+  --toast-bg: #1f2937;
+  --toast-color: #f9fafb;
+}
+
+/* Smooth transitions for theme changes */
+* {
+  transition-property: background-color, border-color, color;
+  transition-duration: 200ms;
+  transition-timing-function: ease-in-out;
+}
+
+/* Prevent transition on page load */
+.no-transition * {
+  transition: none !important;
 }

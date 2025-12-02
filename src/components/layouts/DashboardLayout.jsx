@@ -1,3 +1,4 @@
+// src/components/layouts/DashboardLayout.jsx
 import { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import {
@@ -17,17 +18,17 @@ import {
   ShoppingCart,
   BarChart3,
   MapPin,
-  UserCog,
-  Tag,
   Warehouse,
-  TrendingUp,
-  Shield,
+  Sun,
+  Moon,
 } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
+import { useTheme } from "../../contexts/ThemeContext";
 
 const DashboardLayout = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { user, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -38,49 +39,26 @@ const DashboardLayout = ({ children }) => {
         name: "User Management",
         href: "/admin/users",
         icon: Users,
-        subItems: [
-          { name: "All Users", href: "/admin/users" },
-          { name: "Roles & Permissions", href: "/admin/roles" },
-        ],
       },
       {
         name: "Order Management",
         href: "/admin/orders",
         icon: ShoppingCart,
-        subItems: [
-          { name: "All Orders", href: "/admin/orders" },
-          { name: "Pending Orders", href: "/admin/orders/pending" },
-          { name: "Order History", href: "/admin/orders/history" },
-        ],
       },
       {
         name: "Trip Management",
         href: "/admin/trips",
         icon: Truck,
-        subItems: [
-          { name: "All Trips", href: "/admin/trips" },
-          { name: "Active Trips", href: "/admin/trips/active" },
-          { name: "Trip History", href: "/admin/trips/history" },
-        ],
       },
       {
         name: "Store Management",
         href: "/admin/stores",
         icon: Store,
-        subItems: [
-          { name: "All Stores", href: "/admin/stores" },
-          { name: "Store Categories", href: "/admin/stores/categories" },
-        ],
       },
       {
         name: "Product Management",
         href: "/admin/products",
         icon: Package,
-        subItems: [
-          { name: "All Products", href: "/admin/products" },
-          { name: "Categories", href: "/admin/products/categories" },
-          { name: "Inventory", href: "/admin/products/inventory" },
-        ],
       },
       {
         name: "Distributor Management",
@@ -96,31 +74,16 @@ const DashboardLayout = ({ children }) => {
         name: "Financial Management",
         href: "/admin/finance",
         icon: DollarSign,
-        subItems: [
-          { name: "Payments", href: "/admin/finance/payments" },
-          { name: "Invoices", href: "/admin/finance/invoices" },
-          { name: "Transactions", href: "/admin/finance/transactions" },
-        ],
       },
       {
         name: "Reports & Analytics",
         href: "/admin/reports",
         icon: BarChart3,
-        subItems: [
-          { name: "Sales Reports", href: "/admin/reports/sales" },
-          { name: "Performance", href: "/admin/reports/performance" },
-          { name: "Custom Reports", href: "/admin/reports/custom" },
-        ],
       },
       {
         name: "System Settings",
         href: "/admin/settings",
         icon: Settings,
-        subItems: [
-          { name: "General", href: "/admin/settings/general" },
-          { name: "Notifications", href: "/admin/settings/notifications" },
-          { name: "Security", href: "/admin/settings/security" },
-        ],
       },
     ],
     Agent: [
@@ -153,33 +116,35 @@ const DashboardLayout = ({ children }) => {
   const isActive = (href) => location.pathname === href;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors">
       {/* Mobile sidebar backdrop */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 bg-gray-600 bg-opacity-75 z-40 lg:hidden"
+          className="fixed inset-0 bg-gray-600 bg-opacity-75 dark:bg-gray-900 dark:bg-opacity-75 z-40 lg:hidden transition-opacity"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
       {/* Sidebar */}
       <div
-        className={`fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-gray-800 shadow-lg transform transition-transform duration-300 ease-in-out lg:translate-x-0 ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
         <div className="flex flex-col h-full">
           {/* Logo */}
-          <div className="flex items-center justify-between h-16 px-6 border-b border-gray-200">
+          <div className="flex items-center justify-between h-16 px-6 border-b border-gray-200 dark:border-gray-700">
             <div className="flex items-center space-x-3">
-              <div className="h-8 w-8 bg-blue-600 rounded-lg flex items-center justify-center">
+              <div className="h-8 w-8 bg-blue-600 dark:bg-blue-500 rounded-lg flex items-center justify-center">
                 <span className="text-white text-lg font-bold">A</span>
               </div>
-              <span className="text-xl font-bold text-gray-900">ASTRA</span>
+              <span className="text-xl font-bold text-gray-900 dark:text-white">
+                ASTRA
+              </span>
             </div>
             <button
               onClick={() => setSidebarOpen(false)}
-              className="lg:hidden text-gray-500 hover:text-gray-700"
+              className="lg:hidden text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
             >
               <X className="h-6 w-6" />
             </button>
@@ -197,13 +162,15 @@ const DashboardLayout = ({ children }) => {
                   to={item.href}
                   className={`flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors ${
                     active
-                      ? "bg-blue-50 text-blue-600"
-                      : "text-gray-700 hover:bg-gray-50 hover:text-gray-900"
+                      ? "bg-blue-50 text-blue-600 dark:bg-blue-900/50 dark:text-blue-400"
+                      : "text-gray-700 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white"
                   }`}
                 >
                   <Icon
                     className={`mr-3 h-5 w-5 ${
-                      active ? "text-blue-600" : "text-gray-400"
+                      active
+                        ? "text-blue-600 dark:text-blue-400"
+                        : "text-gray-400 dark:text-gray-500"
                     }`}
                   />
                   {item.name}
@@ -213,26 +180,28 @@ const DashboardLayout = ({ children }) => {
           </nav>
 
           {/* User Section */}
-          <div className="border-t border-gray-200 p-4">
+          <div className="border-t border-gray-200 dark:border-gray-700 p-4">
             <div className="flex items-center space-x-3 mb-4">
-              <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
-                <span className="text-blue-600 font-medium">
+              <div className="h-10 w-10 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
+                <span className="text-blue-600 dark:text-blue-400 font-medium">
                   {user?.fullName?.charAt(0) || "U"}
                 </span>
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900 truncate">
+                <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
                   {user?.fullName}
                 </p>
-                <p className="text-xs text-gray-500 truncate">{user?.role}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                  {user?.role}
+                </p>
               </div>
             </div>
 
             <button
               onClick={handleLogout}
-              className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
+              className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700 rounded-lg transition-colors"
             >
-              <LogOut className="mr-3 h-5 w-5 text-gray-400" />
+              <LogOut className="mr-3 h-5 w-5 text-gray-400 dark:text-gray-500" />
               Logout
             </button>
           </div>
@@ -242,11 +211,11 @@ const DashboardLayout = ({ children }) => {
       {/* Main Content */}
       <div className="lg:pl-64">
         {/* Top Header */}
-        <header className="bg-white shadow-sm sticky top-0 z-30">
+        <header className="bg-white dark:bg-gray-800 shadow-sm sticky top-0 z-30 transition-colors">
           <div className="flex items-center justify-between h-16 px-4 sm:px-6 lg:px-8">
             <button
               onClick={() => setSidebarOpen(true)}
-              className="lg:hidden text-gray-500 hover:text-gray-700"
+              className="lg:hidden text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
             >
               <Menu className="h-6 w-6" />
             </button>
@@ -258,11 +227,11 @@ const DashboardLayout = ({ children }) => {
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Search className="h-5 w-5 text-gray-400" />
+                    <Search className="h-5 w-5 text-gray-400 dark:text-gray-500" />
                   </div>
                   <input
                     id="search"
-                    className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    className="block w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg leading-5 bg-white dark:bg-gray-700 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-colors"
                     placeholder="Search..."
                     type="search"
                   />
@@ -270,8 +239,22 @@ const DashboardLayout = ({ children }) => {
               </div>
             </div>
 
-            <div className="flex items-center space-x-4">
-              <button className="relative p-2 text-gray-400 hover:text-gray-500">
+            <div className="flex items-center space-x-2">
+              {/* Theme Toggle */}
+              <button
+                onClick={toggleTheme}
+                className="p-2 rounded-lg transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
+                aria-label="Toggle theme"
+              >
+                {theme === "light" ? (
+                  <Moon className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+                ) : (
+                  <Sun className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+                )}
+              </button>
+
+              {/* Notifications */}
+              <button className="relative p-2 text-gray-400 hover:text-gray-500 dark:text-gray-500 dark:hover:text-gray-400 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
                 <Bell className="h-6 w-6" />
                 <span className="absolute top-1 right-1 h-2 w-2 bg-red-500 rounded-full"></span>
               </button>
