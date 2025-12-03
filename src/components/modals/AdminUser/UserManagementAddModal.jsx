@@ -175,7 +175,7 @@ export const UserManagementAddModal = ({ isOpen, onClose, onSubmit }) => {
             placeholder="john.doe@example.com"
           />
           <Input
-            label="Phone Number"
+            label="Phone Number *"
             name="phoneNumber"
             value={formData.phoneNumber}
             onChange={handleInputChange}

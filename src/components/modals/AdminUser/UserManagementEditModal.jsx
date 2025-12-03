@@ -1,5 +1,5 @@
 // src/components/modals/AdminUser/UserManagementEditModal.jsx
-import { useState, useMemo, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Modal } from "../../ui/Modal";
 import { Input } from "../../ui/Input";
 import { Select } from "../../ui/Select";
@@ -11,15 +11,18 @@ export const UserManagementEditModal = ({
   onSubmit,
   selectedUser,
 }) => {
-  // Derive form data from selectedUser - recalculates when selectedUser changes
-  const initialFormData = useMemo(() => {
-    if (!selectedUser)
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Initialize form data directly from selectedUser
+  const getInitialFormData = () => {
+    if (!selectedUser) {
       return {
         firstName: "",
         lastName: "",
         phoneNumber: "",
         role: "Agent",
       };
+    }
 
     // Split fullName if it exists
     const fullName =
@@ -36,16 +39,21 @@ export const UserManagementEditModal = ({
           ? selectedUser.roles[0]
           : "Agent",
     };
-  }, [selectedUser]);
+  };
 
-  const [formData, setFormData] = useState(initialFormData);
+  const [formData, setFormData] = useState(getInitialFormData());
 
-  // Update form data when initialFormData changes
-  useEffect(() => {
-    if (isOpen) {
-      setFormData(initialFormData);
+  // Reset form data when modal opens with new user
+  const handleModalOpen = () => {
+    if (isOpen && selectedUser) {
+      setFormData(getInitialFormData());
     }
-  }, [isOpen, initialFormData]);
+  };
+
+  // Use effect only for resetting, not for setting state
+  useEffect(() => {
+    handleModalOpen();
+  }, [isOpen, selectedUser?.id]); // Only trigger on modal open or user change
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -68,22 +76,23 @@ export const UserManagementEditModal = ({
       fullName: `${formData.firstName} ${formData.lastName}`.trim(),
     };
 
-    await onSubmit(submitData);
-    resetForm();
-  };
-
-  const resetForm = () => {
-    setFormData({
-      firstName: "",
-      lastName: "",
-      phoneNumber: "",
-      role: "Agent",
-    });
+    try {
+      setIsSubmitting(true);
+      await onSubmit(submitData);
+      // Only close if submission was successful
+      onClose();
+    } catch (error) {
+      // Error is already handled in parent component
+      console.error("Error in modal submit:", error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleClose = () => {
-    resetForm();
-    onClose();
+    if (!isSubmitting) {
+      onClose();
+    }
   };
 
   const roleOptions = [
@@ -115,6 +124,7 @@ export const UserManagementEditModal = ({
             onChange={handleInputChange}
             required
             placeholder="John"
+            disabled={isSubmitting}
           />
           <Input
             label="Last Name *"
@@ -123,6 +133,7 @@ export const UserManagementEditModal = ({
             onChange={handleInputChange}
             required
             placeholder="Doe"
+            disabled={isSubmitting}
           />
         </div>
 
@@ -132,6 +143,7 @@ export const UserManagementEditModal = ({
           value={formData.phoneNumber}
           onChange={handleInputChange}
           placeholder="09123456789"
+          disabled={isSubmitting}
         />
 
         <Select
@@ -140,6 +152,7 @@ export const UserManagementEditModal = ({
           value={formData.role}
           onChange={handleInputChange}
           options={roleOptions}
+          disabled={isSubmitting}
         />
 
         <div className="p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
@@ -150,10 +163,16 @@ export const UserManagementEditModal = ({
         </div>
 
         <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
-          <Button variant="outline" onClick={handleClose}>
+          <Button
+            variant="outline"
+            onClick={handleClose}
+            disabled={isSubmitting}
+          >
             Cancel
           </Button>
-          <Button onClick={handleSubmit}>Update User</Button>
+          <Button onClick={handleSubmit} disabled={isSubmitting}>
+            {isSubmitting ? "Updating..." : "Update User"}
+          </Button>
         </div>
       </div>
     </Modal>

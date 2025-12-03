@@ -1,4 +1,3 @@
-// src/pages/admin/AdminUsers.jsx
 import { useState, useEffect } from "react";
 import {
   Users,
@@ -87,77 +86,98 @@ const AdminUsers = () => {
       const registerData = {
         email: formData.email,
         password: formData.password,
-        firstName: formData.firstName || formData.fullName?.split(" ")[0] || "",
+        confirmPassword: formData.password, // Required by backend
+        firstName: formData.firstName || "",
         middleName: formData.middleName || "",
-        lastName:
-          formData.lastName ||
-          formData.fullName?.split(" ").slice(1).join(" ") ||
-          "",
+        lastName: formData.lastName || "",
         phoneNumber: formData.phoneNumber || "",
         role: formData.role,
-        distributorId: formData.distributorId || null,
-        warehouseId: formData.warehouseId || null,
+        distributorId: formData.distributorId
+          ? parseInt(formData.distributorId)
+          : null,
+        warehouseId: formData.warehouseId
+          ? parseInt(formData.warehouseId)
+          : null,
       };
 
+      // Register the user
       const { data } = await api.post("/auth/register", registerData);
 
-      if (data.success) {
-        // If you want to auto-approve, call approve endpoint
-        if (formData.isActive) {
+      if (!data.success) {
+        toast.error(data.message || "Failed to create user");
+        throw new Error(data.message || "Failed to create user");
+      }
+
+      // If auto-approve is enabled, approve the user
+      if (formData.isActive && data.data?.userId) {
+        try {
           await api.post("/user/approve", {
             userId: data.data.userId,
-            isApproved: true,
-            message: "Auto-approved by admin",
+            approve: true,
+            message: "Auto-approved by admin during user creation",
           });
+        } catch (approveError) {
+          console.error("Failed to auto-approve user:", approveError);
+          toast.warning(
+            "User created but approval failed. Please approve manually."
+          );
         }
-
-        toast.success("User added successfully");
-        setShowAddModal(false);
-        fetchUsers();
       }
+
+      toast.success("User added successfully");
+      setShowAddModal(false);
+      fetchUsers(); // Refresh the user list
     } catch (error) {
+      console.error("Error adding user:", error);
       toast.error(error.response?.data?.message || "Failed to add user");
-      console.error(error);
+      throw error; // Re-throw to prevent modal from closing
     }
   };
 
   // Handle Edit User
   const handleEditUser = async (formData) => {
     try {
-      // Split fullName into parts
-      const nameParts = formData.fullName?.split(" ") || [];
-      const firstName = nameParts[0] || "";
-      const lastName = nameParts.slice(1).join(" ") || "";
-
       const updateData = {
-        firstName: firstName,
-        lastName: lastName,
+        firstName: formData.firstName,
+        middleName: formData.middleName || "",
+        lastName: formData.lastName,
         phoneNumber: formData.phoneNumber || "",
+        distributorId: formData.distributorId || null,
+        warehouseId: formData.warehouseId || null,
       };
 
-      // Update profile
-      const { data } = await api.put("/user/profile", updateData);
+      // Update profile using the selectedUser.id
+      const { data } = await api.put(
+        `/user/${selectedUser.id}/profile`,
+        updateData
+      );
 
-      if (data.success) {
-        // If role changed, assign new role
-        if (formData.role && formData.role !== selectedUser.role) {
+      if (!data.success) {
+        toast.error(data.message || "Failed to update user");
+        throw new Error(data.message || "Failed to update user");
+      }
+
+      // If role changed, assign new role
+      if (formData.role && formData.role !== selectedUser.roles?.[0]) {
+        try {
           await api.post("/user/assign-roles", {
             userId: selectedUser.id,
             roles: [formData.role],
           });
+        } catch (roleError) {
+          console.error("Failed to update role:", roleError);
+          toast.warning("User updated but role change failed.");
         }
-
-        // If password provided, change it (admin would need special endpoint)
-        // Note: The current API doesn't have admin password change, only user change-password
-
-        toast.success("User updated successfully");
-        setShowEditModal(false);
-        setSelectedUser(null);
-        fetchUsers();
       }
+
+      toast.success("User updated successfully");
+      setShowEditModal(false);
+      setSelectedUser(null);
+      fetchUsers(); // Refresh the user list
     } catch (error) {
+      console.error("Error updating user:", error);
       toast.error(error.response?.data?.message || "Failed to update user");
-      console.error(error);
+      throw error; // Re-throw to prevent modal from closing
     }
   };
 
@@ -165,12 +185,16 @@ const AdminUsers = () => {
   const handleDeleteUser = async () => {
     try {
       const { data } = await api.delete(`/user/${selectedUser.id}`);
-      if (data.success) {
-        toast.success("User deleted successfully");
-        setShowDeleteModal(false);
-        setSelectedUser(null);
-        fetchUsers();
+
+      if (!data.success) {
+        toast.error(data.message || "Failed to delete user");
+        return;
       }
+
+      toast.success("User deleted successfully");
+      setShowDeleteModal(false);
+      setSelectedUser(null);
+      fetchUsers(); // Refresh the user list
     } catch (error) {
       toast.error(error.response?.data?.message || "Failed to delete user");
       console.error(error);
@@ -182,7 +206,7 @@ const AdminUsers = () => {
     try {
       const { data } = await api.post("/user/approve", {
         userId: user.id,
-        isApproved: true,
+        approve: true,
         message: "Approved by admin",
       });
 
@@ -201,7 +225,7 @@ const AdminUsers = () => {
     try {
       const { data } = await api.post("/user/approve", {
         userId: user.id,
-        isApproved: false,
+        approve: false,
         message: "Registration rejected by admin",
       });
 
@@ -218,8 +242,16 @@ const AdminUsers = () => {
   // Open Edit Modal
   const openEditModal = (user) => {
     setSelectedUser({
-      ...user,
+      id: user.id,
+      email: user.email,
+      firstName: user.firstName,
+      middleName: user.middleName,
+      lastName: user.lastName,
       fullName: user.fullName || `${user.firstName} ${user.lastName}`.trim(),
+      phoneNumber: user.phoneNumber,
+      roles: user.roles || [],
+      distributorId: user.distributorId,
+      warehouseId: user.warehouseId,
     });
     setShowEditModal(true);
   };
@@ -302,64 +334,64 @@ const AdminUsers = () => {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <Card>
-            <CardContent className="pt-6">
+            <CardContent className="pt-4 pb-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                  <p className="text-xs text-gray-600 dark:text-gray-400">
                     Total Users
                   </p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                  <p className="text-xl font-bold text-gray-900 dark:text-white">
                     {totalUsers}
                   </p>
                 </div>
-                <Users className="h-8 w-8 text-blue-600" />
+                <Users className="h-6 w-6 text-blue-600" />
               </div>
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="pt-6">
+            <CardContent className="pt-4 pb-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                  <p className="text-xs text-gray-600 dark:text-gray-400">
                     Approved
                   </p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                  <p className="text-xl font-bold text-gray-900 dark:text-white">
                     {users.filter((u) => u.isApproved).length}
                   </p>
                 </div>
-                <CheckCircle className="h-8 w-8 text-green-600" />
+                <CheckCircle className="h-6 w-6 text-green-600" />
               </div>
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="pt-6">
+            <CardContent className="pt-4 pb-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                  <p className="text-xs text-gray-600 dark:text-gray-400">
                     Pending
                   </p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                  <p className="text-xl font-bold text-gray-900 dark:text-white">
                     {users.filter((u) => !u.isApproved).length}
                   </p>
                 </div>
-                <XCircle className="h-8 w-8 text-yellow-600" />
+                <XCircle className="h-6 w-6 text-yellow-600" />
               </div>
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="pt-6">
+            <CardContent className="pt-4 pb-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                  <p className="text-xs text-gray-600 dark:text-gray-400">
                     Admins
                   </p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                  <p className="text-xl font-bold text-gray-900 dark:text-white">
                     {users.filter((u) => u.roles?.includes("Admin")).length}
                   </p>
                 </div>
-                <Shield className="h-8 w-8 text-red-600" />
+                <Shield className="h-6 w-6 text-red-600" />
               </div>
             </CardContent>
           </Card>
@@ -367,8 +399,8 @@ const AdminUsers = () => {
 
         {/* Filters */}
         <Card>
-          <CardContent className="p-4">
-            <div className="flex flex-col sm:flex-row gap-3">
+          <CardContent className="p-3">
+            <div className="flex flex-col sm:flex-row gap-2">
               <div className="flex-1 relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <input
@@ -391,7 +423,7 @@ const AdminUsers = () => {
                     setCurrentPage(1);
                   }}
                   options={roleOptions}
-                  className="w-40"
+                  className="w-36"
                 />
                 <Select
                   value={filterApproval}
@@ -400,7 +432,7 @@ const AdminUsers = () => {
                     setCurrentPage(1);
                   }}
                   options={approvalOptions}
-                  className="w-40"
+                  className="w-36"
                 />
               </div>
             </div>
