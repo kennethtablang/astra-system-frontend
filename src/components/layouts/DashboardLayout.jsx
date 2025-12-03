@@ -1,5 +1,4 @@
-// src/components/layouts/DashboardLayout.jsx
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import {
   Home,
@@ -23,6 +22,14 @@ import {
   Moon,
   ChevronDown,
   UserCircle,
+  ChevronRight,
+  Shield,
+  Tag,
+  Clock,
+  TrendingUp,
+  CreditCard,
+  Activity,
+  FileSpreadsheet,
 } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
 import { useTheme } from "../../contexts/ThemeContext";
@@ -35,82 +42,279 @@ const DashboardLayout = ({ children }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const userMenuRef = useRef(null);
+  const prevLocationRef = useRef(location.pathname);
 
   const navigation = {
     Admin: [
-      { name: "Dashboard", href: "/admin/dashboard", icon: Home },
       {
-        name: "User Management",
-        href: "/admin/users",
+        name: "Dashboard",
+        href: "/admin/dashboard",
+        icon: Home,
+        type: "single",
+      },
+      {
+        name: "Users & Roles",
         icon: Users,
+        type: "group",
+        key: "users",
+        items: [
+          { name: "User Management", href: "/admin/users", icon: Users },
+          { name: "Roles & Permissions", href: "/admin/roles", icon: Shield },
+        ],
       },
       {
-        name: "Order Management",
-        href: "/admin/orders",
+        name: "Orders",
         icon: ShoppingCart,
+        type: "group",
+        key: "orders",
+        items: [
+          { name: "All Orders", href: "/admin/orders", icon: ShoppingCart },
+          { name: "Pending", href: "/admin/orders/pending", icon: Clock },
+          { name: "History", href: "/admin/orders/history", icon: FileText },
+        ],
       },
       {
-        name: "Trip Management",
-        href: "/admin/trips",
+        name: "Trips",
         icon: Truck,
+        type: "group",
+        key: "trips",
+        items: [
+          { name: "All Trips", href: "/admin/trips", icon: Truck },
+          {
+            name: "Active Trips",
+            href: "/admin/trips/active",
+            icon: TrendingUp,
+          },
+          {
+            name: "Trip History",
+            href: "/admin/trips/history",
+            icon: FileText,
+          },
+        ],
       },
       {
-        name: "Store Management",
-        href: "/admin/stores",
+        name: "Stores",
         icon: Store,
+        type: "group",
+        key: "stores",
+        items: [
+          { name: "Store Management", href: "/admin/stores", icon: Store },
+          { name: "Categories", href: "/admin/stores/categories", icon: Tag },
+        ],
       },
       {
-        name: "Product Management",
-        href: "/admin/products",
+        name: "Products",
         icon: Package,
+        type: "group",
+        key: "products",
+        items: [
+          {
+            name: "Product Management",
+            href: "/admin/products",
+            icon: Package,
+          },
+          { name: "Categories", href: "/admin/products/categories", icon: Tag },
+          {
+            name: "Inventory",
+            href: "/admin/products/inventory",
+            icon: Warehouse,
+          },
+        ],
       },
       {
-        name: "Distributor Management",
-        href: "/admin/distributors",
-        icon: Warehouse,
-      },
-      {
-        name: "Route Management",
-        href: "/admin/routes",
+        name: "Operations",
         icon: MapPin,
+        type: "group",
+        key: "operations",
+        items: [
+          {
+            name: "Distributors",
+            href: "/admin/distributors",
+            icon: Warehouse,
+          },
+          { name: "Routes", href: "/admin/routes", icon: MapPin },
+        ],
       },
       {
-        name: "Financial Management",
-        href: "/admin/finance",
+        name: "Finance",
         icon: DollarSign,
+        type: "group",
+        key: "finance",
+        items: [
+          { name: "Overview", href: "/admin/finance", icon: DollarSign },
+          {
+            name: "Payments",
+            href: "/admin/finance/payments",
+            icon: CreditCard,
+          },
+          { name: "Invoices", href: "/admin/finance/invoices", icon: FileText },
+          {
+            name: "Transactions",
+            href: "/admin/finance/transactions",
+            icon: Activity,
+          },
+        ],
       },
       {
-        name: "Reports & Analytics",
-        href: "/admin/reports",
+        name: "Reports",
         icon: BarChart3,
+        type: "group",
+        key: "reports",
+        items: [
+          { name: "Dashboard", href: "/admin/reports", icon: BarChart3 },
+          {
+            name: "Sales Reports",
+            href: "/admin/reports/sales",
+            icon: TrendingUp,
+          },
+          {
+            name: "Performance",
+            href: "/admin/reports/performance",
+            icon: Activity,
+          },
+          {
+            name: "Custom Reports",
+            href: "/admin/reports/custom",
+            icon: FileSpreadsheet,
+          },
+        ],
       },
       {
-        name: "System Settings",
-        href: "/admin/settings",
+        name: "Settings",
         icon: Settings,
+        type: "group",
+        key: "settings",
+        items: [
+          { name: "General", href: "/admin/settings/general", icon: Settings },
+          {
+            name: "Notifications",
+            href: "/admin/settings/notifications",
+            icon: Bell,
+          },
+          { name: "Security", href: "/admin/settings/security", icon: Shield },
+        ],
       },
     ],
     Agent: [
-      { name: "Dashboard", href: "/agent/dashboard", icon: Home },
-      { name: "Orders", href: "/agent/orders", icon: Package },
-      { name: "Stores", href: "/agent/stores", icon: Store },
-      { name: "Products", href: "/agent/products", icon: Package },
+      {
+        name: "Dashboard",
+        href: "/agent/dashboard",
+        icon: Home,
+        type: "single",
+      },
+      { name: "Orders", href: "/agent/orders", icon: Package, type: "single" },
+      { name: "Stores", href: "/agent/stores", icon: Store, type: "single" },
+      {
+        name: "Products",
+        href: "/agent/products",
+        icon: Package,
+        type: "single",
+      },
     ],
     Dispatcher: [
-      { name: "Dashboard", href: "/dispatcher/dashboard", icon: Home },
-      { name: "Trips", href: "/dispatcher/trips", icon: Truck },
-      { name: "Orders", href: "/dispatcher/orders", icon: Package },
-      { name: "Deliveries", href: "/dispatcher/deliveries", icon: Truck },
+      {
+        name: "Dashboard",
+        href: "/dispatcher/dashboard",
+        icon: Home,
+        type: "single",
+      },
+      { name: "Trips", href: "/dispatcher/trips", icon: Truck, type: "single" },
+      {
+        name: "Orders",
+        href: "/dispatcher/orders",
+        icon: Package,
+        type: "single",
+      },
+      {
+        name: "Deliveries",
+        href: "/dispatcher/deliveries",
+        icon: Truck,
+        type: "single",
+      },
     ],
     Accountant: [
-      { name: "Dashboard", href: "/accountant/dashboard", icon: Home },
-      { name: "Payments", href: "/accountant/payments", icon: DollarSign },
-      { name: "Invoices", href: "/accountant/invoices", icon: FileText },
-      { name: "Reports", href: "/accountant/reports", icon: FileText },
+      {
+        name: "Dashboard",
+        href: "/accountant/dashboard",
+        icon: Home,
+        type: "single",
+      },
+      {
+        name: "Payments",
+        href: "/accountant/payments",
+        icon: DollarSign,
+        type: "single",
+      },
+      {
+        name: "Invoices",
+        href: "/accountant/invoices",
+        icon: FileText,
+        type: "single",
+      },
+      {
+        name: "Reports",
+        href: "/accountant/reports",
+        icon: FileText,
+        type: "single",
+      },
     ],
   };
 
   const userNavigation = navigation[user?.role] || [];
+
+  // Calculate initial expanded groups based on active route
+  const getInitialExpandedGroups = useMemo(() => {
+    const initialGroups = {};
+    userNavigation.forEach((item) => {
+      if (item.type === "group" && item.items) {
+        const hasActiveChild = item.items.some(
+          (subItem) => location.pathname === subItem.href
+        );
+        if (hasActiveChild) {
+          initialGroups[item.key] = true;
+        }
+      }
+    });
+    return initialGroups;
+  }, [location.pathname, userNavigation]);
+
+  const [expandedGroups, setExpandedGroups] = useState(
+    getInitialExpandedGroups
+  );
+
+  // Update expanded groups when route changes - FIXED VERSION
+  useEffect(() => {
+    // Only run if location actually changed
+    if (prevLocationRef.current === location.pathname) {
+      return;
+    }
+
+    prevLocationRef.current = location.pathname;
+
+    // Use setTimeout to defer the state update to the next render cycle
+    const timeoutId = setTimeout(() => {
+      setExpandedGroups((prev) => {
+        const newGroups = { ...prev };
+        let hasChanges = false;
+
+        userNavigation.forEach((item) => {
+          if (item.type === "group" && item.items) {
+            const hasActiveChild = item.items.some(
+              (subItem) => location.pathname === subItem.href
+            );
+            if (hasActiveChild && !newGroups[item.key]) {
+              newGroups[item.key] = true;
+              hasChanges = true;
+            }
+          }
+        });
+
+        return hasChanges ? newGroups : prev;
+      });
+    }, 0);
+
+    return () => clearTimeout(timeoutId);
+  }, [location.pathname, userNavigation]);
 
   // Close user menu when clicking outside
   useEffect(() => {
@@ -135,6 +339,17 @@ const DashboardLayout = ({ children }) => {
   };
 
   const isActive = (href) => location.pathname === href;
+
+  const isGroupActive = (items) => {
+    return items?.some((item) => location.pathname === item.href);
+  };
+
+  const toggleGroup = (key) => {
+    setExpandedGroups((prev) => ({
+      ...prev,
+      [key]: !prev[key],
+    }));
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors">
@@ -174,29 +389,98 @@ const DashboardLayout = ({ children }) => {
           {/* Navigation */}
           <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
             {userNavigation.map((item) => {
-              const Icon = item.icon;
-              const active = isActive(item.href);
+              if (item.type === "single") {
+                const Icon = item.icon;
+                const active = isActive(item.href);
 
-              return (
-                <Link
-                  key={item.name}
-                  to={item.href}
-                  className={`flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors ${
-                    active
-                      ? "bg-blue-50 text-blue-600 dark:bg-blue-900/50 dark:text-blue-400"
-                      : "text-gray-700 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-700/50 dark:hover:text-white"
-                  }`}
-                >
-                  <Icon
-                    className={`mr-3 h-5 w-5 ${
+                return (
+                  <Link
+                    key={item.name}
+                    to={item.href}
+                    className={`flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors ${
                       active
-                        ? "text-blue-600 dark:text-blue-400"
-                        : "text-gray-400 dark:text-gray-500"
+                        ? "bg-blue-50 text-blue-600 dark:bg-blue-900/50 dark:text-blue-400"
+                        : "text-gray-700 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-700/50 dark:hover:text-white"
                     }`}
-                  />
-                  {item.name}
-                </Link>
-              );
+                  >
+                    <Icon
+                      className={`mr-3 h-5 w-5 ${
+                        active
+                          ? "text-blue-600 dark:text-blue-400"
+                          : "text-gray-400 dark:text-gray-500"
+                      }`}
+                    />
+                    {item.name}
+                  </Link>
+                );
+              }
+
+              if (item.type === "group") {
+                const Icon = item.icon;
+                const isExpanded = expandedGroups[item.key];
+                const hasActiveChild = isGroupActive(item.items);
+
+                return (
+                  <div key={item.name}>
+                    <button
+                      onClick={() => toggleGroup(item.key)}
+                      className={`w-full flex items-center justify-between px-4 py-3 text-sm font-medium rounded-lg transition-colors ${
+                        hasActiveChild
+                          ? "bg-blue-50 text-blue-600 dark:bg-blue-900/50 dark:text-blue-400"
+                          : "text-gray-700 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-700/50 dark:hover:text-white"
+                      }`}
+                    >
+                      <div className="flex items-center">
+                        <Icon
+                          className={`mr-3 h-5 w-5 ${
+                            hasActiveChild
+                              ? "text-blue-600 dark:text-blue-400"
+                              : "text-gray-400 dark:text-gray-500"
+                          }`}
+                        />
+                        {item.name}
+                      </div>
+                      <ChevronRight
+                        className={`h-4 w-4 transition-transform ${
+                          isExpanded ? "rotate-90" : ""
+                        }`}
+                      />
+                    </button>
+
+                    {isExpanded && (
+                      <div className="mt-1 ml-4 space-y-1">
+                        {item.items.map((subItem) => {
+                          const SubIcon = subItem.icon;
+                          const active = isActive(subItem.href);
+
+                          return (
+                            <Link
+                              key={subItem.name}
+                              to={subItem.href}
+                              className={`flex items-center px-4 py-2 text-sm rounded-lg transition-colors ${
+                                active
+                                  ? "bg-blue-50 text-blue-600 dark:bg-blue-900/50 dark:text-blue-400"
+                                  : "text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-700/50 dark:hover:text-white"
+                              }`}
+                            >
+                              <SubIcon
+                                className={`mr-3 h-4 w-4 ${
+                                  active
+                                    ? "text-blue-600 dark:text-blue-400"
+                                    : "text-gray-400 dark:text-gray-500"
+                                }`}
+                              />
+                              {subItem.name}
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                );
+              }
+
+              return null;
             })}
           </nav>
 
@@ -233,22 +517,12 @@ const DashboardLayout = ({ children }) => {
                   <button
                     onClick={() => {
                       setUserMenuOpen(false);
-                      navigate("/profile");
+                      navigate("/admin/profile");
                     }}
                     className="flex items-center w-full px-4 py-3 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
                   >
                     <UserCircle className="mr-3 h-4 w-4 text-gray-400 dark:text-gray-500" />
                     Profile Settings
-                  </button>
-                  <button
-                    onClick={() => {
-                      setUserMenuOpen(false);
-                      navigate("/settings");
-                    }}
-                    className="flex items-center w-full px-4 py-3 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
-                  >
-                    <Settings className="mr-3 h-4 w-4 text-gray-400 dark:text-gray-500" />
-                    Account Settings
                   </button>
                   <div className="border-t border-gray-200 dark:border-gray-700"></div>
                   <button
