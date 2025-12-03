@@ -1,6 +1,5 @@
-// src/components/modals/UserManagementEditModal.jsx
-import { useState, useMemo } from "react";
-import { Eye, EyeOff } from "lucide-react";
+// src/components/modals/AdminUser/UserManagementEditModal.jsx
+import { useState, useMemo, useEffect } from "react";
 import { Modal } from "../../ui/Modal";
 import { Input } from "../../ui/Input";
 import { Select } from "../../ui/Select";
@@ -12,59 +11,74 @@ export const UserManagementEditModal = ({
   onSubmit,
   selectedUser,
 }) => {
-  const [showPassword, setShowPassword] = useState(false);
-
   // Derive form data from selectedUser - recalculates when selectedUser changes
-  const initialFormData = useMemo(
-    () => ({
-      email: selectedUser?.email || "",
-      password: "",
-      fullName: selectedUser?.fullName || "",
-      phoneNumber: selectedUser?.phoneNumber || "",
-      role: selectedUser?.role || "Agent",
-      address: selectedUser?.address || "",
-      city: selectedUser?.city || "",
-      province: selectedUser?.province || "",
-      postalCode: selectedUser?.postalCode || "",
-      isActive: selectedUser?.isActive ?? true,
-    }),
-    [selectedUser]
-  );
+  const initialFormData = useMemo(() => {
+    if (!selectedUser)
+      return {
+        firstName: "",
+        lastName: "",
+        phoneNumber: "",
+        role: "Agent",
+      };
+
+    // Split fullName if it exists
+    const fullName =
+      selectedUser.fullName ||
+      `${selectedUser.firstName || ""} ${selectedUser.lastName || ""}`.trim();
+    const nameParts = fullName.split(" ");
+
+    return {
+      firstName: nameParts[0] || selectedUser.firstName || "",
+      lastName: nameParts.slice(1).join(" ") || selectedUser.lastName || "",
+      phoneNumber: selectedUser.phoneNumber || "",
+      role:
+        selectedUser.roles && selectedUser.roles.length > 0
+          ? selectedUser.roles[0]
+          : "Agent",
+    };
+  }, [selectedUser]);
 
   const [formData, setFormData] = useState(initialFormData);
 
   // Update form data when initialFormData changes
-  if (isOpen && JSON.stringify(formData) !== JSON.stringify(initialFormData)) {
-    setFormData(initialFormData);
-  }
+  useEffect(() => {
+    if (isOpen) {
+      setFormData(initialFormData);
+    }
+  }, [isOpen, initialFormData]);
 
   const handleInputChange = (e) => {
-    const { name, value, type, checked } = e.target;
+    const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: type === "checkbox" ? checked : value,
+      [name]: value,
     }));
   };
 
   const handleSubmit = async () => {
-    await onSubmit(formData);
+    // Validate required fields
+    if (!formData.firstName || !formData.lastName) {
+      alert("Please fill in all required fields");
+      return;
+    }
+
+    // Create fullName for submission
+    const submitData = {
+      ...formData,
+      fullName: `${formData.firstName} ${formData.lastName}`.trim(),
+    };
+
+    await onSubmit(submitData);
     resetForm();
   };
 
   const resetForm = () => {
     setFormData({
-      email: "",
-      password: "",
-      fullName: "",
+      firstName: "",
+      lastName: "",
       phoneNumber: "",
       role: "Agent",
-      address: "",
-      city: "",
-      province: "",
-      postalCode: "",
-      isActive: true,
     });
-    setShowPassword(false);
   };
 
   const handleClose = () => {
@@ -83,104 +97,56 @@ export const UserManagementEditModal = ({
   return (
     <Modal isOpen={isOpen} onClose={handleClose} title="Edit User" size="lg">
       <div className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Input
-            label="Full Name"
-            name="fullName"
-            value={formData.fullName}
-            onChange={handleInputChange}
-            required
-          />
-          <Input
-            label="Email"
-            name="email"
-            type="email"
-            value={formData.email}
-            onChange={handleInputChange}
-            required
-          />
+        {/* User Info Display */}
+        <div className="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+          <div className="text-sm text-gray-600 dark:text-gray-400">
+            <strong>Email:</strong> {selectedUser?.email}
+          </div>
+          <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+            <strong>User ID:</strong> {selectedUser?.id}
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="relative">
-            <Input
-              label="Password (leave blank to keep current)"
-              name="password"
-              type={showPassword ? "text" : "password"}
-              value={formData.password}
-              onChange={handleInputChange}
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-9 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-            >
-              {showPassword ? (
-                <EyeOff className="h-5 w-5" />
-              ) : (
-                <Eye className="h-5 w-5" />
-              )}
-            </button>
-          </div>
           <Input
-            label="Phone Number"
-            name="phoneNumber"
-            value={formData.phoneNumber}
+            label="First Name *"
+            name="firstName"
+            value={formData.firstName}
             onChange={handleInputChange}
+            required
+            placeholder="John"
+          />
+          <Input
+            label="Last Name *"
+            name="lastName"
+            value={formData.lastName}
+            onChange={handleInputChange}
+            required
+            placeholder="Doe"
           />
         </div>
+
+        <Input
+          label="Phone Number"
+          name="phoneNumber"
+          value={formData.phoneNumber}
+          onChange={handleInputChange}
+          placeholder="09123456789"
+        />
 
         <Select
-          label="Role"
+          label="Role *"
           name="role"
           value={formData.role}
           onChange={handleInputChange}
           options={roleOptions}
         />
 
-        <Input
-          label="Address"
-          name="address"
-          value={formData.address}
-          onChange={handleInputChange}
-        />
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Input
-            label="City"
-            name="city"
-            value={formData.city}
-            onChange={handleInputChange}
-          />
-          <Input
-            label="Province"
-            name="province"
-            value={formData.province}
-            onChange={handleInputChange}
-          />
-          <Input
-            label="Postal Code"
-            name="postalCode"
-            value={formData.postalCode}
-            onChange={handleInputChange}
-          />
-        </div>
-
-        <div className="flex items-center">
-          <input
-            type="checkbox"
-            id="isActiveEdit"
-            name="isActive"
-            checked={formData.isActive}
-            onChange={handleInputChange}
-            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700"
-          />
-          <label
-            htmlFor="isActiveEdit"
-            className="ml-2 text-sm text-gray-700 dark:text-gray-300"
-          >
-            Active User
-          </label>
+        <div className="p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
+          <p className="text-sm text-yellow-800 dark:text-yellow-200">
+            <strong>Note:</strong> Email and password cannot be changed here.
+            User must use "Forgot Password" or "Change Password" feature.
+          </p>
         </div>
 
         <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">

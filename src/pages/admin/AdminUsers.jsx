@@ -1,6 +1,18 @@
 // src/pages/admin/AdminUsers.jsx
 import { useState, useEffect } from "react";
-import { Users, Search, Plus, Edit, Trash2, Phone, MapPin } from "lucide-react";
+import {
+  Users,
+  Search,
+  Plus,
+  Edit,
+  Trash2,
+  Phone,
+  MapPin,
+  Mail,
+  Shield,
+  CheckCircle,
+  XCircle,
+} from "lucide-react";
 import DashboardLayout from "../../components/layouts/DashboardLayout";
 import { Card, CardContent } from "../../components/ui/Card";
 import {
@@ -27,7 +39,7 @@ const AdminUsers = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterRole, setFilterRole] = useState("All");
-  const [filterStatus, setFilterStatus] = useState("All");
+  const [filterApproval, setFilterApproval] = useState("All");
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [totalUsers, setTotalUsers] = useState(0);
@@ -39,7 +51,7 @@ const AdminUsers = () => {
   // Fetch Users
   useEffect(() => {
     fetchUsers();
-  }, [currentPage, pageSize, searchTerm, filterRole, filterStatus]);
+  }, [currentPage, pageSize, searchTerm, filterRole, filterApproval]);
 
   const fetchUsers = async () => {
     try {
@@ -47,15 +59,14 @@ const AdminUsers = () => {
       const params = {
         pageNumber: currentPage,
         pageSize: pageSize,
-        sortBy: "createdAt",
-        sortDescending: true,
       };
 
       if (searchTerm) params.searchTerm = searchTerm;
       if (filterRole !== "All") params.role = filterRole;
-      if (filterStatus !== "All") params.isActive = filterStatus === "Active";
+      if (filterApproval !== "All")
+        params.isApproved = filterApproval === "Approved";
 
-      const { data } = await api.get("/users", { params });
+      const { data } = await api.get("/user", { params });
 
       if (data.success) {
         setUsers(data.data.items || []);
@@ -72,22 +83,73 @@ const AdminUsers = () => {
   // Handle Add User
   const handleAddUser = async (formData) => {
     try {
-      const { data } = await api.post("/users", formData);
+      // Map form data to backend RegisterRequestDto format
+      const registerData = {
+        email: formData.email,
+        password: formData.password,
+        firstName: formData.firstName || formData.fullName?.split(" ")[0] || "",
+        middleName: formData.middleName || "",
+        lastName:
+          formData.lastName ||
+          formData.fullName?.split(" ").slice(1).join(" ") ||
+          "",
+        phoneNumber: formData.phoneNumber || "",
+        role: formData.role,
+        distributorId: formData.distributorId || null,
+        warehouseId: formData.warehouseId || null,
+      };
+
+      const { data } = await api.post("/auth/register", registerData);
+
       if (data.success) {
+        // If you want to auto-approve, call approve endpoint
+        if (formData.isActive) {
+          await api.post("/user/approve", {
+            userId: data.data.userId,
+            isApproved: true,
+            message: "Auto-approved by admin",
+          });
+        }
+
         toast.success("User added successfully");
         setShowAddModal(false);
         fetchUsers();
       }
     } catch (error) {
       toast.error(error.response?.data?.message || "Failed to add user");
+      console.error(error);
     }
   };
 
   // Handle Edit User
   const handleEditUser = async (formData) => {
     try {
-      const { data } = await api.put(`/users/${selectedUser.id}`, formData);
+      // Split fullName into parts
+      const nameParts = formData.fullName?.split(" ") || [];
+      const firstName = nameParts[0] || "";
+      const lastName = nameParts.slice(1).join(" ") || "";
+
+      const updateData = {
+        firstName: firstName,
+        lastName: lastName,
+        phoneNumber: formData.phoneNumber || "",
+      };
+
+      // Update profile
+      const { data } = await api.put("/user/profile", updateData);
+
       if (data.success) {
+        // If role changed, assign new role
+        if (formData.role && formData.role !== selectedUser.role) {
+          await api.post("/user/assign-roles", {
+            userId: selectedUser.id,
+            roles: [formData.role],
+          });
+        }
+
+        // If password provided, change it (admin would need special endpoint)
+        // Note: The current API doesn't have admin password change, only user change-password
+
         toast.success("User updated successfully");
         setShowEditModal(false);
         setSelectedUser(null);
@@ -95,13 +157,14 @@ const AdminUsers = () => {
       }
     } catch (error) {
       toast.error(error.response?.data?.message || "Failed to update user");
+      console.error(error);
     }
   };
 
   // Handle Delete User
   const handleDeleteUser = async () => {
     try {
-      const { data } = await api.delete(`/users/${selectedUser.id}`);
+      const { data } = await api.delete(`/user/${selectedUser.id}`);
       if (data.success) {
         toast.success("User deleted successfully");
         setShowDeleteModal(false);
@@ -110,12 +173,54 @@ const AdminUsers = () => {
       }
     } catch (error) {
       toast.error(error.response?.data?.message || "Failed to delete user");
+      console.error(error);
+    }
+  };
+
+  // Handle Approve User
+  const handleApproveUser = async (user) => {
+    try {
+      const { data } = await api.post("/user/approve", {
+        userId: user.id,
+        isApproved: true,
+        message: "Approved by admin",
+      });
+
+      if (data.success) {
+        toast.success(`User ${user.fullName} approved successfully`);
+        fetchUsers();
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to approve user");
+      console.error(error);
+    }
+  };
+
+  // Handle Reject User
+  const handleRejectUser = async (user) => {
+    try {
+      const { data } = await api.post("/user/approve", {
+        userId: user.id,
+        isApproved: false,
+        message: "Registration rejected by admin",
+      });
+
+      if (data.success) {
+        toast.success(`User ${user.fullName} rejected`);
+        fetchUsers();
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to reject user");
+      console.error(error);
     }
   };
 
   // Open Edit Modal
   const openEditModal = (user) => {
-    setSelectedUser(user);
+    setSelectedUser({
+      ...user,
+      fullName: user.fullName || `${user.firstName} ${user.lastName}`.trim(),
+    });
     setShowEditModal(true);
   };
 
@@ -142,12 +247,12 @@ const AdminUsers = () => {
     return variants[role] || "default";
   };
 
-  // Get Status Badge
-  const getStatusBadge = (isActive) => {
-    return isActive ? (
-      <Badge variant="success">Active</Badge>
+  // Get Approval Badge
+  const getApprovalBadge = (isApproved) => {
+    return isApproved ? (
+      <Badge variant="success">Approved</Badge>
     ) : (
-      <Badge variant="danger">Inactive</Badge>
+      <Badge variant="warning">Pending</Badge>
     );
   };
 
@@ -161,10 +266,10 @@ const AdminUsers = () => {
     { value: "Accountant", label: "Accountant" },
   ];
 
-  const statusOptions = [
-    { value: "All", label: "All Status" },
-    { value: "Active", label: "Active" },
-    { value: "Inactive", label: "Inactive" },
+  const approvalOptions = [
+    { value: "All", label: "All Users" },
+    { value: "Approved", label: "Approved" },
+    { value: "Pending", label: "Pending Approval" },
   ];
 
   const pageSizeOptions = [
@@ -184,7 +289,7 @@ const AdminUsers = () => {
               User Management
             </h1>
             <p className="text-gray-600 dark:text-gray-400 mt-1">
-              Manage all system users
+              Manage all system users and permissions
             </p>
           </div>
           <Button
@@ -196,16 +301,79 @@ const AdminUsers = () => {
           </Button>
         </div>
 
-        {/* Compact Filters */}
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Total Users
+                  </p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                    {totalUsers}
+                  </p>
+                </div>
+                <Users className="h-8 w-8 text-blue-600" />
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Approved
+                  </p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                    {users.filter((u) => u.isApproved).length}
+                  </p>
+                </div>
+                <CheckCircle className="h-8 w-8 text-green-600" />
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Pending
+                  </p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                    {users.filter((u) => !u.isApproved).length}
+                  </p>
+                </div>
+                <XCircle className="h-8 w-8 text-yellow-600" />
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Admins
+                  </p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                    {users.filter((u) => u.roles?.includes("Admin")).length}
+                  </p>
+                </div>
+                <Shield className="h-8 w-8 text-red-600" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Filters */}
         <Card>
-          <CardContent className="p-0">
+          <CardContent className="p-4">
             <div className="flex flex-col sm:flex-row gap-3">
-              {/* Search - Takes more space on larger screens */}
               <div className="flex-1 relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <input
                   type="text"
-                  placeholder="Search users..."
+                  placeholder="Search by name or email..."
                   value={searchTerm}
                   onChange={(e) => {
                     setSearchTerm(e.target.value);
@@ -215,7 +383,6 @@ const AdminUsers = () => {
                 />
               </div>
 
-              {/* Compact Filters */}
               <div className="flex gap-2">
                 <Select
                   value={filterRole}
@@ -224,16 +391,16 @@ const AdminUsers = () => {
                     setCurrentPage(1);
                   }}
                   options={roleOptions}
-                  className="w-36"
+                  className="w-40"
                 />
                 <Select
-                  value={filterStatus}
+                  value={filterApproval}
                   onChange={(e) => {
-                    setFilterStatus(e.target.value);
+                    setFilterApproval(e.target.value);
                     setCurrentPage(1);
                   }}
-                  options={statusOptions}
-                  className="w-32"
+                  options={approvalOptions}
+                  className="w-40"
                 />
               </div>
             </div>
@@ -273,13 +440,25 @@ const AdminUsers = () => {
                       {users.map((user) => (
                         <TableRow key={user.id}>
                           <TableCell>
-                            <div>
-                              <p className="font-medium text-gray-900 dark:text-white">
-                                {user.fullName}
-                              </p>
-                              <p className="text-sm text-gray-500 dark:text-gray-400">
-                                {user.email}
-                              </p>
+                            <div className="flex items-center gap-3">
+                              <div className="h-10 w-10 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center flex-shrink-0">
+                                <span className="text-blue-600 dark:text-blue-400 font-medium">
+                                  {user.fullName?.charAt(0) ||
+                                    user.email?.charAt(0) ||
+                                    "U"}
+                                </span>
+                              </div>
+                              <div>
+                                <p className="font-medium text-gray-900 dark:text-white">
+                                  {user.fullName ||
+                                    `${user.firstName} ${user.lastName}`.trim() ||
+                                    "No name"}
+                                </p>
+                                <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
+                                  <Mail className="h-3 w-3 mr-1" />
+                                  {user.email}
+                                </div>
+                              </div>
                             </div>
                           </TableCell>
                           <TableCell>
@@ -290,25 +469,71 @@ const AdminUsers = () => {
                                   {user.phoneNumber}
                                 </div>
                               )}
-                              {user.city && (
+                              {(user.distributorId || user.warehouseId) && (
                                 <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
                                   <MapPin className="h-3 w-3 mr-1" />
-                                  {user.city}, {user.province}
+                                  {user.distributorName ||
+                                    user.warehouseName ||
+                                    "Assigned"}
                                 </div>
                               )}
                             </div>
                           </TableCell>
                           <TableCell>
-                            <Badge variant={getRoleBadgeVariant(user.role)}>
-                              {user.role}
-                            </Badge>
+                            <div className="space-y-1">
+                              {user.roles && user.roles.length > 0 ? (
+                                user.roles.map((role, idx) => (
+                                  <Badge
+                                    key={idx}
+                                    variant={getRoleBadgeVariant(role)}
+                                    className="mr-1"
+                                  >
+                                    {role}
+                                  </Badge>
+                                ))
+                              ) : (
+                                <Badge variant="default">No Role</Badge>
+                              )}
+                            </div>
                           </TableCell>
-                          <TableCell>{getStatusBadge(user.isActive)}</TableCell>
                           <TableCell>
-                            {new Date(user.createdAt).toLocaleDateString()}
+                            <div className="space-y-1">
+                              {getApprovalBadge(user.isApproved)}
+                              {user.emailConfirmed && (
+                                <div className="text-xs text-green-600 dark:text-green-400 flex items-center">
+                                  <CheckCircle className="h-3 w-3 mr-1" />
+                                  Email Verified
+                                </div>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="text-sm">
+                              {new Date(
+                                user.createdAt || Date.now()
+                              ).toLocaleDateString()}
+                            </div>
                           </TableCell>
                           <TableCell>
                             <div className="flex items-center justify-end gap-2">
+                              {!user.isApproved && (
+                                <>
+                                  <button
+                                    onClick={() => handleApproveUser(user)}
+                                    className="p-2 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors"
+                                    title="Approve user"
+                                  >
+                                    <CheckCircle className="h-4 w-4" />
+                                  </button>
+                                  <button
+                                    onClick={() => handleRejectUser(user)}
+                                    className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                                    title="Reject user"
+                                  >
+                                    <XCircle className="h-4 w-4" />
+                                  </button>
+                                </>
+                              )}
                               <button
                                 onClick={() => openEditModal(user)}
                                 className="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
@@ -331,7 +556,7 @@ const AdminUsers = () => {
                   </Table>
                 </div>
 
-                {/* Compact Pagination */}
+                {/* Pagination */}
                 <div className="border-t border-gray-200 dark:border-gray-700 px-4 py-3">
                   <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
                     <div className="flex items-center gap-2 text-sm">
