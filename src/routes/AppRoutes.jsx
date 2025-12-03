@@ -38,6 +38,7 @@ import { AdminSettings } from "../pages/admin/AdminSettings";
 import { AdminSettingsGeneral } from "../pages/admin/AdminSettingsGeneral";
 import { AdminSettingsNotifications } from "../pages/admin/AdminSettingsNotifications";
 import { AdminSettingsSecurity } from "../pages/admin/AdminSettingsSecurity";
+import { AdminProfileSettings } from "../pages/admin/AdminProfileSettings";
 
 // Agent Pages
 import AgentDashboard from "../pages/agent/AgentDashboard";
@@ -66,6 +67,8 @@ const AppRoutes = () => {
       {/* Admin Routes */}
       <Route element={<ProtectedRoute allowedRoles={["Admin"]} />}>
         <Route path="/admin/dashboard" element={<AdminDashboard />} />
+
+        <Route path="/admin/profile" element={<AdminProfileSettings />} />
 
         {/* User Management */}
         <Route path="/admin/users" element={<AdminUsers />} />
