@@ -13,8 +13,8 @@ export const ProductAddModal = ({ isOpen, onClose, onSubmit }) => {
   const [formData, setFormData] = useState({
     sku: "",
     name: "",
-    categoryId: null, // Changed from 'category' to 'categoryId'
-    price: "0",
+    categoryId: "", // Keep as string for select, convert on submit
+    price: "",
     unitOfMeasure: "",
     isPerishable: false,
     isBarcoded: false,
@@ -33,7 +33,11 @@ export const ProductAddModal = ({ isOpen, onClose, onSubmit }) => {
       setLoadingCategories(true);
       const { data } = await api.get("/category");
       if (data.success) {
-        setCategories(data.data || []);
+        // Filter only active categories
+        const activeCategories = (data.data || []).filter(
+          (cat) => cat.isActive
+        );
+        setCategories(activeCategories);
       }
     } catch (error) {
       console.error("Failed to fetch categories:", error);
@@ -57,22 +61,30 @@ export const ProductAddModal = ({ isOpen, onClose, onSubmit }) => {
       return;
     }
 
+    // Validate price is positive
+    if (parseFloat(formData.price) <= 0) {
+      alert("Price must be greater than zero");
+      return;
+    }
+
     // Validate barcode if product is barcoded
     if (formData.isBarcoded && !formData.barcode) {
       alert("Please enter a barcode for barcoded products");
       return;
     }
 
-    // Convert price to number and categoryId to number or null
+    // Convert and prepare data for backend CreateProductDto
     const submitData = {
-      sku: formData.sku,
-      name: formData.name,
-      categoryId: formData.categoryId ? parseInt(formData.categoryId) : null,
-      price: parseFloat(formData.price) || 0,
-      unitOfMeasure: formData.unitOfMeasure || null,
+      sku: formData.sku.trim(),
+      name: formData.name.trim(),
+      categoryId: formData.categoryId
+        ? parseInt(formData.categoryId, 10)
+        : null,
+      price: parseFloat(formData.price),
+      unitOfMeasure: formData.unitOfMeasure.trim() || null,
       isPerishable: formData.isPerishable,
       isBarcoded: formData.isBarcoded,
-      barcode: formData.barcode || null,
+      barcode: formData.isBarcoded ? formData.barcode.trim() : null,
     };
 
     await onSubmit(submitData);
@@ -83,8 +95,8 @@ export const ProductAddModal = ({ isOpen, onClose, onSubmit }) => {
     setFormData({
       sku: "",
       name: "",
-      categoryId: null,
-      price: "0",
+      categoryId: "",
+      price: "",
       unitOfMeasure: "",
       isPerishable: false,
       isBarcoded: false,
@@ -98,8 +110,11 @@ export const ProductAddModal = ({ isOpen, onClose, onSubmit }) => {
   };
 
   const categoryOptions = [
-    { value: "", label: "Select Category" },
-    ...categories.map((c) => ({ value: c.id.toString(), label: c.name })),
+    { value: "", label: "Select Category (Optional)" },
+    ...categories.map((c) => ({
+      value: c.id.toString(),
+      label: c.name,
+    })),
   ];
 
   const unitOptions = [
@@ -146,7 +161,7 @@ export const ProductAddModal = ({ isOpen, onClose, onSubmit }) => {
           <Select
             label="Category"
             name="categoryId"
-            value={formData.categoryId || ""}
+            value={formData.categoryId}
             onChange={handleInputChange}
             options={categoryOptions}
             disabled={loadingCategories}
@@ -164,7 +179,7 @@ export const ProductAddModal = ({ isOpen, onClose, onSubmit }) => {
           label="Price *"
           name="price"
           type="number"
-          min="0"
+          min="0.01"
           step="0.01"
           value={formData.price}
           onChange={handleInputChange}
