@@ -24,6 +24,9 @@ import { Badge } from "../../components/ui/Badge";
 import { Button } from "../../components/ui/Button";
 import { Select } from "../../components/ui/Select";
 import { LoadingSpinner } from "../../components/ui/Loading";
+import { ProductAddModal } from "../../components/modals/AdminProduct/ProductAddModal";
+import { ProductEditModal } from "../../components/modals/AdminProduct/ProductEditModal";
+import { ProductDeleteModal } from "../../components/modals/AdminProduct/ProductDeleteModal";
 import api from "../../api/axios";
 import { toast } from "react-hot-toast";
 
@@ -37,6 +40,10 @@ const AdminProducts = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [totalProducts, setTotalProducts] = useState(0);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState(null);
 
   // Fetch Products
   useEffect(() => {
@@ -80,6 +87,79 @@ const AdminProducts = () => {
     }
   };
 
+  // Handle Add Product
+  const handleAddProduct = async (formData) => {
+    try {
+      const { data } = await api.post("/product", formData);
+
+      if (!data.success) {
+        toast.error(data.message || "Failed to add product");
+        throw new Error(data.message || "Failed to add product");
+      }
+
+      toast.success("Product added successfully");
+      setShowAddModal(false);
+      fetchProducts();
+    } catch (error) {
+      console.error("Error adding product:", error);
+      toast.error(error.response?.data?.message || "Failed to add product");
+      throw error;
+    }
+  };
+
+  // Handle Edit Product
+  const handleEditProduct = async (formData) => {
+    try {
+      const { data } = await api.put(`/product/${formData.id}`, formData);
+
+      if (!data.success) {
+        toast.error(data.message || "Failed to update product");
+        throw new Error(data.message || "Failed to update product");
+      }
+
+      toast.success("Product updated successfully");
+      setShowEditModal(false);
+      setSelectedProduct(null);
+      fetchProducts();
+    } catch (error) {
+      console.error("Error updating product:", error);
+      toast.error(error.response?.data?.message || "Failed to update product");
+      throw error;
+    }
+  };
+
+  // Handle Delete Product
+  const handleDeleteProduct = async () => {
+    try {
+      const { data } = await api.delete(`/product/${selectedProduct.id}`);
+
+      if (!data.success) {
+        toast.error(data.message || "Failed to delete product");
+        return;
+      }
+
+      toast.success("Product deleted successfully");
+      setShowDeleteModal(false);
+      setSelectedProduct(null);
+      fetchProducts();
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to delete product");
+      console.error(error);
+    }
+  };
+
+  // Open Edit Modal
+  const openEditModal = (product) => {
+    setSelectedProduct(product);
+    setShowEditModal(true);
+  };
+
+  // Open Delete Modal
+  const openDeleteModal = (product) => {
+    setSelectedProduct(product);
+    setShowDeleteModal(true);
+  };
+
   // Pagination Calculations
   const totalPages = Math.ceil(totalProducts / pageSize);
   const startIndex = (currentPage - 1) * pageSize + 1;
@@ -119,79 +199,13 @@ const AdminProducts = () => {
               Manage all products
             </p>
           </div>
-          <Button className="flex items-center gap-2">
+          <Button
+            onClick={() => setShowAddModal(true)}
+            className="flex items-center gap-2"
+          >
             <Plus className="h-4 w-4" />
             Add Product
           </Button>
-        </div>
-
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Total Products
-                  </p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                    {totalProducts}
-                  </p>
-                </div>
-                <Package className="h-8 w-8 text-blue-600" />
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Categories
-                  </p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                    {categories.length}
-                  </p>
-                </div>
-                <Tag className="h-8 w-8 text-green-600" />
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Avg Price
-                  </p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                    {formatCurrency(
-                      products.length > 0
-                        ? products.reduce((sum, p) => sum + p.price, 0) /
-                            products.length
-                        : 0
-                    )}
-                  </p>
-                </div>
-                <DollarSign className="h-8 w-8 text-yellow-600" />
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Perishable
-                  </p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                    {products.filter((p) => p.isPerishable).length}
-                  </p>
-                </div>
-                <Box className="h-8 w-8 text-red-600" />
-              </div>
-            </CardContent>
-          </Card>
         </div>
 
         {/* Filters */}
@@ -274,6 +288,11 @@ const AdminProducts = () => {
                                 <p className="font-medium text-gray-900 dark:text-white">
                                   {product.name}
                                 </p>
+                                {product.isBarcoded && product.barcode && (
+                                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                                    {product.barcode}
+                                  </p>
+                                )}
                               </div>
                             </div>
                           </TableCell>
@@ -311,12 +330,14 @@ const AdminProducts = () => {
                           <TableCell>
                             <div className="flex items-center justify-end gap-2">
                               <button
+                                onClick={() => openEditModal(product)}
                                 className="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
                                 title="Edit product"
                               >
                                 <Edit className="h-4 w-4" />
                               </button>
                               <button
+                                onClick={() => openDeleteModal(product)}
                                 className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
                                 title="Delete product"
                               >
@@ -409,6 +430,33 @@ const AdminProducts = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Modals */}
+      <ProductAddModal
+        isOpen={showAddModal}
+        onClose={() => setShowAddModal(false)}
+        onSubmit={handleAddProduct}
+      />
+
+      <ProductEditModal
+        isOpen={showEditModal}
+        onClose={() => {
+          setShowEditModal(false);
+          setSelectedProduct(null);
+        }}
+        onSubmit={handleEditProduct}
+        selectedProduct={selectedProduct}
+      />
+
+      <ProductDeleteModal
+        isOpen={showDeleteModal}
+        onClose={() => {
+          setShowDeleteModal(false);
+          setSelectedProduct(null);
+        }}
+        onConfirm={handleDeleteProduct}
+        selectedProduct={selectedProduct}
+      />
     </DashboardLayout>
   );
 };

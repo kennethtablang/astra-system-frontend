@@ -22,6 +22,9 @@ import {
 import { Badge } from "../../components/ui/Badge";
 import { Button } from "../../components/ui/Button";
 import { LoadingSpinner } from "../../components/ui/Loading";
+import { CategoryAddModal } from "../../components/modals/AdminProductCategory/CategoryAddModal";
+import { CategoryEditModal } from "../../components/modals/AdminProductCategory/CategoryEditModal";
+import { CategoryDeleteModal } from "../../components/modals/AdminProductCategory/CategoryDeleteModal";
 import api from "../../api/axios";
 import { toast } from "react-hot-toast";
 
@@ -30,6 +33,10 @@ const AdminProductCategories = () => {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState(null);
 
   // Fetch Categories
   useEffect(() => {
@@ -39,20 +46,10 @@ const AdminProductCategories = () => {
   const fetchCategories = async () => {
     try {
       setLoading(true);
-      const { data } = await api.get("/product/categories");
+      const { data } = await api.get("/category");
 
       if (data.success) {
-        // Transform categories into objects with mock data
-        // In real implementation, you'd get this from a dedicated categories endpoint
-        const categoryData = (data.data || []).map((cat, index) => ({
-          id: index + 1,
-          name: cat,
-          productCount: Math.floor(Math.random() * 50) + 1, // Mock data
-          description: `Category for ${cat} products`,
-          color: getRandomColor(),
-          createdAt: new Date(Date.now() - Math.random() * 10000000000),
-        }));
-        setCategories(categoryData);
+        setCategories(data.data || []);
       }
     } catch (error) {
       toast.error("Failed to fetch categories");
@@ -62,17 +59,77 @@ const AdminProductCategories = () => {
     }
   };
 
-  const getRandomColor = () => {
-    const colors = [
-      "blue",
-      "green",
-      "purple",
-      "yellow",
-      "red",
-      "indigo",
-      "pink",
-    ];
-    return colors[Math.floor(Math.random() * colors.length)];
+  // Handle Add Category
+  const handleAddCategory = async (formData) => {
+    try {
+      const { data } = await api.post("/category", formData);
+
+      if (!data.success) {
+        toast.error(data.message || "Failed to add category");
+        throw new Error(data.message || "Failed to add category");
+      }
+
+      toast.success("Category added successfully");
+      setShowAddModal(false);
+      fetchCategories();
+    } catch (error) {
+      console.error("Error adding category:", error);
+      toast.error(error.response?.data?.message || "Failed to add category");
+      throw error;
+    }
+  };
+
+  // Handle Edit Category
+  const handleEditCategory = async (formData) => {
+    try {
+      const { data } = await api.put(`/category/${formData.id}`, formData);
+
+      if (!data.success) {
+        toast.error(data.message || "Failed to update category");
+        throw new Error(data.message || "Failed to update category");
+      }
+
+      toast.success("Category updated successfully");
+      setShowEditModal(false);
+      setSelectedCategory(null);
+      fetchCategories();
+    } catch (error) {
+      console.error("Error updating category:", error);
+      toast.error(error.response?.data?.message || "Failed to update category");
+      throw error;
+    }
+  };
+
+  // Handle Delete Category
+  const handleDeleteCategory = async () => {
+    try {
+      const { data } = await api.delete(`/category/${selectedCategory.id}`);
+
+      if (!data.success) {
+        toast.error(data.message || "Failed to delete category");
+        return;
+      }
+
+      toast.success("Category deleted successfully");
+      setShowDeleteModal(false);
+      setSelectedCategory(null);
+      fetchCategories();
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to delete category");
+      console.error(error);
+    }
+  };
+
+  // Open Edit Modal
+  const openEditModal = (category) => {
+    setSelectedCategory(category);
+    setShowEditModal(true);
+  };
+
+  // Open Delete Modal
+  const openDeleteModal = (category) => {
+    setSelectedCategory(category);
+    setShowDeleteModal(true);
   };
 
   const getColorBadge = (color) => {
@@ -86,6 +143,25 @@ const AdminProductCategories = () => {
       pink: "danger",
     };
     return variants[color] || "default";
+  };
+
+  // Calculate stats
+  const stats = {
+    totalCategories: categories.length,
+    activeCategories: categories.filter((c) => c.isActive).length,
+    totalProducts: categories.reduce((sum, cat) => sum + cat.productCount, 0),
+    mostPopular:
+      categories.length > 0
+        ? [...categories].sort((a, b) => b.productCount - a.productCount)[0]
+            ?.name
+        : "N/A",
+    avgProductsPerCategory:
+      categories.length > 0
+        ? Math.round(
+            categories.reduce((sum, cat) => sum + cat.productCount, 0) /
+              categories.length
+          )
+        : 0,
   };
 
   // Filter categories
@@ -106,85 +182,13 @@ const AdminProductCategories = () => {
               Manage product categories
             </p>
           </div>
-          <Button className="flex items-center gap-2">
+          <Button
+            onClick={() => setShowAddModal(true)}
+            className="flex items-center gap-2"
+          >
             <Plus className="h-4 w-4" />
             Add Category
           </Button>
-        </div>
-
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Total Categories
-                  </p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                    {categories.length}
-                  </p>
-                </div>
-                <Tag className="h-8 w-8 text-blue-600" />
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Total Products
-                  </p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                    {categories.reduce((sum, cat) => sum + cat.productCount, 0)}
-                  </p>
-                </div>
-                <Package className="h-8 w-8 text-green-600" />
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Most Popular
-                  </p>
-                  <p className="text-lg font-bold text-gray-900 dark:text-white">
-                    {categories.length > 0
-                      ? [...categories].sort(
-                          (a, b) => b.productCount - a.productCount
-                        )[0]?.name
-                      : "N/A"}
-                  </p>
-                </div>
-                <TrendingUp className="h-8 w-8 text-purple-600" />
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Avg Products/Category
-                  </p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                    {categories.length > 0
-                      ? Math.round(
-                          categories.reduce(
-                            (sum, cat) => sum + cat.productCount,
-                            0
-                          ) / categories.length
-                        )
-                      : 0}
-                  </p>
-                </div>
-                <Package className="h-8 w-8 text-yellow-600" />
-              </div>
-            </CardContent>
-          </Card>
         </div>
 
         {/* Search */}
@@ -230,70 +234,89 @@ const AdminProductCategories = () => {
                     <TableHead>Description</TableHead>
                     <TableHead>Products</TableHead>
                     <TableHead>Color</TableHead>
+                    <TableHead>Status</TableHead>
                     <TableHead>Created</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableHeader>
                   <TableBody>
-                    {filteredCategories.map((category) => (
-                      <TableRow key={category.id}>
-                        <TableCell>
-                          <div className="flex items-center gap-3">
-                            <div
-                              className={`h-10 w-10 rounded-full bg-${category.color}-100 dark:bg-${category.color}-900 flex items-center justify-center flex-shrink-0`}
-                            >
-                              <Tag
-                                className={`h-5 w-5 text-${category.color}-600 dark:text-${category.color}-400`}
-                              />
+                    {filteredCategories.map((category) => {
+                      const percentage =
+                        stats.totalProducts > 0
+                          ? (category.productCount / stats.totalProducts) * 100
+                          : 0;
+
+                      return (
+                        <TableRow key={category.id}>
+                          <TableCell>
+                            <div className="flex items-center gap-3">
+                              <div
+                                className={`h-10 w-10 rounded-full bg-${category.color}-100 dark:bg-${category.color}-900 flex items-center justify-center flex-shrink-0`}
+                              >
+                                <Tag
+                                  className={`h-5 w-5 text-${category.color}-600 dark:text-${category.color}-400`}
+                                />
+                              </div>
+                              <div>
+                                <p className="font-medium text-gray-900 dark:text-white">
+                                  {category.name}
+                                </p>
+                              </div>
                             </div>
-                            <div>
-                              <p className="font-medium text-gray-900 dark:text-white">
-                                {category.name}
-                              </p>
+                          </TableCell>
+                          <TableCell>
+                            <div className="text-sm text-gray-600 dark:text-gray-400 max-w-xs truncate">
+                              {category.description || "—"}
                             </div>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="text-sm text-gray-600 dark:text-gray-400 max-w-xs truncate">
-                            {category.description || "—"}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <Package className="h-4 w-4 text-gray-400" />
-                            <span className="font-medium text-gray-900 dark:text-white">
-                              {category.productCount}
-                            </span>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant={getColorBadge(category.color)}>
-                            {category.color}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <div className="text-sm">
-                            {new Date(category.createdAt).toLocaleDateString()}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center justify-end gap-2">
-                            <button
-                              className="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
-                              title="Edit category"
-                            >
-                              <Edit className="h-4 w-4" />
-                            </button>
-                            <button
-                              className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                              title="Delete category"
-                              disabled={category.productCount > 0}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <Package className="h-4 w-4 text-gray-400" />
+                              <span className="font-medium text-gray-900 dark:text-white">
+                                {category.productCount}
+                              </span>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant={getColorBadge(category.color)}>
+                              {category.color}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            {category.isActive ? (
+                              <Badge variant="success">Active</Badge>
+                            ) : (
+                              <Badge variant="default">Inactive</Badge>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <div className="text-sm">
+                              {new Date(
+                                category.createdAt
+                              ).toLocaleDateString()}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center justify-end gap-2">
+                              <button
+                                onClick={() => openEditModal(category)}
+                                className="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+                                title="Edit category"
+                              >
+                                <Edit className="h-4 w-4" />
+                              </button>
+                              <button
+                                onClick={() => openDeleteModal(category)}
+                                className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                                title="Delete category"
+                                disabled={category.productCount > 0}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
                   </TableBody>
                 </Table>
               </div>
@@ -301,6 +324,33 @@ const AdminProductCategories = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Modals */}
+      <CategoryAddModal
+        isOpen={showAddModal}
+        onClose={() => setShowAddModal(false)}
+        onSubmit={handleAddCategory}
+      />
+
+      <CategoryEditModal
+        isOpen={showEditModal}
+        onClose={() => {
+          setShowEditModal(false);
+          setSelectedCategory(null);
+        }}
+        onSubmit={handleEditCategory}
+        selectedCategory={selectedCategory}
+      />
+
+      <CategoryDeleteModal
+        isOpen={showDeleteModal}
+        onClose={() => {
+          setShowDeleteModal(false);
+          setSelectedCategory(null);
+        }}
+        onConfirm={handleDeleteCategory}
+        selectedCategory={selectedCategory}
+      />
     </DashboardLayout>
   );
 };
