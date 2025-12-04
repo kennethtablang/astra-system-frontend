@@ -1,5 +1,5 @@
-// src/components/modals/AdminProduct/ProductEditModal.jsx
-import { useState, useEffect, useMemo } from "react";
+//src/components/modals/AdminProduct/ProductAddModal.jsx
+import { useState, useEffect } from "react";
 import { Modal } from "../../ui/Modal";
 import { Input } from "../../ui/Input";
 import { Select } from "../../ui/Select";
@@ -14,49 +14,40 @@ export const ProductEditModal = ({
 }) => {
   const [categories, setCategories] = useState([]);
   const [loadingCategories, setLoadingCategories] = useState(false);
+  const [formData, setFormData] = useState({
+    id: "",
+    sku: "",
+    name: "",
+    categoryId: null,
+    price: "0",
+    unitOfMeasure: "",
+    isPerishable: false,
+    isBarcoded: false,
+    barcode: "",
+  });
 
-  // Derive form data from selectedProduct
-  const initialFormData = useMemo(() => {
-    if (!selectedProduct)
-      return {
-        id: "",
-        sku: "",
-        name: "",
-        category: "",
-        price: "0",
-        unitOfMeasure: "",
-        isPerishable: false,
-        isBarcoded: false,
-        barcode: "",
-      };
-
-    return {
-      id: selectedProduct.id,
-      sku: selectedProduct.sku || "",
-      name: selectedProduct.name || "",
-      category: selectedProduct.category || "",
-      price: selectedProduct.price?.toString() || "0",
-      unitOfMeasure: selectedProduct.unitOfMeasure || "",
-      isPerishable: selectedProduct.isPerishable || false,
-      isBarcoded: selectedProduct.isBarcoded || false,
-      barcode: selectedProduct.barcode || "",
-    };
-  }, [selectedProduct]);
-
-  const [formData, setFormData] = useState(initialFormData);
-
-  // Update form data when initialFormData changes
+  // Update form when selectedProduct changes
   useEffect(() => {
-    if (isOpen) {
-      setFormData(initialFormData);
+    if (isOpen && selectedProduct) {
+      setFormData({
+        id: selectedProduct.id,
+        sku: selectedProduct.sku || "",
+        name: selectedProduct.name || "",
+        categoryId: selectedProduct.categoryId || null,
+        price: selectedProduct.price?.toString() || "0",
+        unitOfMeasure: selectedProduct.unitOfMeasure || "",
+        isPerishable: selectedProduct.isPerishable || false,
+        isBarcoded: selectedProduct.isBarcoded || false,
+        barcode: selectedProduct.barcode || "",
+      });
       fetchCategories();
     }
-  }, [isOpen, initialFormData]);
+  }, [isOpen, selectedProduct]);
 
   const fetchCategories = async () => {
     try {
       setLoadingCategories(true);
-      const { data } = await api.get("/product/categories");
+      const { data } = await api.get("/category");
       if (data.success) {
         setCategories(data.data || []);
       }
@@ -76,50 +67,39 @@ export const ProductEditModal = ({
   };
 
   const handleSubmit = async () => {
-    // Validate required fields
     if (!formData.sku || !formData.name || !formData.price) {
       alert("Please fill in all required fields");
       return;
     }
 
-    // Validate barcode if product is barcoded
     if (formData.isBarcoded && !formData.barcode) {
       alert("Please enter a barcode for barcoded products");
       return;
     }
 
-    // Convert price to number
     const submitData = {
-      ...formData,
+      id: formData.id,
+      sku: formData.sku,
+      name: formData.name,
+      categoryId: formData.categoryId ? parseInt(formData.categoryId) : null,
       price: parseFloat(formData.price) || 0,
+      unitOfMeasure: formData.unitOfMeasure || null,
+      isPerishable: formData.isPerishable,
+      isBarcoded: formData.isBarcoded,
+      barcode: formData.barcode || null,
     };
 
     await onSubmit(submitData);
-    resetForm();
-  };
-
-  const resetForm = () => {
-    setFormData({
-      id: "",
-      sku: "",
-      name: "",
-      category: "",
-      price: "0",
-      unitOfMeasure: "",
-      isPerishable: false,
-      isBarcoded: false,
-      barcode: "",
-    });
+    onClose();
   };
 
   const handleClose = () => {
-    resetForm();
     onClose();
   };
 
   const categoryOptions = [
     { value: "", label: "Select Category" },
-    ...categories.map((c) => ({ value: c, label: c })),
+    ...categories.map((c) => ({ value: c.id.toString(), label: c.name })),
   ];
 
   const unitOptions = [
@@ -138,7 +118,6 @@ export const ProductEditModal = ({
   return (
     <Modal isOpen={isOpen} onClose={handleClose} title="Edit Product" size="lg">
       <div className="space-y-4">
-        {/* Product Info Display */}
         <div className="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
           <div className="text-sm text-gray-600 dark:text-gray-400">
             <strong>Product ID:</strong> {selectedProduct?.id}
@@ -172,8 +151,8 @@ export const ProductEditModal = ({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Select
             label="Category"
-            name="category"
-            value={formData.category}
+            name="categoryId"
+            value={formData.categoryId?.toString() || ""}
             onChange={handleInputChange}
             options={categoryOptions}
             disabled={loadingCategories}

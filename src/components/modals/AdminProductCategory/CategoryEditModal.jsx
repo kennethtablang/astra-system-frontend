@@ -20,6 +20,7 @@ export const CategoryEditModal = ({
         description: "",
         color: "blue",
         isActive: true,
+        productCount: 0,
       };
 
     return {
@@ -67,6 +68,7 @@ export const CategoryEditModal = ({
       description: "",
       color: "blue",
       isActive: true,
+      productCount: 0,
     });
   };
 

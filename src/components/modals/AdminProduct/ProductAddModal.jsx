@@ -13,7 +13,7 @@ export const ProductAddModal = ({ isOpen, onClose, onSubmit }) => {
   const [formData, setFormData] = useState({
     sku: "",
     name: "",
-    category: "",
+    categoryId: null, // Changed from 'category' to 'categoryId'
     price: "0",
     unitOfMeasure: "",
     isPerishable: false,
@@ -31,7 +31,7 @@ export const ProductAddModal = ({ isOpen, onClose, onSubmit }) => {
   const fetchCategories = async () => {
     try {
       setLoadingCategories(true);
-      const { data } = await api.get("/product/categories");
+      const { data } = await api.get("/category");
       if (data.success) {
         setCategories(data.data || []);
       }
@@ -63,10 +63,16 @@ export const ProductAddModal = ({ isOpen, onClose, onSubmit }) => {
       return;
     }
 
-    // Convert price to number
+    // Convert price to number and categoryId to number or null
     const submitData = {
-      ...formData,
+      sku: formData.sku,
+      name: formData.name,
+      categoryId: formData.categoryId ? parseInt(formData.categoryId) : null,
       price: parseFloat(formData.price) || 0,
+      unitOfMeasure: formData.unitOfMeasure || null,
+      isPerishable: formData.isPerishable,
+      isBarcoded: formData.isBarcoded,
+      barcode: formData.barcode || null,
     };
 
     await onSubmit(submitData);
@@ -77,7 +83,7 @@ export const ProductAddModal = ({ isOpen, onClose, onSubmit }) => {
     setFormData({
       sku: "",
       name: "",
-      category: "",
+      categoryId: null,
       price: "0",
       unitOfMeasure: "",
       isPerishable: false,
@@ -93,7 +99,7 @@ export const ProductAddModal = ({ isOpen, onClose, onSubmit }) => {
 
   const categoryOptions = [
     { value: "", label: "Select Category" },
-    ...categories.map((c) => ({ value: c, label: c })),
+    ...categories.map((c) => ({ value: c.id.toString(), label: c.name })),
   ];
 
   const unitOptions = [
@@ -139,8 +145,8 @@ export const ProductAddModal = ({ isOpen, onClose, onSubmit }) => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Select
             label="Category"
-            name="category"
-            value={formData.category}
+            name="categoryId"
+            value={formData.categoryId || ""}
             onChange={handleInputChange}
             options={categoryOptions}
             disabled={loadingCategories}
