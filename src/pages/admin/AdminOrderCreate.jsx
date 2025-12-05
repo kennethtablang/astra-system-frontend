@@ -55,7 +55,7 @@ const AdminOrderCreate = () => {
   const [inventoryWarnings, setInventoryWarnings] = useState({});
 
   // Order Options
-  const [selectedWarehouse, setSelectedWarehouse] = useState(1); // Default warehouse
+  const [selectedWarehouse] = useState(1); // Default warehouse
   const [priority, setPriority] = useState(false);
   const [scheduledFor, setScheduledFor] = useState("");
   const [submitting, setSubmitting] = useState(false);
