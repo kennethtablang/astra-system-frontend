@@ -1,6 +1,7 @@
 // src/pages/admin/AdminOrders.jsx
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { ViewOrderDetailsModal } from "../../components/modals/AdminOrder/ViewOrderDetailsModal";
 import {
   ShoppingCart,
   Plus,
@@ -8,6 +9,7 @@ import {
   Eye,
   Download,
   Filter,
+  Edit,
   AlertCircle,
   Package,
   Clock,
@@ -45,6 +47,8 @@ const AdminOrders = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
   const [totalOrders, setTotalOrders] = useState(0);
+  const [selectedOrderId, setSelectedOrderId] = useState(null);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [stats, setStats] = useState({
     totalOrders: 0,
     pendingOrders: 0,
@@ -85,6 +89,16 @@ const AdminOrders = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleViewOrder = (orderId) => {
+    setSelectedOrderId(orderId);
+    setIsViewModalOpen(true);
+  };
+
+  const handleEditOrder = (order) => {
+    // Navigate to edit page with order data
+    navigate(`/admin/orders/edit/${order.id}`, { state: { order } });
   };
 
   const fetchStats = async () => {
@@ -428,9 +442,7 @@ const AdminOrders = () => {
                           <TableCell>
                             <div className="flex items-center justify-end gap-2">
                               <button
-                                onClick={() =>
-                                  navigate(`/admin/orders/${order.id}`)
-                                }
+                                onClick={() => handleViewOrder(order.id)}
                                 className="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
                                 title="View details"
                               >
@@ -523,6 +535,15 @@ const AdminOrders = () => {
           </CardContent>
         </Card>
       </div>
+      <ViewOrderDetailsModal
+        isOpen={isViewModalOpen}
+        onClose={() => {
+          setIsViewModalOpen(false);
+          setSelectedOrderId(null);
+        }}
+        orderId={selectedOrderId}
+        onEdit={handleEditOrder}
+      />
     </DashboardLayout>
   );
 };
