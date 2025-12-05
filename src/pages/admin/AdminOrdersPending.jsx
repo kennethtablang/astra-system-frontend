@@ -6,11 +6,13 @@ import {
   Search,
   Eye,
   CheckCircle,
+  Edit,
   XCircle,
   AlertCircle,
   Package,
 } from "lucide-react";
 import DashboardLayout from "../../components/layouts/DashboardLayout";
+import { ViewOrderDetailsModal } from "../../components/modals/AdminOrder/ViewOrderDetailsModal";
 import { Card, CardContent } from "../../components/ui/Card";
 import {
   Table,
@@ -37,6 +39,8 @@ const AdminOrdersPending = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
   const [totalOrders, setTotalOrders] = useState(0);
+  const [selectedOrderId, setSelectedOrderId] = useState(null);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
 
   // Fetch Pending Orders
   useEffect(() => {
@@ -74,6 +78,16 @@ const AdminOrdersPending = () => {
       style: "currency",
       currency: "PHP",
     }).format(amount);
+  };
+
+  const handleViewOrder = (orderId) => {
+    setSelectedOrderId(orderId);
+    setIsViewModalOpen(true);
+  };
+
+  const handleEditOrder = (order) => {
+    // Navigate to edit page with order data
+    navigate(`/admin/orders/edit/${order.id}`, { state: { order } });
   };
 
   // Calculate time since order
@@ -279,9 +293,7 @@ const AdminOrdersPending = () => {
                           <TableCell>
                             <div className="flex items-center justify-end gap-2">
                               <button
-                                onClick={() =>
-                                  navigate(`/admin/orders/${order.id}`)
-                                }
+                                onClick={() => handleViewOrder(order.id)}
                                 className="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
                                 title="View details"
                               >
@@ -390,6 +402,15 @@ const AdminOrdersPending = () => {
           </Card>
         )}
       </div>
+      <ViewOrderDetailsModal
+        isOpen={isViewModalOpen}
+        onClose={() => {
+          setIsViewModalOpen(false);
+          setSelectedOrderId(null);
+        }}
+        orderId={selectedOrderId}
+        onEdit={handleEditOrder}
+      />
     </DashboardLayout>
   );
 };
