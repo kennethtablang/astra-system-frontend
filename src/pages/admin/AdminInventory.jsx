@@ -10,6 +10,7 @@ import {
   Upload,
   History,
   Settings,
+  Plus,
 } from "lucide-react";
 import DashboardLayout from "../../components/layouts/DashboardLayout";
 import { Card, CardContent } from "../../components/ui/Card";
@@ -25,6 +26,7 @@ import { Badge } from "../../components/ui/Badge";
 import { Button } from "../../components/ui/Button";
 import { Select } from "../../components/ui/Select";
 import { LoadingSpinner } from "../../components/ui/Loading";
+import { InventoryCreateModal } from "../../components/modals/AdminInventory/InventoryCreateModal";
 import { InventoryAdjustModal } from "../../components/modals/AdminInventory/InventoryAdjustModal";
 import { InventoryMovementModal } from "../../components/modals/AdminInventory/InventoryMovementModal";
 import { InventoryLevelsModal } from "../../components/modals/AdminInventory/InventoryLevelsModal";
@@ -51,6 +53,7 @@ const AdminInventory = () => {
   });
 
   // Modal states
+  const [showCreateModal, setShowCreateModal] = useState(false);
   const [showAdjustModal, setShowAdjustModal] = useState(false);
   const [showMovementModal, setShowMovementModal] = useState(false);
   const [showLevelsModal, setShowLevelsModal] = useState(false);
@@ -110,6 +113,27 @@ const AdminInventory = () => {
       }
     } catch (error) {
       console.error("Failed to fetch summary:", error);
+    }
+  };
+
+  // Handle Create Inventory
+  const handleCreateInventory = async (formData) => {
+    try {
+      const result = await inventoryService.createInventory(formData);
+
+      if (!result.success) {
+        toast.error(result.message || "Failed to create inventory");
+        throw new Error(result.message || "Failed to create inventory");
+      }
+
+      toast.success("Inventory created successfully");
+      setShowCreateModal(false);
+      fetchInventory();
+      fetchSummary();
+    } catch (error) {
+      toast.error(error.message || "Failed to create inventory");
+      console.error(error);
+      throw error;
     }
   };
 
@@ -240,13 +264,16 @@ const AdminInventory = () => {
             </p>
           </div>
           <div className="flex gap-2">
+            <Button
+              onClick={() => setShowCreateModal(true)}
+              className="flex items-center gap-2"
+            >
+              <Plus className="h-4 w-4" />
+              Add Inventory
+            </Button>
             <Button variant="outline" className="flex items-center gap-2">
               <Download className="h-4 w-4" />
               Export
-            </Button>
-            <Button className="flex items-center gap-2">
-              <Upload className="h-4 w-4" />
-              Import Stock
             </Button>
           </div>
         </div>
@@ -374,6 +401,13 @@ const AdminInventory = () => {
                     ? "Try adjusting your search or filters"
                     : "Get started by adding inventory records"}
                 </p>
+                <Button
+                  onClick={() => setShowCreateModal(true)}
+                  className="mt-4"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Inventory
+                </Button>
               </div>
             ) : (
               <>
@@ -558,6 +592,12 @@ const AdminInventory = () => {
       </div>
 
       {/* Modals */}
+      <InventoryCreateModal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        onSubmit={handleCreateInventory}
+      />
+
       <InventoryAdjustModal
         isOpen={showAdjustModal}
         onClose={() => {
