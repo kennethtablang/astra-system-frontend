@@ -8,6 +8,7 @@ import productService from './productService';
 import storeService from './storeService';
 import tripService from './tripService';
 import deliveryService from './deliveryService';
+import inventoryService from './inventoryService';
 import { paymentService, invoiceService } from './paymentService';
 import { warehouseService, distributorService } from './warehouseService';
 import { notificationService, reportService } from './notificationService';
@@ -20,6 +21,7 @@ export { default as productService } from './productService';
 export { default as storeService } from './storeService';
 export { default as tripService } from './tripService';
 export { default as deliveryService } from './deliveryService';
+export { default as inventoryService } from './inventoryService';
 
 export { 
   paymentService, 
@@ -45,6 +47,7 @@ export const services = {
   store: storeService,
   trip: tripService,
   delivery: deliveryService,
+  inventory: inventoryService,
   payment: paymentService,
   invoice: invoiceService,
   warehouse: warehouseService,
