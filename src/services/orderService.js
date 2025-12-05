@@ -142,6 +142,65 @@ const orderService = {
       throw error.response?.data || error;
     }
   },
+  // Edit order (Pending orders only)
+  async editOrder(orderId, orderData) {
+    try {
+      const { data } = await api.put(`/order/${orderId}`, orderData);
+      return data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
+  },
+
+  // Dispatch order (Assign to trip)
+  async dispatchOrder(orderId, tripId) {
+    try {
+      const { data } = await api.post(`/order/${orderId}/dispatch`, { orderId, tripId });
+      return data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
+  },
+
+  // Mark order in transit
+  async markOrderInTransit(orderId) {
+    try {
+      const { data } = await api.post(`/order/${orderId}/in-transit`);
+      return data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
+  },
+
+  // Mark order at store
+  async markOrderAtStore(orderId) {
+    try {
+      const { data } = await api.post(`/order/${orderId}/at-store`);
+      return data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
+  },
+
+  // Mark order delivered
+  async markOrderDelivered(orderId, notes) {
+    try {
+      const { data } = await api.post(`/order/${orderId}/delivered`, { orderId, notes });
+      return data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
+  },
+
+  // Mark order returned
+  async markOrderReturned(orderId, reason) {
+    try {
+      const { data } = await api.post(`/order/${orderId}/returned`, { orderId, reason });
+      return data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
+  },
 };
 
 export default orderService;

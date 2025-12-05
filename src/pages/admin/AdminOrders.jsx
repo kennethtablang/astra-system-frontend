@@ -2,6 +2,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ViewOrderDetailsModal } from "../../components/modals/AdminOrder/ViewOrderDetailsModal";
+import { EditOrderModal } from "../../components/modals/AdminOrder/EditOrderModal";
+import { UpdateOrderStatusModal } from "../../components/modals/AdminOrder/UpdateOrderStatusModal";
 import {
   ShoppingCart,
   Plus,
@@ -9,6 +11,7 @@ import {
   Eye,
   Download,
   Filter,
+  RefreshCw,
   Edit,
   AlertCircle,
   Package,
@@ -49,6 +52,9 @@ const AdminOrders = () => {
   const [totalOrders, setTotalOrders] = useState(0);
   const [selectedOrderId, setSelectedOrderId] = useState(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [statusModalOpen, setStatusModalOpen] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState(null);
   const [stats, setStats] = useState({
     totalOrders: 0,
     pendingOrders: 0,
@@ -448,6 +454,27 @@ const AdminOrders = () => {
                               >
                                 <Eye className="h-4 w-4" />
                               </button>
+                              <button
+                                onClick={() => {
+                                  setSelectedOrder(order);
+                                  setEditModalOpen(true);
+                                }}
+                                className="p-2 text-blue-600 hover:bg-blue-50"
+                                title="Edit order"
+                              >
+                                <Edit className="h-4 w-4" />
+                              </button>
+
+                              <button
+                                onClick={() => {
+                                  setSelectedOrder(order);
+                                  setStatusModalOpen(true);
+                                }}
+                                className="p-2 text-green-600 hover:bg-green-50"
+                                title="Update status"
+                              >
+                                <RefreshCw className="h-4 w-4" />
+                              </button>
                             </div>
                           </TableCell>
                         </TableRow>
@@ -543,6 +570,19 @@ const AdminOrders = () => {
         }}
         orderId={selectedOrderId}
         onEdit={handleEditOrder}
+      />
+      <EditOrderModal
+        isOpen={editModalOpen}
+        onClose={() => setEditModalOpen(false)}
+        order={selectedOrder}
+        onSuccess={() => fetchOrders()}
+      />
+
+      <UpdateOrderStatusModal
+        isOpen={statusModalOpen}
+        onClose={() => setStatusModalOpen(false)}
+        order={selectedOrder}
+        onSuccess={() => fetchOrders()}
       />
     </DashboardLayout>
   );
