@@ -14,6 +14,7 @@ import AdminDashboard from "../pages/admin/AdminDashboard";
 import AdminUsers from "../pages/admin/AdminUsers";
 import AdminRoles from "../pages/admin/AdminRoles";
 import AdminOrders from "../pages/admin/AdminOrders";
+import AdminOrderCreate from "../pages/admin/AdminOrderCreate";
 import AdminOrdersPending from "../pages/admin/AdminOrdersPending";
 import AdminOrdersHistory from "../pages/admin/AdminOrdersHistory";
 import AdminTrips from "../pages/admin/AdminTrips";
@@ -78,6 +79,7 @@ const AppRoutes = () => {
         <Route path="/admin/orders" element={<AdminOrders />} />
         <Route path="/admin/orders/pending" element={<AdminOrdersPending />} />
         <Route path="/admin/orders/history" element={<AdminOrdersHistory />} />
+        <Route path="/admin/orders/create" element={<AdminOrderCreate />} />
 
         {/* Trip Management */}
         <Route path="/admin/trips" element={<AdminTrips />} />

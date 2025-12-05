@@ -18,6 +18,7 @@ import {
   BarChart3,
   MapPin,
   Warehouse,
+  ShoppingBag,
   Sun,
   Moon,
   ChevronDown,
@@ -68,6 +69,11 @@ const DashboardLayout = ({ children }) => {
         type: "group",
         key: "orders",
         items: [
+          {
+            name: "Create Order",
+            href: "/admin/orders/create",
+            icon: ShoppingBag,
+          },
           { name: "All Orders", href: "/admin/orders", icon: ShoppingCart },
           { name: "Pending", href: "/admin/orders/pending", icon: Clock },
           { name: "History", href: "/admin/orders/history", icon: FileText },
