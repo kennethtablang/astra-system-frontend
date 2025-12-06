@@ -1,4 +1,4 @@
-// src/services/tripService.js
+// src/services/tripService.js - Extended version
 import api from '../api/axios';
 
 const tripService = {
@@ -97,11 +97,10 @@ const tripService = {
   },
 
   // Get active trips
-  async getActiveTrips(dispatcherId) {
+  async getActiveTrips(dispatcherId = null) {
     try {
-      const { data } = await api.get('/trip/active', {
-        params: { dispatcherId }
-      });
+      const params = dispatcherId ? { dispatcherId } : {};
+      const { data } = await api.get('/trip/active', { params });
       return data;
     } catch (error) {
       throw error.response?.data || error;
@@ -112,6 +111,21 @@ const tripService = {
   async suggestTripSequence(orderIds) {
     try {
       const { data } = await api.post('/trip/suggest-sequence', orderIds);
+      return data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
+  },
+
+  // Get trip history (completed and cancelled trips)
+  async getTripHistory(params = {}) {
+    try {
+      // Add status filter for completed/cancelled
+      const historyParams = {
+        ...params,
+        status: params.status || 'Completed,Cancelled'
+      };
+      const { data } = await api.get('/trip', { params: historyParams });
       return data;
     } catch (error) {
       throw error.response?.data || error;

@@ -1,4 +1,6 @@
+// src/pages/admin/AdminTripsHistory.jsx
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   FileText,
   Search,
@@ -10,226 +12,21 @@ import {
   XCircle,
   Clock,
   MapPin,
-  Loader2,
   Download,
   Eye,
 } from "lucide-react";
 import DashboardLayout from "../../components/layouts/DashboardLayout";
-
-// UI Components
-const Card = ({ children, className = "" }) => (
-  <div
-    className={`bg-white dark:bg-gray-800 rounded-lg shadow dark:shadow-gray-900/50 transition-colors ${className}`}
-  >
-    {children}
-  </div>
-);
-
-const CardContent = ({ children, className = "" }) => (
-  <div className={`px-6 py-4 ${className}`}>{children}</div>
-);
-
-const Badge = ({ children, variant = "default", className = "" }) => {
-  const variants = {
-    default: "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200",
-    success:
-      "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
-    danger: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
-  };
-
-  return (
-    <span
-      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${variants[variant]} ${className}`}
-    >
-      {children}
-    </span>
-  );
-};
-
-const Button = ({
-  children,
-  variant = "primary",
-  size = "md",
-  disabled = false,
-  onClick,
-  className = "",
-}) => {
-  const variants = {
-    primary: "bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500",
-    outline:
-      "border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700",
-  };
-
-  const sizes = {
-    sm: "px-3 py-1.5 text-sm",
-    md: "px-4 py-2 text-sm",
-  };
-
-  return (
-    <button
-      onClick={onClick}
-      disabled={disabled}
-      className={`inline-flex items-center justify-center font-medium rounded-lg focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors ${variants[variant]} ${sizes[size]} ${className}`}
-    >
-      {children}
-    </button>
-  );
-};
-
-const Select = ({
-  value,
-  onChange,
-  options,
-  className = "",
-  disabled = false,
-}) => (
-  <select
-    value={value}
-    onChange={onChange}
-    disabled={disabled}
-    className={`block px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${className}`}
-  >
-    {options.map((option) => (
-      <option key={option.value} value={option.value}>
-        {option.label}
-      </option>
-    ))}
-  </select>
-);
-
-const LoadingSpinner = ({ size = "md" }) => {
-  const sizes = { md: "h-8 w-8", lg: "h-12 w-12" };
-  return <Loader2 className={`animate-spin text-blue-600 ${sizes[size]}`} />;
-};
-
-// Mock API
-const mockApi = {
-  getTripHistory: async () => {
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    return {
-      success: true,
-      data: {
-        items: [
-          {
-            id: 15,
-            warehouseName: "Main Warehouse",
-            dispatcherName: "Juan Dela Cruz",
-            vehicle: "ABC-1234",
-            status: "Completed",
-            departureAt: new Date("2024-12-03T08:00:00"),
-            completedAt: new Date("2024-12-03T16:30:00"),
-            totalStops: 12,
-            deliveredStops: 12,
-            failedStops: 0,
-            totalValue: 45000,
-            duration: "8h 30m",
-          },
-          {
-            id: 14,
-            warehouseName: "North Warehouse",
-            dispatcherName: "Maria Santos",
-            vehicle: "XYZ-5678",
-            status: "Completed",
-            departureAt: new Date("2024-12-03T10:00:00"),
-            completedAt: new Date("2024-12-03T17:00:00"),
-            totalStops: 8,
-            deliveredStops: 8,
-            failedStops: 0,
-            totalValue: 32000,
-            duration: "7h 0m",
-          },
-          {
-            id: 13,
-            warehouseName: "South Warehouse",
-            dispatcherName: "Pedro Reyes",
-            vehicle: "DEF-9012",
-            status: "Completed",
-            departureAt: new Date("2024-12-02T09:00:00"),
-            completedAt: new Date("2024-12-02T15:30:00"),
-            totalStops: 15,
-            deliveredStops: 14,
-            failedStops: 1,
-            totalValue: 58000,
-            duration: "6h 30m",
-          },
-          {
-            id: 12,
-            warehouseName: "East Warehouse",
-            dispatcherName: "Ana Lopez",
-            vehicle: "GHI-3456",
-            status: "Completed",
-            departureAt: new Date("2024-12-02T07:30:00"),
-            completedAt: new Date("2024-12-02T14:00:00"),
-            totalStops: 10,
-            deliveredStops: 10,
-            failedStops: 0,
-            totalValue: 38000,
-            duration: "6h 30m",
-          },
-          {
-            id: 11,
-            warehouseName: "West Warehouse",
-            dispatcherName: "Carlos Ramos",
-            vehicle: "JKL-7890",
-            status: "Cancelled",
-            departureAt: new Date("2024-12-01T14:00:00"),
-            completedAt: new Date("2024-12-01T14:15:00"),
-            totalStops: 6,
-            deliveredStops: 0,
-            failedStops: 0,
-            totalValue: 22000,
-            duration: "0h 15m",
-          },
-          {
-            id: 10,
-            warehouseName: "Main Warehouse",
-            dispatcherName: "Juan Dela Cruz",
-            vehicle: "ABC-1234",
-            status: "Completed",
-            departureAt: new Date("2024-12-01T08:00:00"),
-            completedAt: new Date("2024-12-01T16:00:00"),
-            totalStops: 11,
-            deliveredStops: 10,
-            failedStops: 1,
-            totalValue: 42000,
-            duration: "8h 0m",
-          },
-          {
-            id: 9,
-            warehouseName: "North Warehouse",
-            dispatcherName: "Maria Santos",
-            vehicle: "XYZ-5678",
-            status: "Completed",
-            departureAt: new Date("2024-11-30T10:00:00"),
-            completedAt: new Date("2024-11-30T16:30:00"),
-            totalStops: 9,
-            deliveredStops: 9,
-            failedStops: 0,
-            totalValue: 35000,
-            duration: "6h 30m",
-          },
-          {
-            id: 8,
-            warehouseName: "South Warehouse",
-            dispatcherName: "Pedro Reyes",
-            vehicle: "DEF-9012",
-            status: "Completed",
-            departureAt: new Date("2024-11-30T09:00:00"),
-            completedAt: new Date("2024-11-30T15:00:00"),
-            totalStops: 13,
-            deliveredStops: 13,
-            failedStops: 0,
-            totalValue: 52000,
-            duration: "6h 0m",
-          },
-        ],
-        totalCount: 8,
-      },
-    };
-  },
-};
+import { Card, CardContent } from "../../components/ui/Card";
+import { Badge } from "../../components/ui/Badge";
+import { Button } from "../../components/ui/Button";
+import { Select } from "../../components/ui/Select";
+import { LoadingSpinner } from "../../components/ui/Loading";
+import tripService from "../../services/tripService";
+import { toast } from "react-hot-toast";
 
 const AdminTripsHistory = () => {
+  const navigate = useNavigate();
+
   const [trips, setTrips] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -237,38 +34,115 @@ const AdminTripsHistory = () => {
   const [filterDateRange, setFilterDateRange] = useState("All");
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+  const [totalTrips, setTotalTrips] = useState(0);
+  const [stats, setStats] = useState({
+    totalTrips: 0,
+    totalStops: 0,
+    totalValue: 0,
+    avgSuccessRate: 0,
+  });
 
   useEffect(() => {
     fetchTripHistory();
-  }, []);
+  }, [currentPage, pageSize, filterStatus, filterDateRange]);
 
   const fetchTripHistory = async () => {
     try {
       setLoading(true);
-      const { data } = await mockApi.getTripHistory();
-      if (data) {
-        setTrips(data.items || []);
+
+      const params = {
+        pageNumber: currentPage,
+        pageSize: pageSize,
+        sortBy: "departureAt",
+        sortDescending: true,
+      };
+
+      // Filter by status
+      if (filterStatus === "All") {
+        params.status = "Completed";
+      } else {
+        params.status = filterStatus;
+      }
+
+      // Filter by date range
+      if (filterDateRange !== "All") {
+        const now = new Date();
+        let fromDate;
+
+        if (filterDateRange === "Today") {
+          fromDate = new Date(now.setHours(0, 0, 0, 0));
+        } else if (filterDateRange === "Week") {
+          fromDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        } else if (filterDateRange === "Month") {
+          fromDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        }
+
+        if (fromDate) {
+          params.departureFrom = fromDate.toISOString();
+        }
+      }
+
+      const result = await tripService.getTrips(params);
+
+      if (result.success) {
+        const tripsData = result.data.items || [];
+        setTrips(tripsData);
+        setTotalTrips(result.data.totalCount || 0);
+        calculateStats(tripsData);
+      } else {
+        toast.error("Failed to load trip history");
       }
     } catch (error) {
       console.error("Failed to fetch trip history:", error);
+      toast.error("Failed to load trip history");
     } finally {
       setLoading(false);
     }
   };
 
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat("en-PH", {
-      style: "currency",
-      currency: "PHP",
-    }).format(amount);
+  const calculateStats = (tripsData) => {
+    const stats = {
+      totalTrips: tripsData.filter((t) => t.status === "Completed").length,
+      totalStops: tripsData.reduce((sum, t) => sum + (t.orderCount || 0), 0),
+      totalValue: tripsData.reduce(
+        (sum, t) =>
+          t.status === "Completed" ? sum + (t.totalValue || 0) : sum,
+        0
+      ),
+      avgSuccessRate: 0,
+    };
+
+    // Calculate average success rate
+    if (tripsData.length > 0) {
+      const completedTrips = tripsData.filter((t) => t.status === "Completed");
+      if (completedTrips.length > 0) {
+        stats.avgSuccessRate = Math.round(
+          (completedTrips.length / tripsData.length) * 100
+        );
+      }
+    }
+
+    setStats(stats);
   };
 
-  const formatDate = (date) => {
-    return new Date(date).toLocaleDateString("en-PH", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
+  const handleDownloadManifest = async (tripId) => {
+    try {
+      const pdfBlob = await tripService.generateTripManifestPdf(tripId);
+
+      const url = window.URL.createObjectURL(new Blob([pdfBlob]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", `trip_manifest_${tripId}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+
+      toast.success("Manifest downloaded successfully");
+    } catch (error) {
+      console.error("Error downloading manifest:", error);
+      toast.error("Failed to download manifest");
+    }
   };
 
   const getStatusBadge = (status) => {
@@ -280,64 +154,56 @@ const AdminTripsHistory = () => {
     return <Badge variant={config.variant}>{config.label}</Badge>;
   };
 
-  const getSuccessRate = (delivered, total) => {
-    return total > 0 ? Math.round((delivered / total) * 100) : 0;
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat("en-PH", {
+      style: "currency",
+      currency: "PHP",
+    }).format(amount);
   };
 
-  // Filter trips
+  const formatDate = (date) => {
+    if (!date) return "N/A";
+    return new Date(date).toLocaleDateString("en-PH", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+  };
+
+  const formatDateTime = (date) => {
+    if (!date) return "N/A";
+    return new Date(date).toLocaleString("en-PH", {
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
+  const calculateDuration = (departure, completion) => {
+    if (!departure || !completion) return "N/A";
+    const diff = new Date(completion) - new Date(departure);
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    return `${hours}h ${minutes}m`;
+  };
+
+  // Filter trips by search term
   const filteredTrips = trips.filter((trip) => {
-    const matchesSearch =
-      searchTerm === "" ||
-      trip.dispatcherName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      trip.vehicle?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      trip.id.toString().includes(searchTerm);
-
-    const matchesStatus =
-      filterStatus === "All" || trip.status === filterStatus;
-
-    let matchesDateRange = true;
-    if (filterDateRange !== "All") {
-      const tripDate = new Date(trip.departureAt);
-      const now = new Date();
-      if (filterDateRange === "Today") {
-        matchesDateRange = tripDate.toDateString() === now.toDateString();
-      } else if (filterDateRange === "Week") {
-        const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-        matchesDateRange = tripDate >= weekAgo;
-      } else if (filterDateRange === "Month") {
-        const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-        matchesDateRange = tripDate >= monthAgo;
-      }
-    }
-
-    return matchesSearch && matchesStatus && matchesDateRange;
+    if (!searchTerm) return true;
+    const search = searchTerm.toLowerCase();
+    return (
+      trip.id.toString().includes(search) ||
+      trip.dispatcherName?.toLowerCase().includes(search) ||
+      trip.vehicle?.toLowerCase().includes(search) ||
+      trip.warehouseName?.toLowerCase().includes(search)
+    );
   });
 
   // Pagination
-  const totalTrips = filteredTrips.length;
   const totalPages = Math.ceil(totalTrips / pageSize);
-  const startIndex = (currentPage - 1) * pageSize;
+  const startIndex = (currentPage - 1) * pageSize + 1;
   const endIndex = Math.min(currentPage * pageSize, totalTrips);
-  const paginatedTrips = filteredTrips.slice(startIndex, endIndex);
-
-  // Calculate stats
-  const stats = {
-    totalTrips: trips.filter((t) => t.status === "Completed").length,
-    totalStops: trips.reduce((sum, t) => sum + t.deliveredStops, 0),
-    totalValue: trips.reduce(
-      (sum, t) => (t.status === "Completed" ? sum + t.totalValue : sum),
-      0
-    ),
-    avgSuccessRate:
-      trips.length > 0
-        ? Math.round(
-            trips.reduce(
-              (sum, t) => sum + getSuccessRate(t.deliveredStops, t.totalStops),
-              0
-            ) / trips.length
-          )
-        : 0,
-  };
 
   const statusOptions = [
     { value: "All", label: "All Status" },
@@ -432,7 +298,7 @@ const AdminTripsHistory = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Avg Success Rate
+                    Success Rate
                   </p>
                   <p className="text-2xl font-bold text-gray-900 dark:text-white">
                     {stats.avgSuccessRate}%
@@ -452,7 +318,7 @@ const AdminTripsHistory = () => {
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <input
                   type="text"
-                  placeholder="Search by trip ID, dispatcher, or vehicle..."
+                  placeholder="Search by trip ID, dispatcher, vehicle, or warehouse..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="w-full pl-9 pr-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
@@ -462,13 +328,19 @@ const AdminTripsHistory = () => {
               <div className="flex gap-2">
                 <Select
                   value={filterStatus}
-                  onChange={(e) => setFilterStatus(e.target.value)}
+                  onChange={(e) => {
+                    setFilterStatus(e.target.value);
+                    setCurrentPage(1);
+                  }}
                   options={statusOptions}
                   className="w-36"
                 />
                 <Select
                   value={filterDateRange}
-                  onChange={(e) => setFilterDateRange(e.target.value)}
+                  onChange={(e) => {
+                    setFilterDateRange(e.target.value);
+                    setCurrentPage(1);
+                  }}
                   options={dateRangeOptions}
                   className="w-40"
                 />
@@ -484,14 +356,18 @@ const AdminTripsHistory = () => {
               <div className="flex items-center justify-center py-12">
                 <LoadingSpinner size="lg" />
               </div>
-            ) : paginatedTrips.length === 0 ? (
+            ) : filteredTrips.length === 0 ? (
               <div className="text-center py-12">
                 <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                 <h3 className="text-lg font-medium text-gray-900 dark:text-white">
                   No trip history found
                 </h3>
                 <p className="text-gray-500 dark:text-gray-400 mt-2">
-                  Try adjusting your search or filters
+                  {searchTerm ||
+                  filterStatus !== "All" ||
+                  filterDateRange !== "All"
+                    ? "Try adjusting your search or filters"
+                    : "Completed trips will appear here"}
                 </p>
               </div>
             ) : (
@@ -507,10 +383,10 @@ const AdminTripsHistory = () => {
                           Dispatcher
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 dark:text-gray-300 uppercase">
-                          Date & Duration
+                          Date
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 dark:text-gray-300 uppercase">
-                          Deliveries
+                          Orders
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 dark:text-gray-300 uppercase">
                           Value
@@ -524,99 +400,89 @@ const AdminTripsHistory = () => {
                       </tr>
                     </thead>
                     <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                      {paginatedTrips.map((trip) => {
-                        const successRate = getSuccessRate(
-                          trip.deliveredStops,
-                          trip.totalStops
-                        );
-                        return (
-                          <tr
-                            key={trip.id}
-                            className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
-                          >
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="flex items-center gap-3">
-                                <div className="h-10 w-10 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
-                                  <FileText className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+                      {filteredTrips.map((trip) => (
+                        <tr
+                          key={trip.id}
+                          className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                        >
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex items-center gap-3">
+                              <div className="h-10 w-10 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
+                                <FileText className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+                              </div>
+                              <div>
+                                <p className="font-medium text-gray-900 dark:text-white">
+                                  Trip #{trip.id}
+                                </p>
+                                <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
+                                  <MapPin className="h-3 w-3 mr-1" />
+                                  {trip.warehouseName}
                                 </div>
-                                <div>
-                                  <p className="font-medium text-gray-900 dark:text-white">
-                                    Trip #{trip.id}
-                                  </p>
-                                  <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
-                                    <MapPin className="h-3 w-3 mr-1" />
-                                    {trip.warehouseName}
-                                  </div>
+                                {trip.vehicle && (
                                   <div className="text-xs text-gray-500 dark:text-gray-400">
                                     {trip.vehicle}
                                   </div>
-                                </div>
+                                )}
                               </div>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="flex items-center gap-2">
-                                <User className="h-4 w-4 text-gray-400" />
-                                <span className="text-sm text-gray-900 dark:text-white">
-                                  {trip.dispatcherName}
-                                </span>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex items-center gap-2">
+                              <User className="h-4 w-4 text-gray-400" />
+                              <span className="text-sm text-gray-900 dark:text-white">
+                                {trip.dispatcherName || "N/A"}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm">
+                              <div className="flex items-center gap-1 text-gray-900 dark:text-white">
+                                <Calendar className="h-4 w-4 text-gray-400" />
+                                {formatDate(trip.departureAt)}
                               </div>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="text-sm">
-                                <div className="flex items-center gap-1 text-gray-900 dark:text-white">
-                                  <Calendar className="h-4 w-4 text-gray-400" />
-                                  {formatDate(trip.departureAt)}
-                                </div>
-                                <div className="flex items-center gap-1 text-gray-500 dark:text-gray-400 mt-1">
-                                  <Clock className="h-3 w-3" />
-                                  {trip.duration}
-                                </div>
+                              <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                {formatDateTime(trip.departureAt)}
                               </div>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="text-sm">
-                                <div className="flex items-center gap-2">
-                                  {trip.deliveredStops === trip.totalStops ? (
-                                    <CheckCircle className="h-4 w-4 text-green-600" />
-                                  ) : (
-                                    <XCircle className="h-4 w-4 text-red-600" />
-                                  )}
-                                  <span className="font-medium text-gray-900 dark:text-white">
-                                    {trip.deliveredStops}/{trip.totalStops}
-                                  </span>
-                                </div>
-                                <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                  {successRate}% success rate
-                                </div>
-                              </div>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="font-medium text-gray-900 dark:text-white">
-                                {formatCurrency(trip.totalValue)}
-                              </div>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              {getStatusBadge(trip.status)}
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="flex items-center justify-end gap-2">
-                                <button
-                                  className="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
-                                  title="View details"
-                                >
-                                  <Eye className="h-4 w-4" />
-                                </button>
-                                <button
-                                  className="p-2 text-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                                  title="Download report"
-                                >
-                                  <Download className="h-4 w-4" />
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        );
-                      })}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex items-center gap-2">
+                              <Package className="h-4 w-4 text-gray-400" />
+                              <span className="font-medium text-gray-900 dark:text-white">
+                                {trip.orderCount || 0}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="font-medium text-gray-900 dark:text-white">
+                              {formatCurrency(trip.totalValue || 0)}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            {getStatusBadge(trip.status)}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex items-center justify-end gap-2">
+                              <button
+                                onClick={() =>
+                                  navigate(`/admin/trips/${trip.id}`)
+                                }
+                                className="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+                                title="View details"
+                              >
+                                <Eye className="h-4 w-4" />
+                              </button>
+                              <button
+                                onClick={() => handleDownloadManifest(trip.id)}
+                                className="p-2 text-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                                title="Download manifest"
+                              >
+                                <Download className="h-4 w-4" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
                     </tbody>
                   </table>
                 </div>
@@ -635,7 +501,7 @@ const AdminTripsHistory = () => {
                         className="w-20"
                       />
                       <span className="text-gray-700 dark:text-gray-300 whitespace-nowrap">
-                        {startIndex + 1}-{endIndex} of {totalTrips}
+                        {startIndex}-{endIndex} of {totalTrips}
                       </span>
                     </div>
 

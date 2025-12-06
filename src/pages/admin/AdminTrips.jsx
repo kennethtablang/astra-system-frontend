@@ -14,12 +14,15 @@ import {
   DollarSign,
   FileText,
   Navigation,
+  Play,
   AlertCircle,
   Eye,
 } from "lucide-react";
 import DashboardLayout from "../../components/layouts/DashboardLayout";
 import { CreateTripModal } from "../../components/modals/AdminTrip/CreateTripModal";
 import { TripDetailsModal } from "../../components/modals/AdminTrip/TripDetailsModal";
+import { EditTripModal } from "../../components/modals/AdminTrip/EditTripModal";
+import { UpdateTripStatusModal } from "../../components/modals/AdminTrip/UpdateTripStatusModal";
 import { Card, CardContent } from "../../components/ui/Card";
 import { Badge } from "../../components/ui/Badge";
 import { Button } from "../../components/ui/Button";
@@ -45,6 +48,10 @@ const AdminTrips = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [selectedTripId, setSelectedTripId] = useState(null);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showStatusModal, setShowStatusModal] = useState(false);
+  const [selectedTrip, setSelectedTrip] = useState(null);
+  const [editTripId, setEditTripId] = useState(null);
   const [stats, setStats] = useState({
     totalTrips: 0,
     inProgress: 0,
@@ -474,6 +481,21 @@ const AdminTrips = () => {
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="flex items-center justify-end gap-2">
+                              {(trip.status === "Created" ||
+                                trip.status === "Assigned" ||
+                                trip.status === "Started" ||
+                                trip.status === "InProgress") && (
+                                <button
+                                  onClick={() => {
+                                    setSelectedTrip(trip);
+                                    setShowStatusModal(true);
+                                  }}
+                                  className="p-2 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors"
+                                  title="Update status"
+                                >
+                                  <Play className="h-4 w-4" />
+                                </button>
+                              )}
                               <button
                                 onClick={() => {
                                   setSelectedTripId(trip.id);
@@ -506,9 +528,10 @@ const AdminTrips = () => {
                               {trip.status === "Created" && (
                                 <>
                                   <button
-                                    onClick={() =>
-                                      navigate(`/admin/trips/${trip.id}/edit`)
-                                    }
+                                    onClick={() => {
+                                      setEditTripId(trip.id);
+                                      setShowEditModal(true);
+                                    }}
                                     className="p-2 text-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors"
                                     title="Edit trip"
                                   >
@@ -616,6 +639,31 @@ const AdminTrips = () => {
         onSuccess={() => {
           fetchTrips();
           setShowCreateModal(false);
+        }}
+      />
+
+      <UpdateTripStatusModal
+        isOpen={showStatusModal}
+        onClose={() => {
+          setShowStatusModal(false);
+          setSelectedTrip(null);
+        }}
+        trip={selectedTrip}
+        onSuccess={() => {
+          fetchTrips(); // Refresh the trips list
+        }}
+      />
+
+      <EditTripModal
+        isOpen={showEditModal}
+        onClose={() => {
+          setShowEditModal(false);
+          setEditTripId(null);
+        }}
+        tripId={editTripId}
+        onSuccess={() => {
+          fetchTrips();
+          setShowEditModal(false);
         }}
       />
 
