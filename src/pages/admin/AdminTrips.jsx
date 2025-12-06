@@ -18,6 +18,8 @@ import {
   Eye,
 } from "lucide-react";
 import DashboardLayout from "../../components/layouts/DashboardLayout";
+import { CreateTripModal } from "../../components/modals/AdminTrip/CreateTripModal";
+import { TripDetailsModal } from "../../components/modals/AdminTrip/TripDetailsModal";
 import { Card, CardContent } from "../../components/ui/Card";
 import { Badge } from "../../components/ui/Badge";
 import { Button } from "../../components/ui/Button";
@@ -40,6 +42,9 @@ const AdminTrips = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [totalTrips, setTotalTrips] = useState(0);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [selectedTripId, setSelectedTripId] = useState(null);
   const [stats, setStats] = useState({
     totalTrips: 0,
     inProgress: 0,
@@ -237,7 +242,7 @@ const AdminTrips = () => {
             </p>
           </div>
           <Button
-            onClick={() => navigate("/admin/trips/create")}
+            onClick={() => setShowCreateModal(true)}
             className="flex items-center gap-2"
           >
             <Plus className="h-4 w-4" />
@@ -470,9 +475,10 @@ const AdminTrips = () => {
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="flex items-center justify-end gap-2">
                               <button
-                                onClick={() =>
-                                  navigate(`/admin/trips/${trip.id}`)
-                                }
+                                onClick={() => {
+                                  setSelectedTripId(trip.id);
+                                  setShowDetailsModal(true);
+                                }}
                                 className="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
                                 title="View details"
                               >
@@ -604,6 +610,23 @@ const AdminTrips = () => {
           </CardContent>
         </Card>
       </div>
+      <CreateTripModal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        onSuccess={() => {
+          fetchTrips();
+          setShowCreateModal(false);
+        }}
+      />
+
+      <TripDetailsModal
+        isOpen={showDetailsModal}
+        onClose={() => {
+          setShowDetailsModal(false);
+          setSelectedTripId(null);
+        }}
+        tripId={selectedTripId}
+      />
     </DashboardLayout>
   );
 };

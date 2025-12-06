@@ -20,6 +20,8 @@ import AdminOrdersHistory from "../pages/admin/AdminOrdersHistory";
 import AdminTrips from "../pages/admin/AdminTrips";
 import AdminTripsActive from "../pages/admin/AdminTripsActive";
 import AdminTripsHistory from "../pages/admin/AdminTripsHistory";
+import AdminTripDetails from "../pages/admin/AdminTripDetails";
+import AdminTripTracking from "../pages/admin/AdminTripTracking";
 import AdminStores from "../pages/admin/AdminStores";
 import AdminStoreCategories from "../pages/admin/AdminStoreCategories";
 import AdminProducts from "../pages/admin/AdminProducts";
@@ -87,6 +89,8 @@ const AppRoutes = () => {
         <Route path="/admin/trips" element={<AdminTrips />} />
         <Route path="/admin/trips/active" element={<AdminTripsActive />} />
         <Route path="/admin/trips/history" element={<AdminTripsHistory />} />
+        <Route path="/admin/trips/:id" element={<AdminTripDetails />} />
+        <Route path="/admin/trips/:id/track" element={<AdminTripTracking />} />
 
         {/* Store Management */}
         <Route path="/admin/stores" element={<AdminStores />} />
