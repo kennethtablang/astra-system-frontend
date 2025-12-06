@@ -1,4 +1,6 @@
+// src/pages/admin/AdminTripsActive.jsx
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Navigation,
   MapPin,
@@ -9,322 +11,23 @@ import {
   AlertCircle,
   Phone,
   TrendingUp,
-  Loader2,
   RefreshCw,
   Eye,
 } from "lucide-react";
 import DashboardLayout from "../../components/layouts/DashboardLayout";
-
-// UI Components
-const Card = ({ children, className = "" }) => (
-  <div
-    className={`bg-white dark:bg-gray-800 rounded-lg shadow dark:shadow-gray-900/50 transition-colors ${className}`}
-  >
-    {children}
-  </div>
-);
-
-const CardContent = ({ children, className = "" }) => (
-  <div className={`px-6 py-4 ${className}`}>{children}</div>
-);
-
-const Badge = ({ children, variant = "default", className = "" }) => {
-  const variants = {
-    default: "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200",
-    success:
-      "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
-    info: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
-    warning:
-      "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200",
-    danger: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
-  };
-
-  return (
-    <span
-      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${variants[variant]} ${className}`}
-    >
-      {children}
-    </span>
-  );
-};
-
-const Button = ({
-  children,
-  variant = "primary",
-  size = "md",
-  disabled = false,
-  onClick,
-  className = "",
-}) => {
-  const variants = {
-    primary: "bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500",
-    outline:
-      "border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700",
-  };
-
-  const sizes = {
-    sm: "px-3 py-1.5 text-sm",
-    md: "px-4 py-2 text-sm",
-  };
-
-  return (
-    <button
-      onClick={onClick}
-      disabled={disabled}
-      className={`inline-flex items-center justify-center font-medium rounded-lg focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors ${variants[variant]} ${sizes[size]} ${className}`}
-    >
-      {children}
-    </button>
-  );
-};
-
-const LoadingSpinner = ({ size = "md" }) => {
-  const sizes = { md: "h-8 w-8", lg: "h-12 w-12" };
-  return <Loader2 className={`animate-spin text-blue-600 ${sizes[size]}`} />;
-};
-
-// Mock API
-const mockApi = {
-  getActiveTrips: async () => {
-    await new Promise((resolve) => setTimeout(resolve, 800));
-    return {
-      success: true,
-      data: [
-        {
-          id: 1,
-          warehouseName: "Main Warehouse",
-          dispatcherName: "Juan Dela Cruz",
-          dispatcherPhone: "09123456789",
-          vehicle: "ABC-1234",
-          departureAt: new Date("2024-12-04T08:00:00"),
-          totalStops: 12,
-          completedStops: 7,
-          currentLocation: "Meycauayan, Bulacan",
-          lastUpdate: new Date("2024-12-04T14:30:00"),
-          estimatedCompletion: new Date("2024-12-04T17:00:00"),
-          stops: [
-            {
-              id: 101,
-              storeName: "Sari-Sari Store 1",
-              status: "Delivered",
-              deliveredAt: new Date("2024-12-04T09:15:00"),
-            },
-            {
-              id: 102,
-              storeName: "Mini Mart Express",
-              status: "Delivered",
-              deliveredAt: new Date("2024-12-04T09:45:00"),
-            },
-            {
-              id: 103,
-              storeName: "Corner Store",
-              status: "Delivered",
-              deliveredAt: new Date("2024-12-04T10:30:00"),
-            },
-            {
-              id: 104,
-              storeName: "Lucky Store",
-              status: "Delivered",
-              deliveredAt: new Date("2024-12-04T11:00:00"),
-            },
-            {
-              id: 105,
-              storeName: "Sunshine Mart",
-              status: "Delivered",
-              deliveredAt: new Date("2024-12-04T12:15:00"),
-            },
-            {
-              id: 106,
-              storeName: "Quick Shop",
-              status: "Delivered",
-              deliveredAt: new Date("2024-12-04T13:00:00"),
-            },
-            {
-              id: 107,
-              storeName: "Happy Store",
-              status: "Delivered",
-              deliveredAt: new Date("2024-12-04T14:00:00"),
-            },
-            {
-              id: 108,
-              storeName: "Golden Mart",
-              status: "InTransit",
-              deliveredAt: null,
-            },
-            {
-              id: 109,
-              storeName: "Star Store",
-              status: "Pending",
-              deliveredAt: null,
-            },
-            {
-              id: 110,
-              storeName: "Royal Shop",
-              status: "Pending",
-              deliveredAt: null,
-            },
-            {
-              id: 111,
-              storeName: "Premier Store",
-              status: "Pending",
-              deliveredAt: null,
-            },
-            {
-              id: 112,
-              storeName: "Elite Mart",
-              status: "Pending",
-              deliveredAt: null,
-            },
-          ],
-        },
-        {
-          id: 2,
-          warehouseName: "North Warehouse",
-          dispatcherName: "Maria Santos",
-          dispatcherPhone: "09187654321",
-          vehicle: "XYZ-5678",
-          departureAt: new Date("2024-12-04T10:00:00"),
-          totalStops: 8,
-          completedStops: 3,
-          currentLocation: "Marilao, Bulacan",
-          lastUpdate: new Date("2024-12-04T14:00:00"),
-          estimatedCompletion: new Date("2024-12-04T16:30:00"),
-          stops: [
-            {
-              id: 201,
-              storeName: "Fresh Market",
-              status: "Delivered",
-              deliveredAt: new Date("2024-12-04T11:00:00"),
-            },
-            {
-              id: 202,
-              storeName: "Daily Needs",
-              status: "Delivered",
-              deliveredAt: new Date("2024-12-04T12:00:00"),
-            },
-            {
-              id: 203,
-              storeName: "Grocery Plus",
-              status: "Delivered",
-              deliveredAt: new Date("2024-12-04T13:30:00"),
-            },
-            {
-              id: 204,
-              storeName: "Super Store",
-              status: "InTransit",
-              deliveredAt: null,
-            },
-            {
-              id: 205,
-              storeName: "Mega Mart",
-              status: "Pending",
-              deliveredAt: null,
-            },
-            {
-              id: 206,
-              storeName: "Value Shop",
-              status: "Pending",
-              deliveredAt: null,
-            },
-            {
-              id: 207,
-              storeName: "Best Buy Store",
-              status: "Pending",
-              deliveredAt: null,
-            },
-            {
-              id: 208,
-              storeName: "Top Choice",
-              status: "Pending",
-              deliveredAt: null,
-            },
-          ],
-        },
-        {
-          id: 3,
-          warehouseName: "South Warehouse",
-          dispatcherName: "Pedro Reyes",
-          dispatcherPhone: "09156789012",
-          vehicle: "DEF-9012",
-          departureAt: new Date("2024-12-04T07:30:00"),
-          totalStops: 10,
-          completedStops: 9,
-          currentLocation: "Bocaue, Bulacan",
-          lastUpdate: new Date("2024-12-04T14:45:00"),
-          estimatedCompletion: new Date("2024-12-04T15:30:00"),
-          stops: [
-            {
-              id: 301,
-              storeName: "Community Store",
-              status: "Delivered",
-              deliveredAt: new Date("2024-12-04T08:30:00"),
-            },
-            {
-              id: 302,
-              storeName: "Neighborhood Mart",
-              status: "Delivered",
-              deliveredAt: new Date("2024-12-04T09:00:00"),
-            },
-            {
-              id: 303,
-              storeName: "Local Shop",
-              status: "Delivered",
-              deliveredAt: new Date("2024-12-04T10:00:00"),
-            },
-            {
-              id: 304,
-              storeName: "Town Store",
-              status: "Delivered",
-              deliveredAt: new Date("2024-12-04T11:15:00"),
-            },
-            {
-              id: 305,
-              storeName: "Village Mart",
-              status: "Delivered",
-              deliveredAt: new Date("2024-12-04T12:00:00"),
-            },
-            {
-              id: 306,
-              storeName: "District Shop",
-              status: "Delivered",
-              deliveredAt: new Date("2024-12-04T12:45:00"),
-            },
-            {
-              id: 307,
-              storeName: "Area Store",
-              status: "Delivered",
-              deliveredAt: new Date("2024-12-04T13:30:00"),
-            },
-            {
-              id: 308,
-              storeName: "Zone Mart",
-              status: "Delivered",
-              deliveredAt: new Date("2024-12-04T14:00:00"),
-            },
-            {
-              id: 309,
-              storeName: "Block Store",
-              status: "Delivered",
-              deliveredAt: new Date("2024-12-04T14:30:00"),
-            },
-            {
-              id: 310,
-              storeName: "Final Stop Shop",
-              status: "InTransit",
-              deliveredAt: null,
-            },
-          ],
-        },
-      ],
-    };
-  },
-};
+import { Card, CardContent } from "../../components/ui/Card";
+import { Badge } from "../../components/ui/Badge";
+import { Button } from "../../components/ui/Button";
+import { LoadingSpinner } from "../../components/ui/Loading";
+import tripService from "../../services/tripService";
+import { toast } from "react-hot-toast";
 
 const AdminTripsActive = () => {
+  const navigate = useNavigate();
   const [trips, setTrips] = useState([]);
   const [loading, setLoading] = useState(true);
   const [lastRefresh, setLastRefresh] = useState(new Date());
-  const [autoRefresh, setAutoRefresh] = useState(true);
+  const [autoRefresh] = useState(true);
 
   useEffect(() => {
     fetchActiveTrips();
@@ -344,13 +47,15 @@ const AdminTripsActive = () => {
   const fetchActiveTrips = async () => {
     try {
       setLoading(true);
-      const { data } = await mockApi.getActiveTrips();
-      if (data) {
-        setTrips(data || []);
+      const result = await tripService.getActiveTrips();
+
+      if (result.success) {
+        setTrips(result.data || []);
         setLastRefresh(new Date());
       }
     } catch (error) {
       console.error("Failed to fetch active trips:", error);
+      toast.error("Failed to load active trips");
     } finally {
       setLoading(false);
     }
@@ -360,7 +65,9 @@ const AdminTripsActive = () => {
     const statusMap = {
       Delivered: { variant: "success", icon: CheckCircle },
       InTransit: { variant: "warning", icon: Navigation },
+      AtStore: { variant: "info", icon: MapPin },
       Pending: { variant: "default", icon: Clock },
+      Dispatched: { variant: "info", icon: Navigation },
       Failed: { variant: "danger", icon: AlertCircle },
     };
     const config = statusMap[status] || statusMap.Pending;
@@ -373,11 +80,16 @@ const AdminTripsActive = () => {
     );
   };
 
-  const getProgressPercentage = (completed, total) => {
-    return Math.round((completed / total) * 100);
+  const getProgressPercentage = (assignments) => {
+    if (!assignments || assignments.length === 0) return 0;
+    const completed = assignments.filter(
+      (a) => a.status === "Delivered" || a.status === "Completed"
+    ).length;
+    return Math.round((completed / assignments.length) * 100);
   };
 
   const formatTime = (date) => {
+    if (!date) return "Not set";
     return new Date(date).toLocaleTimeString("en-PH", {
       hour: "2-digit",
       minute: "2-digit",
@@ -396,8 +108,12 @@ const AdminTripsActive = () => {
   // Calculate overall stats
   const stats = {
     totalTrips: trips.length,
-    totalStops: trips.reduce((sum, t) => sum + t.totalStops, 0),
-    completedStops: trips.reduce((sum, t) => sum + t.completedStops, 0),
+    totalStops: trips.reduce((sum, t) => sum + (t.assignments?.length || 0), 0),
+    completedStops: trips.reduce((sum, t) => {
+      const completed =
+        t.assignments?.filter((a) => a.status === "Delivered").length || 0;
+      return sum + completed;
+    }, 0),
     activeDispatchers: trips.length,
   };
 
@@ -527,12 +243,13 @@ const AdminTripsActive = () => {
         ) : (
           <div className="space-y-4">
             {trips.map((trip) => {
-              const progress = getProgressPercentage(
-                trip.completedStops,
-                trip.totalStops
-              );
-              const currentStop = trip.stops.find(
-                (s) => s.status === "InTransit"
+              const progress = getProgressPercentage(trip.assignments);
+              const completedStops =
+                trip.assignments?.filter((a) => a.status === "Delivered")
+                  .length || 0;
+              const totalStops = trip.assignments?.length || 0;
+              const currentStop = trip.assignments?.find(
+                (a) => a.status === "InTransit" || a.status === "AtStore"
               );
 
               return (
@@ -552,22 +269,24 @@ const AdminTripsActive = () => {
                             <div className="flex items-center gap-4 mt-1 text-sm text-gray-600 dark:text-gray-400">
                               <div className="flex items-center gap-1">
                                 <User className="h-4 w-4" />
-                                {trip.dispatcherName}
+                                {trip.dispatcherName || "Not assigned"}
                               </div>
+                              {trip.vehicle && (
+                                <div className="flex items-center gap-1">
+                                  <Package className="h-4 w-4" />
+                                  {trip.vehicle}
+                                </div>
+                              )}
                               <div className="flex items-center gap-1">
-                                <Phone className="h-4 w-4" />
-                                {trip.dispatcherPhone}
-                              </div>
-                              <div className="flex items-center gap-1">
-                                <Package className="h-4 w-4" />
-                                {trip.vehicle}
+                                <MapPin className="h-4 w-4" />
+                                {trip.warehouseName}
                               </div>
                             </div>
                           </div>
                         </div>
                         <div className="text-right">
                           <Badge variant="info" className="mb-2">
-                            In Progress
+                            {trip.status}
                           </Badge>
                           <div className="text-sm text-gray-500 dark:text-gray-400">
                             Started: {formatTime(trip.departureAt)}
@@ -579,8 +298,7 @@ const AdminTripsActive = () => {
                       <div>
                         <div className="flex items-center justify-between mb-2">
                           <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                            Progress: {trip.completedStops} of {trip.totalStops}{" "}
-                            stops
+                            Progress: {completedStops} of {totalStops} stops
                           </span>
                           <span className="text-sm font-semibold text-blue-600 dark:text-blue-400">
                             {progress}%
@@ -594,35 +312,25 @@ const AdminTripsActive = () => {
                         </div>
                       </div>
 
-                      {/* Current Location & Status */}
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-                        <div>
-                          <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">
-                            Current Location
-                          </div>
-                          <div className="flex items-center gap-2 text-sm font-medium text-gray-900 dark:text-white">
-                            <MapPin className="h-4 w-4 text-red-500" />
-                            {trip.currentLocation}
-                          </div>
-                          <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                            Updated {getTimeAgo(trip.lastUpdate)}
-                          </div>
-                        </div>
-                        <div>
+                      {/* Current Stop */}
+                      {currentStop && (
+                        <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
                           <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">
                             Current Stop
                           </div>
-                          <div className="text-sm font-medium text-gray-900 dark:text-white">
-                            {currentStop
-                              ? currentStop.storeName
-                              : "Between stops"}
+                          <div className="flex items-center justify-between">
+                            <div className="text-sm font-medium text-gray-900 dark:text-white">
+                              {currentStop.storeName}
+                            </div>
+                            {getStopStatusBadge(currentStop.status)}
                           </div>
                           <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                            Est. completion:{" "}
-                            {formatTime(trip.estimatedCompletion)}
+                            {currentStop.storeBarangay &&
+                              `${currentStop.storeBarangay}, `}
+                            {currentStop.storeCity}
                           </div>
                         </div>
-                      </div>
+                      )}
 
                       {/* Recent Stops */}
                       <div>
@@ -634,40 +342,45 @@ const AdminTripsActive = () => {
                             variant="outline"
                             size="sm"
                             className="flex items-center gap-1"
+                            onClick={() => navigate(`/admin/trips/${trip.id}`)}
                           >
                             <Eye className="h-3 w-3" />
                             View All
                           </Button>
                         </div>
                         <div className="space-y-2">
-                          {trip.stops.slice(0, 5).map((stop, index) => (
-                            <div
-                              key={stop.id}
-                              className="flex items-center justify-between p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg"
-                            >
-                              <div className="flex items-center gap-3">
-                                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-sm font-medium text-gray-600 dark:text-gray-300">
-                                  {index + 1}
-                                </div>
-                                <div>
-                                  <div className="text-sm font-medium text-gray-900 dark:text-white">
-                                    {stop.storeName}
+                          {trip.assignments
+                            ?.slice(0, 5)
+                            .map((assignment, index) => (
+                              <div
+                                key={assignment.id}
+                                className="flex items-center justify-between p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg"
+                              >
+                                <div className="flex items-center gap-3">
+                                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-sm font-medium text-gray-600 dark:text-gray-300">
+                                    {assignment.sequenceNo || index + 1}
                                   </div>
-                                  {stop.deliveredAt && (
-                                    <div className="text-xs text-gray-500 dark:text-gray-400">
-                                      Delivered at{" "}
-                                      {formatTime(stop.deliveredAt)}
+                                  <div>
+                                    <div className="text-sm font-medium text-gray-900 dark:text-white">
+                                      {assignment.storeName}
                                     </div>
-                                  )}
+                                    <div className="text-xs text-gray-500 dark:text-gray-400">
+                                      Order #{assignment.orderId}
+                                    </div>
+                                  </div>
                                 </div>
+                                {getStopStatusBadge(assignment.status)}
                               </div>
-                              {getStopStatusBadge(stop.status)}
-                            </div>
-                          ))}
-                          {trip.stops.length > 5 && (
+                            ))}
+                          {trip.assignments && trip.assignments.length > 5 && (
                             <div className="text-center">
-                              <button className="text-sm text-blue-600 dark:text-blue-400 hover:underline">
-                                Show {trip.stops.length - 5} more stops
+                              <button
+                                onClick={() =>
+                                  navigate(`/admin/trips/${trip.id}`)
+                                }
+                                className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
+                              >
+                                Show {trip.assignments.length - 5} more stops
                               </button>
                             </div>
                           )}
@@ -676,10 +389,20 @@ const AdminTripsActive = () => {
 
                       {/* Actions */}
                       <div className="flex items-center justify-end gap-2 pt-2 border-t border-gray-200 dark:border-gray-700">
-                        <Button variant="outline" size="sm">
-                          Contact Dispatcher
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => navigate(`/admin/trips/${trip.id}`)}
+                        >
+                          View Details
                         </Button>
-                        <Button size="sm" className="flex items-center gap-2">
+                        <Button
+                          size="sm"
+                          className="flex items-center gap-2"
+                          onClick={() =>
+                            navigate(`/admin/trips/${trip.id}/track`)
+                          }
+                        >
                           <MapPin className="h-4 w-4" />
                           Track Live
                         </Button>

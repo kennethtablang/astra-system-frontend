@@ -1,4 +1,4 @@
-// src/services/orderService.js
+// src/services/orderService.js - CORRECTED VERSION
 import api from '../api/axios';
 
 const orderService = {
@@ -52,24 +52,20 @@ const orderService = {
     }
   },
 
-  // Confirm order - SIMPLIFIED
-  async confirmOrder(orderId, notes) {
+  // ✅ FIXED: Confirm order
+  async confirmOrder(confirmData) {
     try {
-      const { data } = await api.post(`/order/${orderId}/confirm`, { 
-        notes: notes || undefined 
-      });
+      const { data } = await api.post('/order/confirm', confirmData);
       return data;
     } catch (error) {
       throw error.response?.data || error;
     }
   },
 
-  // Mark order as packed - SIMPLIFIED
-  async markOrderAsPacked(orderId, notes) {
+  // ✅ FIXED: Mark order as packed
+  async markOrderAsPacked(packedData) {
     try {
-      const { data } = await api.post(`/order/${orderId}/pack-simple`, { 
-        notes: notes || undefined 
-      });
+      const { data } = await api.post('/order/pack', packedData);
       return data;
     } catch (error) {
       throw error.response?.data || error;
@@ -125,7 +121,7 @@ const orderService = {
   // Generate pick list
   async generatePickList(warehouseId, orderIds) {
     try {
-      const { data } = await api.post(`/order/pick-list`, orderIds, {
+      const { data } = await api.post('/order/pick-list', orderIds, {
         params: { warehouseId },
         responseType: 'blob'
       });
@@ -160,38 +156,9 @@ const orderService = {
   // Dispatch order (Assign to trip)
   async dispatchOrder(orderId, tripId) {
     try {
-      const { data } = await api.post(`/order/${orderId}/dispatch`, { orderId, tripId });
-      return data;
-    } catch (error) {
-      throw error.response?.data || error;
-    }
-  },
-
-  // Mark order in transit - SIMPLIFIED
-  async markOrderInTransit(orderId) {
-    try {
-      const { data } = await api.post(`/order/${orderId}/in-transit-simple`);
-      return data;
-    } catch (error) {
-      throw error.response?.data || error;
-    }
-  },
-
-  // Mark order at store - SIMPLIFIED
-  async markOrderAtStore(orderId) {
-    try {
-      const { data } = await api.post(`/order/${orderId}/at-store-simple`);
-      return data;
-    } catch (error) {
-      throw error.response?.data || error;
-    }
-  },
-
-  // Mark order delivered - SIMPLIFIED
-  async markOrderDelivered(orderId, notes) {
-    try {
-      const { data } = await api.post(`/order/${orderId}/delivered-simple`, { 
-        notes: notes || undefined 
+      const { data } = await api.post(`/order/${orderId}/dispatch`, { 
+        orderId, 
+        tripId 
       });
       return data;
     } catch (error) {
@@ -199,10 +166,44 @@ const orderService = {
     }
   },
 
-  // Mark order returned - SIMPLIFIED
+  // Mark order in transit
+  async markOrderInTransit(orderId) {
+    try {
+      const { data } = await api.post(`/order/${orderId}/in-transit`);
+      return data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
+  },
+
+  // Mark order at store
+  async markOrderAtStore(orderId) {
+    try {
+      const { data } = await api.post(`/order/${orderId}/at-store`);
+      return data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
+  },
+
+  // Mark order delivered
+  async markOrderDelivered(orderId, notes) {
+    try {
+      const { data } = await api.post(`/order/${orderId}/delivered`, { 
+        orderId,
+        notes: notes || null 
+      });
+      return data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
+  },
+
+  // Mark order returned
   async markOrderReturned(orderId, reason) {
     try {
-      const { data } = await api.post(`/order/${orderId}/returned-simple`, { 
+      const { data } = await api.post(`/order/${orderId}/returned`, { 
+        orderId,
         reason 
       });
       return data;

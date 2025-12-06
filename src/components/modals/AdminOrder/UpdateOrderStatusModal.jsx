@@ -131,20 +131,20 @@ export const UpdateOrderStatusModal = ({
         case "confirm":
           result = await orderService.confirmOrder({
             orderId: order.id,
-            warehouseId: order.warehouseId,
-            notes: notes || undefined,
+            warehouseId: order.warehouseId || 1, // Default warehouse if not set
+            itemAdjustments: null,
+            notes: notes || null,
           });
           break;
 
         case "pack":
           result = await orderService.markOrderAsPacked({
             orderId: order.id,
-            notes: notes || undefined,
+            notes: notes || null,
           });
           break;
 
         case "dispatch":
-          // FIXED: Changed toast.info to toast.error
           toast.error("Please assign order to a trip first");
           setLoading(false);
           return;
@@ -158,10 +158,7 @@ export const UpdateOrderStatusModal = ({
           break;
 
         case "delivered":
-          result = await orderService.markOrderDelivered(
-            order.id,
-            notes || undefined
-          );
+          result = await orderService.markOrderDelivered(order.id, notes);
           break;
 
         case "returned":
@@ -195,7 +192,11 @@ export const UpdateOrderStatusModal = ({
       }
     } catch (error) {
       console.error("Order status update error:", error);
-      toast.error("Failed to update order status");
+      toast.error(
+        error.response?.data?.message ||
+          error.message ||
+          "Failed to update order status"
+      );
     } finally {
       setLoading(false);
     }

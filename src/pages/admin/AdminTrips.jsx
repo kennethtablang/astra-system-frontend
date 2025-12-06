@@ -1,4 +1,6 @@
+// src/pages/admin/AdminTrips.jsx
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Truck,
   Plus,
@@ -12,180 +14,23 @@ import {
   DollarSign,
   FileText,
   Navigation,
-  Loader2,
+  AlertCircle,
+  Eye,
 } from "lucide-react";
 import DashboardLayout from "../../components/layouts/DashboardLayout";
-
-// UI Components
-const Card = ({ children, className = "" }) => (
-  <div
-    className={`bg-white dark:bg-gray-800 rounded-lg shadow dark:shadow-gray-900/50 transition-colors ${className}`}
-  >
-    {children}
-  </div>
-);
-
-const CardContent = ({ children, className = "" }) => (
-  <div className={`px-6 py-4 ${className}`}>{children}</div>
-);
-
-const Badge = ({ children, variant = "default", className = "" }) => {
-  const variants = {
-    default: "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200",
-    success:
-      "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
-    info: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
-    danger: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
-  };
-
-  return (
-    <span
-      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${variants[variant]} ${className}`}
-    >
-      {children}
-    </span>
-  );
-};
-
-const Button = ({
-  children,
-  variant = "primary",
-  size = "md",
-  disabled = false,
-  onClick,
-  className = "",
-}) => {
-  const variants = {
-    primary: "bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500",
-    outline:
-      "border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 focus:ring-gray-500",
-  };
-
-  const sizes = {
-    sm: "px-3 py-1.5 text-sm",
-    md: "px-4 py-2 text-sm",
-  };
-
-  return (
-    <button
-      onClick={onClick}
-      disabled={disabled}
-      className={`inline-flex items-center justify-center font-medium rounded-lg focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors ${variants[variant]} ${sizes[size]} ${className}`}
-    >
-      {children}
-    </button>
-  );
-};
-
-const Select = ({
-  value,
-  onChange,
-  options,
-  className = "",
-  disabled = false,
-}) => (
-  <select
-    value={value}
-    onChange={onChange}
-    disabled={disabled}
-    className={`block px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${className}`}
-  >
-    {options.map((option) => (
-      <option key={option.value} value={option.value}>
-        {option.label}
-      </option>
-    ))}
-  </select>
-);
-
-const LoadingSpinner = ({ size = "md" }) => {
-  const sizes = { md: "h-8 w-8", lg: "h-12 w-12" };
-  return <Loader2 className={`animate-spin text-blue-600 ${sizes[size]}`} />;
-};
-
-// Mock API
-const mockApi = {
-  getTrips: async () => {
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    return {
-      success: true,
-      data: {
-        items: [
-          {
-            id: 1,
-            warehouseName: "Main Warehouse",
-            dispatcherName: "Juan Dela Cruz",
-            status: "InProgress",
-            departureAt: new Date("2024-12-03T08:00:00"),
-            orderCount: 12,
-            totalValue: 45000,
-            vehicle: "ABC-1234",
-            createdAt: new Date("2024-12-02"),
-          },
-          {
-            id: 2,
-            warehouseName: "North Warehouse",
-            dispatcherName: "Maria Santos",
-            status: "Created",
-            departureAt: new Date("2024-12-03T10:00:00"),
-            orderCount: 8,
-            totalValue: 32000,
-            vehicle: "XYZ-5678",
-            createdAt: new Date("2024-12-02"),
-          },
-          {
-            id: 3,
-            warehouseName: "South Warehouse",
-            dispatcherName: "Pedro Reyes",
-            status: "Completed",
-            departureAt: new Date("2024-12-02T09:00:00"),
-            orderCount: 15,
-            totalValue: 58000,
-            vehicle: "DEF-9012",
-            createdAt: new Date("2024-12-01"),
-          },
-          {
-            id: 4,
-            warehouseName: "East Warehouse",
-            dispatcherName: "Ana Lopez",
-            status: "InProgress",
-            departureAt: new Date("2024-12-03T07:30:00"),
-            orderCount: 10,
-            totalValue: 38000,
-            vehicle: "GHI-3456",
-            createdAt: new Date("2024-12-02"),
-          },
-          {
-            id: 5,
-            warehouseName: "West Warehouse",
-            dispatcherName: "Carlos Ramos",
-            status: "Created",
-            departureAt: new Date("2024-12-03T14:00:00"),
-            orderCount: 6,
-            totalValue: 22000,
-            vehicle: "JKL-7890",
-            createdAt: new Date("2024-12-02"),
-          },
-        ],
-        totalCount: 5,
-      },
-    };
-  },
-  getWarehouses: async () => {
-    return {
-      success: true,
-      data: [
-        { id: 1, name: "Main Warehouse" },
-        { id: 2, name: "North Warehouse" },
-        { id: 3, name: "South Warehouse" },
-        { id: 4, name: "East Warehouse" },
-        { id: 5, name: "West Warehouse" },
-      ],
-    };
-  },
-};
+import { Card, CardContent } from "../../components/ui/Card";
+import { Badge } from "../../components/ui/Badge";
+import { Button } from "../../components/ui/Button";
+import { Select } from "../../components/ui/Select";
+import { LoadingSpinner } from "../../components/ui/Loading";
+import tripService from "../../services/tripService";
+import { warehouseService } from "../../services/warehouseService";
+import { toast } from "react-hot-toast";
 
 const AdminTrips = () => {
+  const navigate = useNavigate();
+
+  // State
   const [trips, setTrips] = useState([]);
   const [warehouses, setWarehouses] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -194,21 +39,47 @@ const AdminTrips = () => {
   const [filterWarehouse, setFilterWarehouse] = useState("All");
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+  const [totalTrips, setTotalTrips] = useState(0);
+  const [stats, setStats] = useState({
+    totalTrips: 0,
+    inProgress: 0,
+    completed: 0,
+    totalValue: 0,
+  });
 
   useEffect(() => {
     fetchTrips();
     fetchWarehouses();
-  }, []);
+  }, [currentPage, pageSize, filterStatus, filterWarehouse]);
 
   const fetchTrips = async () => {
     try {
       setLoading(true);
-      const { data } = await mockApi.getTrips();
-      if (data) {
-        setTrips(data.items || []);
+      const params = {
+        pageNumber: currentPage,
+        pageSize: pageSize,
+      };
+
+      if (filterStatus !== "All") {
+        params.status = filterStatus;
+      }
+
+      if (filterWarehouse !== "All") {
+        params.warehouseId = parseInt(filterWarehouse);
+      }
+
+      const result = await tripService.getTrips(params);
+
+      if (result.success) {
+        setTrips(result.data.items || []);
+        setTotalTrips(result.data.totalCount || 0);
+
+        // Calculate stats
+        calculateStats(result.data.items || []);
       }
     } catch (error) {
       console.error("Failed to fetch trips:", error);
+      toast.error("Failed to load trips");
     } finally {
       setLoading(false);
     }
@@ -216,18 +87,76 @@ const AdminTrips = () => {
 
   const fetchWarehouses = async () => {
     try {
-      const { data } = await mockApi.getWarehouses();
-      if (data) {
-        setWarehouses(data || []);
+      const result = await warehouseService.getWarehouses();
+      if (result.success) {
+        setWarehouses(result.data || []);
       }
     } catch (error) {
       console.error("Failed to fetch warehouses:", error);
     }
   };
 
+  const calculateStats = (tripsData) => {
+    const stats = {
+      totalTrips: tripsData.length,
+      inProgress: tripsData.filter(
+        (t) => t.status === "Started" || t.status === "InProgress"
+      ).length,
+      completed: tripsData.filter((t) => t.status === "Completed").length,
+      totalValue: tripsData.reduce((sum, t) => sum + (t.totalValue || 0), 0),
+    };
+    setStats(stats);
+  };
+
+  const handleCancelTrip = async (tripId) => {
+    if (
+      !window.confirm(
+        "Are you sure you want to cancel this trip? Orders will be returned to packed status."
+      )
+    ) {
+      return;
+    }
+
+    try {
+      const result = await tripService.cancelTrip(tripId, "Cancelled by admin");
+      if (result.success) {
+        toast.success("Trip cancelled successfully");
+        fetchTrips();
+      } else {
+        toast.error(result.message || "Failed to cancel trip");
+      }
+    } catch (error) {
+      console.error("Error cancelling trip:", error);
+      toast.error("Failed to cancel trip");
+    }
+  };
+
+  const handleGenerateManifest = async (tripId) => {
+    try {
+      const pdfBlob = await tripService.generateTripManifestPdf(tripId);
+
+      // Create download link
+      const url = window.URL.createObjectURL(new Blob([pdfBlob]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", `trip_manifest_${tripId}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+
+      toast.success("Manifest downloaded successfully");
+    } catch (error) {
+      console.error("Error generating manifest:", error);
+      toast.error("Failed to generate manifest");
+    }
+  };
+
   const getStatusBadge = (status) => {
     const statusMap = {
       Created: { variant: "default", label: "Created" },
+      Assigned: { variant: "info", label: "Assigned" },
+      Started: { variant: "info", label: "Started" },
       InProgress: { variant: "info", label: "In Progress" },
       Completed: { variant: "success", label: "Completed" },
       Cancelled: { variant: "danger", label: "Cancelled" },
@@ -244,6 +173,7 @@ const AdminTrips = () => {
   };
 
   const formatDateTime = (date) => {
+    if (!date) return "Not set";
     return new Date(date).toLocaleString("en-PH", {
       month: "short",
       day: "numeric",
@@ -253,39 +183,27 @@ const AdminTrips = () => {
     });
   };
 
-  // Filter trips
+  // Filter trips by search term
   const filteredTrips = trips.filter((trip) => {
-    const matchesSearch =
-      searchTerm === "" ||
-      trip.dispatcherName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      trip.vehicle?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus =
-      filterStatus === "All" || trip.status === filterStatus;
-    const matchesWarehouse =
-      filterWarehouse === "All" ||
-      trip.warehouseName ===
-        warehouses.find((w) => w.id.toString() === filterWarehouse)?.name;
-    return matchesSearch && matchesStatus && matchesWarehouse;
+    if (!searchTerm) return true;
+    const search = searchTerm.toLowerCase();
+    return (
+      trip.dispatcherName?.toLowerCase().includes(search) ||
+      trip.vehicle?.toLowerCase().includes(search) ||
+      trip.id.toString().includes(search)
+    );
   });
 
   // Pagination
-  const totalTrips = filteredTrips.length;
   const totalPages = Math.ceil(totalTrips / pageSize);
-  const startIndex = (currentPage - 1) * pageSize;
+  const startIndex = (currentPage - 1) * pageSize + 1;
   const endIndex = Math.min(currentPage * pageSize, totalTrips);
-  const paginatedTrips = filteredTrips.slice(startIndex, endIndex);
-
-  // Calculate stats
-  const stats = {
-    totalTrips: trips.length,
-    inProgress: trips.filter((t) => t.status === "InProgress").length,
-    completed: trips.filter((t) => t.status === "Completed").length,
-    totalValue: trips.reduce((sum, t) => sum + t.totalValue, 0),
-  };
 
   const statusOptions = [
     { value: "All", label: "All Status" },
     { value: "Created", label: "Created" },
+    { value: "Assigned", label: "Assigned" },
+    { value: "Started", label: "Started" },
     { value: "InProgress", label: "In Progress" },
     { value: "Completed", label: "Completed" },
     { value: "Cancelled", label: "Cancelled" },
@@ -293,7 +211,10 @@ const AdminTrips = () => {
 
   const warehouseOptions = [
     { value: "All", label: "All Warehouses" },
-    ...warehouses.map((w) => ({ value: w.id.toString(), label: w.name })),
+    ...warehouses.map((w) => ({
+      value: w.id.toString(),
+      label: w.name,
+    })),
   ];
 
   const pageSizeOptions = [
@@ -315,7 +236,10 @@ const AdminTrips = () => {
               Manage delivery trips and routes
             </p>
           </div>
-          <Button className="flex items-center gap-2">
+          <Button
+            onClick={() => navigate("/admin/trips/create")}
+            className="flex items-center gap-2"
+          >
             <Plus className="h-4 w-4" />
             Create Trip
           </Button>
@@ -396,7 +320,7 @@ const AdminTrips = () => {
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <input
                   type="text"
-                  placeholder="Search by dispatcher or vehicle..."
+                  placeholder="Search by dispatcher, vehicle, or trip ID..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="w-full pl-9 pr-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
@@ -406,13 +330,19 @@ const AdminTrips = () => {
               <div className="flex gap-2">
                 <Select
                   value={filterStatus}
-                  onChange={(e) => setFilterStatus(e.target.value)}
+                  onChange={(e) => {
+                    setFilterStatus(e.target.value);
+                    setCurrentPage(1);
+                  }}
                   options={statusOptions}
                   className="w-40"
                 />
                 <Select
                   value={filterWarehouse}
-                  onChange={(e) => setFilterWarehouse(e.target.value)}
+                  onChange={(e) => {
+                    setFilterWarehouse(e.target.value);
+                    setCurrentPage(1);
+                  }}
                   options={warehouseOptions}
                   className="w-48"
                 />
@@ -428,15 +358,26 @@ const AdminTrips = () => {
               <div className="flex items-center justify-center py-12">
                 <LoadingSpinner size="lg" />
               </div>
-            ) : paginatedTrips.length === 0 ? (
+            ) : filteredTrips.length === 0 ? (
               <div className="text-center py-12">
                 <Truck className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                 <h3 className="text-lg font-medium text-gray-900 dark:text-white">
                   No trips found
                 </h3>
                 <p className="text-gray-500 dark:text-gray-400 mt-2">
-                  Try adjusting your search or filters
+                  {searchTerm ||
+                  filterStatus !== "All" ||
+                  filterWarehouse !== "All"
+                    ? "Try adjusting your search or filters"
+                    : "Get started by creating your first trip"}
                 </p>
+                <Button
+                  onClick={() => navigate("/admin/trips/create")}
+                  className="mt-4"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create Trip
+                </Button>
               </div>
             ) : (
               <>
@@ -468,7 +409,7 @@ const AdminTrips = () => {
                       </tr>
                     </thead>
                     <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                      {paginatedTrips.map((trip) => (
+                      {filteredTrips.map((trip) => (
                         <tr
                           key={trip.id}
                           className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
@@ -498,7 +439,7 @@ const AdminTrips = () => {
                             <div className="flex items-center gap-2">
                               <User className="h-4 w-4 text-gray-400" />
                               <span className="text-sm text-gray-900 dark:text-white">
-                                {trip.dispatcherName}
+                                {trip.dispatcherName || "Not assigned"}
                               </span>
                             </div>
                           </td>
@@ -520,7 +461,7 @@ const AdminTrips = () => {
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="font-medium text-gray-900 dark:text-white">
-                              {formatCurrency(trip.totalValue)}
+                              {formatCurrency(trip.totalValue || 0)}
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
@@ -529,30 +470,52 @@ const AdminTrips = () => {
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="flex items-center justify-end gap-2">
                               <button
+                                onClick={() =>
+                                  navigate(`/admin/trips/${trip.id}`)
+                                }
                                 className="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
-                                title="View manifest"
+                                title="View details"
+                              >
+                                <Eye className="h-4 w-4" />
+                              </button>
+                              <button
+                                onClick={() => handleGenerateManifest(trip.id)}
+                                className="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+                                title="Download manifest"
                               >
                                 <FileText className="h-4 w-4" />
                               </button>
-                              <button
-                                className="p-2 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors"
-                                title="Track trip"
-                              >
-                                <Navigation className="h-4 w-4" />
-                              </button>
-                              <button
-                                className="p-2 text-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                                title="Edit trip"
-                              >
-                                <Edit className="h-4 w-4" />
-                              </button>
-                              {trip.status === "Created" && (
+                              {(trip.status === "Started" ||
+                                trip.status === "InProgress") && (
                                 <button
-                                  className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                                  title="Cancel trip"
+                                  onClick={() =>
+                                    navigate(`/admin/trips/${trip.id}/track`)
+                                  }
+                                  className="p-2 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors"
+                                  title="Track trip"
                                 >
-                                  <Trash2 className="h-4 w-4" />
+                                  <Navigation className="h-4 w-4" />
                                 </button>
+                              )}
+                              {trip.status === "Created" && (
+                                <>
+                                  <button
+                                    onClick={() =>
+                                      navigate(`/admin/trips/${trip.id}/edit`)
+                                    }
+                                    className="p-2 text-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                                    title="Edit trip"
+                                  >
+                                    <Edit className="h-4 w-4" />
+                                  </button>
+                                  <button
+                                    onClick={() => handleCancelTrip(trip.id)}
+                                    className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                                    title="Cancel trip"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </button>
+                                </>
                               )}
                             </div>
                           </td>
@@ -576,7 +539,7 @@ const AdminTrips = () => {
                         className="w-20"
                       />
                       <span className="text-gray-700 dark:text-gray-300 whitespace-nowrap">
-                        {startIndex + 1}-{endIndex} of {totalTrips}
+                        {startIndex}-{endIndex} of {totalTrips}
                       </span>
                     </div>
 
