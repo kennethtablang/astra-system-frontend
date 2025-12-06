@@ -144,7 +144,8 @@ export const UpdateOrderStatusModal = ({
           break;
 
         case "dispatch":
-          toast.info("Please assign order to a trip first");
+          // FIXED: Changed toast.info to toast.error
+          toast.error("Please assign order to a trip first");
           setLoading(false);
           return;
 
@@ -238,7 +239,7 @@ export const UpdateOrderStatusModal = ({
                   key={action.type}
                   onClick={() => handleAction(action.type)}
                   disabled={loading}
-                  className="w-full p-4 border-2 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors text-left"
+                  className="w-full p-4 border-2 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors text-left disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <div className="flex items-start gap-3">
                     <Icon className="h-6 w-6 text-blue-600 flex-shrink-0" />
@@ -268,6 +269,7 @@ export const UpdateOrderStatusModal = ({
               placeholder="Why is this order being returned?"
               rows={3}
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              disabled={loading}
             />
           </div>
         )}
@@ -284,12 +286,13 @@ export const UpdateOrderStatusModal = ({
                 placeholder="Add any additional notes..."
                 rows={3}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                disabled={loading}
               />
             </div>
           )}
 
         <div className="flex justify-end pt-4">
-          <Button variant="outline" onClick={onClose}>
+          <Button variant="outline" onClick={onClose} disabled={loading}>
             Close
           </Button>
         </div>

@@ -32,6 +32,16 @@ const productService = {
     }
   },
 
+  // Get product by Barcode - ADDED
+  async getProductByBarcode(barcode) {
+    try {
+      const { data } = await api.get(`/product/barcode/${barcode}`);
+      return data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
+  },
+
   // Get products for lookup
   async getProductsForLookup(searchTerm) {
     try {

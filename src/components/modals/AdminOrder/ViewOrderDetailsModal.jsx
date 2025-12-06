@@ -21,7 +21,7 @@ import { LoadingSpinner } from "../../ui/Loading";
 import orderService from "../../../services/orderService";
 import { toast } from "react-hot-toast";
 
-export const ViewOrderDetailsModal = ({ isOpen, onClose, orderId, onEdit }) => {
+export const ViewOrderDetailsModal = ({ isOpen, onClose, orderId }) => {
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -120,21 +120,6 @@ export const ViewOrderDetailsModal = ({ isOpen, onClose, orderId, onEdit }) => {
               <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                 Created {formatDate(order.createdAt)}
               </p>
-            </div>
-            <div className="flex gap-2">
-              {onEdit && order.status === "Pending" && (
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    onEdit(order);
-                    onClose();
-                  }}
-                  className="flex items-center gap-2"
-                >
-                  <Edit className="h-4 w-4" />
-                  Edit Order
-                </Button>
-              )}
             </div>
           </div>
 

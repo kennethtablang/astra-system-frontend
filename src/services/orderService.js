@@ -52,20 +52,24 @@ const orderService = {
     }
   },
 
-  // Confirm order
-  async confirmOrder(confirmData) {
+  // Confirm order - SIMPLIFIED
+  async confirmOrder(orderId, notes) {
     try {
-      const { data } = await api.post('/order/confirm', confirmData);
+      const { data } = await api.post(`/order/${orderId}/confirm`, { 
+        notes: notes || undefined 
+      });
       return data;
     } catch (error) {
       throw error.response?.data || error;
     }
   },
 
-  // Mark order as packed
-  async markOrderAsPacked(packedData) {
+  // Mark order as packed - SIMPLIFIED
+  async markOrderAsPacked(orderId, notes) {
     try {
-      const { data } = await api.post('/order/pack', packedData);
+      const { data } = await api.post(`/order/${orderId}/pack-simple`, { 
+        notes: notes || undefined 
+      });
       return data;
     } catch (error) {
       throw error.response?.data || error;
@@ -142,6 +146,7 @@ const orderService = {
       throw error.response?.data || error;
     }
   },
+
   // Edit order (Pending orders only)
   async editOrder(orderId, orderData) {
     try {
@@ -162,40 +167,44 @@ const orderService = {
     }
   },
 
-  // Mark order in transit
+  // Mark order in transit - SIMPLIFIED
   async markOrderInTransit(orderId) {
     try {
-      const { data } = await api.post(`/order/${orderId}/in-transit`);
+      const { data } = await api.post(`/order/${orderId}/in-transit-simple`);
       return data;
     } catch (error) {
       throw error.response?.data || error;
     }
   },
 
-  // Mark order at store
+  // Mark order at store - SIMPLIFIED
   async markOrderAtStore(orderId) {
     try {
-      const { data } = await api.post(`/order/${orderId}/at-store`);
+      const { data } = await api.post(`/order/${orderId}/at-store-simple`);
       return data;
     } catch (error) {
       throw error.response?.data || error;
     }
   },
 
-  // Mark order delivered
+  // Mark order delivered - SIMPLIFIED
   async markOrderDelivered(orderId, notes) {
     try {
-      const { data } = await api.post(`/order/${orderId}/delivered`, { orderId, notes });
+      const { data } = await api.post(`/order/${orderId}/delivered-simple`, { 
+        notes: notes || undefined 
+      });
       return data;
     } catch (error) {
       throw error.response?.data || error;
     }
   },
 
-  // Mark order returned
+  // Mark order returned - SIMPLIFIED
   async markOrderReturned(orderId, reason) {
     try {
-      const { data } = await api.post(`/order/${orderId}/returned`, { orderId, reason });
+      const { data } = await api.post(`/order/${orderId}/returned-simple`, { 
+        reason 
+      });
       return data;
     } catch (error) {
       throw error.response?.data || error;
