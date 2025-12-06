@@ -18,6 +18,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 import DashboardLayout from "../../components/layouts/DashboardLayout";
+import { ViewOrderDetailsModal } from "../../components/modals/AdminOrder/ViewOrderDetailsModal";
 import { Card, CardContent } from "../../components/ui/Card";
 import { Badge } from "../../components/ui/Badge";
 import { Button } from "../../components/ui/Button";
@@ -32,6 +33,8 @@ const AdminTripDetails = () => {
   const [trip, setTrip] = useState(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [viewOrderModalOpen, setViewOrderModalOpen] = useState(false);
+  const [selectedOrderId, setSelectedOrderId] = useState(null);
 
   useEffect(() => {
     fetchTripDetails();
@@ -491,9 +494,10 @@ const AdminTripDetails = () => {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() =>
-                            navigate(`/admin/orders/${assignment.orderId}`)
-                          }
+                          onClick={() => {
+                            setSelectedOrderId(assignment.orderId);
+                            setViewOrderModalOpen(true);
+                          }}
                         >
                           View
                         </Button>
@@ -512,6 +516,14 @@ const AdminTripDetails = () => {
           </Card>
         </div>
       </div>
+      <ViewOrderDetailsModal
+        isOpen={viewOrderModalOpen}
+        onClose={() => {
+          setViewOrderModalOpen(false);
+          setSelectedOrderId(null);
+        }}
+        orderId={selectedOrderId}
+      />
     </DashboardLayout>
   );
 };

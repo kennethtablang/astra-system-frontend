@@ -7,9 +7,8 @@ import {
   Calendar,
   MapPin,
   TrendingUp,
-  Edit,
-  CheckCircle,
   Clock,
+  CheckCircle,
   XCircle,
   Truck,
   AlertCircle,
@@ -99,7 +98,7 @@ export const ViewOrderDetailsModal = ({ isOpen, onClose, orderId }) => {
       {loading ? (
         <LoadingSpinner />
       ) : !order ? (
-        <div className="text-center py-8">
+        <div className="text-center py-12">
           <AlertCircle className="h-12 w-12 text-red-400 mx-auto mb-4" />
           <p className="text-gray-600 dark:text-gray-400">
             Failed to load order details
