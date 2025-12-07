@@ -149,11 +149,11 @@ const AdminTripTracking = () => {
           <div className="flex items-center gap-4">
             <Button
               variant="outline"
+              size="sm"
               onClick={() => navigate(`/admin/trips/${id}`)}
               className="flex items-center gap-2"
             >
               <ArrowLeft className="h-4 w-4" />
-              Back
             </Button>
             <div>
               <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
@@ -183,7 +183,6 @@ const AdminTripTracking = () => {
               className="flex items-center gap-2"
             >
               <RefreshCw className="h-4 w-4" />
-              Refresh
             </Button>
           </div>
         </div>

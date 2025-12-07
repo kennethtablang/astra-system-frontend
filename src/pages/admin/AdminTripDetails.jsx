@@ -200,11 +200,11 @@ const AdminTripDetails = () => {
           <div className="flex items-center gap-4">
             <Button
               variant="outline"
+              size="sm"
               onClick={() => navigate("/admin/trips")}
               className="flex items-center gap-2"
             >
               <ArrowLeft className="h-4 w-4" />
-              Back
             </Button>
             <div>
               <div className="flex items-center gap-3">
@@ -230,7 +230,6 @@ const AdminTripDetails = () => {
               <RefreshCw
                 className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`}
               />
-              Refresh
             </Button>
             <Button
               variant="outline"
@@ -239,7 +238,6 @@ const AdminTripDetails = () => {
               className="flex items-center gap-2"
             >
               <Download className="h-4 w-4" />
-              Manifest
             </Button>
             {(trip.status === "Started" || trip.status === "InProgress") && (
               <Button
@@ -248,7 +246,7 @@ const AdminTripDetails = () => {
                 className="flex items-center gap-2"
               >
                 <Navigation className="h-4 w-4" />
-                Track Live
+                Track
               </Button>
             )}
             {trip.status === "Created" && (
@@ -523,6 +521,9 @@ const AdminTripDetails = () => {
           setSelectedOrderId(null);
         }}
         orderId={selectedOrderId}
+        onSuccess={() => {
+          fetchTripDetails(true); // Refresh trip details after order status changes
+        }}
       />
     </DashboardLayout>
   );

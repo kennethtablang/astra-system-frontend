@@ -83,7 +83,7 @@ const DashboardLayout = ({ children }) => {
         ],
       },
       {
-        name: "Trips",
+        name: "Trips (Distributor)",
         icon: Truck,
         type: "group",
         key: "trips",
@@ -102,7 +102,7 @@ const DashboardLayout = ({ children }) => {
         ],
       },
       {
-        name: "Deliveries",
+        name: "Deliveries (Dispatcher)",
         icon: Truck,
         type: "group",
         key: "deliveries",
