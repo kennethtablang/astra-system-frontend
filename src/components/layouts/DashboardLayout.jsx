@@ -107,20 +107,30 @@ const DashboardLayout = ({ children }) => {
         type: "group",
         key: "deliveries",
         items: [
+          { name: "All Deliveries", href: "/admin/deliveries", icon: Package },
           {
-            name: "Live Tracking",
+            name: "Delivery Live",
             href: "/admin/deliveries/live",
             icon: Navigation,
           },
-          { name: "All Deliveries", href: "/admin/deliveries", icon: Package },
           {
             name: "Delivery Photos",
             href: "/admin/deliveries/photos",
             icon: Camera,
           },
           {
-            name: "Exceptions",
+            name: "Delivery Exceptions",
             href: "/admin/deliveries/exceptions",
+            icon: AlertCircle,
+          },
+          {
+            name: "Deliveries (Dispatcher)",
+            href: "/admin/deliveries-dispatcher",
+            icon: AlertCircle,
+          },
+          {
+            name: "Delivery Details (Dispatcher)",
+            href: "/admin/deliveries/details-dispatcher",
             icon: AlertCircle,
           },
         ],
