@@ -23,11 +23,11 @@ import AdminTripsHistory from "../pages/admin/AdminTripsHistory";
 import AdminTripDetails from "../pages/admin/AdminTripDetails";
 import AdminTripTracking from "../pages/admin/AdminTripTracking";
 import AdminDeliveries from "../pages/admin/AdminDeliveries";
-import AdminDeliveryExceptions from "../pages/admin/AdminDeliveryExceptions";
-import AdminDeliveryLive from "../pages/admin/AdminDeliveryLive";
+import AdminDeliveriesExceptions from "../pages/admin/AdminDeliveriesExceptions";
+import AdminDeliveriesLive from "../pages/admin/AdminDeliveriesLive";
 import AdminDeliveriesPhotos from "../pages/admin/AdminDeliveriesPhotos";
-import DispatcherDeliveries from "../pages/dispatcher/DispatcherDeliveries";
-import DispatcherDeliveryDetails from "../pages/dispatcher/DispatcherDeliveryDetails";
+import DispatcherDeliveries from "../pages/admin/DispatcherDeliveries";
+import DispatcherDeliveryDetails from "../pages/admin/DispatcherDeliveryDetails";
 import AdminStores from "../pages/admin/AdminStores";
 import AdminStoreCategories from "../pages/admin/AdminStoreCategories";
 import AdminProducts from "../pages/admin/AdminProducts";
@@ -102,9 +102,12 @@ const AppRoutes = () => {
         <Route path="/admin/deliveries" element={<AdminDeliveries />} />
         <Route
           path="/admin/deliveries/exceptions"
-          element={<AdminDeliveryExceptions />}
+          element={<AdminDeliveriesExceptions />}
         />
-        <Route path="/admin/deliveries/live" element={<AdminDeliveryLive />} />
+        <Route
+          path="/admin/deliveries/live"
+          element={<AdminDeliveriesLive />}
+        />
         <Route
           path="/admin/deliveries/photos"
           element={<AdminDeliveriesPhotos />}
