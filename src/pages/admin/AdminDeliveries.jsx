@@ -35,11 +35,11 @@ const AdminDeliveries = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("All");
-  const [filterTrip, setFilterTrip] = useState("All");
+  const [filterTrip] = useState("All");
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [totalDeliveries, setTotalDeliveries] = useState(0);
-  const [trips, setTrips] = useState([]);
+  const [setTrips] = useState([]);
   const [stats, setStats] = useState({
     totalDeliveries: 0,
     inTransit: 0,

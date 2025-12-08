@@ -1,3 +1,4 @@
+// src/routes/AppRoutes.jsx - FIXED VERSION
 import { Routes, Route, Navigate } from "react-router-dom";
 import ProtectedRoute from "../components/common/ProtectedRoute";
 import { useAuth } from "../contexts/AuthContext";
@@ -22,12 +23,17 @@ import AdminTripsActive from "../pages/admin/AdminTripsActive";
 import AdminTripsHistory from "../pages/admin/AdminTripsHistory";
 import AdminTripDetails from "../pages/admin/AdminTripDetails";
 import AdminTripTracking from "../pages/admin/AdminTripTracking";
+
+// Delivery Pages (Admin role access)
 import AdminDeliveries from "../pages/admin/AdminDeliveries";
 import AdminDeliveriesExceptions from "../pages/admin/AdminDeliveriesExceptions";
 import AdminDeliveriesLive from "../pages/admin/AdminDeliveriesLive";
 import AdminDeliveriesPhotos from "../pages/admin/AdminDeliveriesPhotos";
+
+// Dispatcher specific pages (shown in admin interface for testing/demo)
 import DispatcherDeliveries from "../pages/admin/DispatcherDeliveries";
 import DispatcherDeliveryDetails from "../pages/admin/DispatcherDeliveryDetails";
+
 import AdminStores from "../pages/admin/AdminStores";
 import AdminStoreCategories from "../pages/admin/AdminStoreCategories";
 import AdminProducts from "../pages/admin/AdminProducts";
@@ -56,7 +62,7 @@ import AgentCreateOrder from "../pages/agent/AgentCreateOrder";
 import AgentOrderDetail from "../pages/agent/AgentOrderDetail";
 import AgentStoresList from "../pages/agent/AgentStoresList";
 
-// Dispatcher Pages
+// Dispatcher Pages (Actual dispatcher role)
 import DispatcherDashboard from "../pages/dispatcher/DispatcherDashboard";
 
 const AppRoutes = () => {
@@ -112,12 +118,14 @@ const AppRoutes = () => {
           path="/admin/deliveries/photos"
           element={<AdminDeliveriesPhotos />}
         />
+
+        {/* Dispatcher View (Admin Testing) - These are demo/testing routes */}
         <Route
           path="/admin/deliveries-dispatcher"
           element={<DispatcherDeliveries />}
         />
         <Route
-          path="/admin/deliveries/details-dispatcher"
+          path="/admin/deliveries/details-dispatcher/:orderId"
           element={<DispatcherDeliveryDetails />}
         />
 
@@ -183,9 +191,17 @@ const AppRoutes = () => {
         <Route path="/agent/stores" element={<AgentStoresList />} />
       </Route>
 
-      {/* Dispatcher Routes */}
+      {/* Dispatcher Routes - Actual dispatcher interface */}
       <Route element={<ProtectedRoute allowedRoles={["Dispatcher"]} />}>
         <Route path="/dispatcher/dashboard" element={<DispatcherDashboard />} />
+        <Route
+          path="/dispatcher/deliveries"
+          element={<DispatcherDeliveries />}
+        />
+        <Route
+          path="/dispatcher/deliveries/:orderId"
+          element={<DispatcherDeliveryDetails />}
+        />
       </Route>
 
       {/* Fallback Routes */}
