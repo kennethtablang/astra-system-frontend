@@ -142,7 +142,7 @@ const DashboardLayout = ({ children }) => {
         key: "stores",
         items: [
           { name: "Store Management", href: "/admin/stores", icon: Store },
-          { name: "Categories", href: "/admin/stores/categories", icon: Tag },
+          { name: "Barangay", href: "/admin/stores/barangay", icon: Tag },
         ],
       },
       {

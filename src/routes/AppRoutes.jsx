@@ -35,7 +35,7 @@ import DispatcherDeliveries from "../pages/admin/DispatcherDeliveries";
 import DispatcherDeliveryDetails from "../pages/admin/DispatcherDeliveryDetails";
 
 import AdminStores from "../pages/admin/AdminStores";
-import AdminStoreCategories from "../pages/admin/AdminStoreCategories";
+import AdminStoreBarangay from "../pages/admin/AdminStoreBarangay";
 import AdminProducts from "../pages/admin/AdminProducts";
 import AdminProductCategories from "../pages/admin/AdminProductCategories";
 import AdminInventory from "../pages/admin/AdminInventory";
@@ -131,10 +131,7 @@ const AppRoutes = () => {
 
         {/* Store Management */}
         <Route path="/admin/stores" element={<AdminStores />} />
-        <Route
-          path="/admin/stores/categories"
-          element={<AdminStoreCategories />}
-        />
+        <Route path="/admin/stores/barangay" element={<AdminStoreBarangay />} />
 
         {/* Product Management */}
         <Route path="/admin/products" element={<AdminProducts />} />
