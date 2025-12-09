@@ -143,6 +143,7 @@ const DashboardLayout = ({ children }) => {
         items: [
           { name: "Store Management", href: "/admin/stores", icon: Store },
           { name: "Barangay", href: "/admin/stores/barangay", icon: Tag },
+          { name: "City", href: "/admin/stores/city", icon: Tag },
         ],
       },
       {

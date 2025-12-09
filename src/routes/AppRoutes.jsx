@@ -35,6 +35,7 @@ import DispatcherDeliveries from "../pages/admin/DispatcherDeliveries";
 import DispatcherDeliveryDetails from "../pages/admin/DispatcherDeliveryDetails";
 
 import AdminStores from "../pages/admin/AdminStores";
+import AdminStoreCity from "../pages/admin/AdminStoreCity";
 import AdminStoreBarangay from "../pages/admin/AdminStoreBarangay";
 import AdminProducts from "../pages/admin/AdminProducts";
 import AdminProductCategories from "../pages/admin/AdminProductCategories";
@@ -131,6 +132,7 @@ const AppRoutes = () => {
 
         {/* Store Management */}
         <Route path="/admin/stores" element={<AdminStores />} />
+        <Route path="/admin/stores/city" element={<AdminStoreCity />} />
         <Route path="/admin/stores/barangay" element={<AdminStoreBarangay />} />
 
         {/* Product Management */}
