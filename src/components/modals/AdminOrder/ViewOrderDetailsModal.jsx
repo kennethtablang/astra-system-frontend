@@ -1,4 +1,4 @@
-// src/components/modals/AdminOrder/ViewOrderDetailsModal.jsx
+// src/components/modals/AdminOrder/ViewOrderDetailsModal.jsx - UPDATED WITH LOCATION INFO
 import { useState, useEffect } from "react";
 import {
   X,
@@ -404,30 +404,58 @@ export const ViewOrderDetailsModal = ({
 
         {/* Order Info Grid */}
         <div className="grid md:grid-cols-2 gap-4">
-          {/* Store Info */}
+          {/* Store Info with Location */}
           <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
-            <div className="flex items-center gap-2 mb-2">
+            <div className="flex items-center gap-2 mb-3">
               <Store className="h-5 w-5 text-blue-600" />
               <h3 className="font-semibold text-gray-900 dark:text-white">
                 Store Information
               </h3>
             </div>
-            <div className="space-y-2 text-sm">
+            <div className="space-y-3 text-sm">
               <div>
                 <p className="text-gray-600 dark:text-gray-400">Store Name</p>
                 <p className="font-medium text-gray-900 dark:text-white">
                   {order.storeName}
                 </p>
               </div>
-              {(order.storeBarangay || order.storeCity) && (
-                <div>
-                  <p className="text-gray-600 dark:text-gray-400">Location</p>
-                  <p className="font-medium text-gray-900 dark:text-white">
-                    {order.storeBarangay && `${order.storeBarangay}, `}
-                    {order.storeCity}
+
+              {/* Delivery Location - NEW SECTION */}
+              <div className="pt-2 border-t border-gray-200 dark:border-gray-600">
+                <div className="flex items-start gap-2 mb-2">
+                  <MapPin className="h-4 w-4 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+                  <p className="text-gray-600 dark:text-gray-400 font-medium">
+                    Delivery Location
                   </p>
                 </div>
-              )}
+                <div className="ml-6 space-y-1">
+                  {order.storeBarangay && (
+                    <div>
+                      <span className="text-gray-600 dark:text-gray-400">
+                        Barangay:{" "}
+                      </span>
+                      <span className="font-medium text-gray-900 dark:text-white">
+                        {order.storeBarangay}
+                      </span>
+                    </div>
+                  )}
+                  {order.storeCity && (
+                    <div>
+                      <span className="text-gray-600 dark:text-gray-400">
+                        City:{" "}
+                      </span>
+                      <span className="font-medium text-gray-900 dark:text-white">
+                        {order.storeCity}
+                      </span>
+                    </div>
+                  )}
+                  {!order.storeBarangay && !order.storeCity && (
+                    <span className="text-gray-500 dark:text-gray-400 italic">
+                      No location information
+                    </span>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
 

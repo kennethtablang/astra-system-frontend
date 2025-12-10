@@ -1,3 +1,4 @@
+// src/components/modals/AdminOrder/UpdateOrderStatusModal.jsx - UPDATED WITH LOCATION INFO
 import { useState } from "react";
 import { Modal } from "../../ui/Modal";
 import { Button } from "../../ui/Button";
@@ -223,34 +224,58 @@ export const UpdateOrderStatusModal = ({
           </p>
         </div>
 
-        {/* Delivery Location Info */}
+        {/* Store & Delivery Location Info - UPDATED */}
         <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
           <div className="flex items-start gap-3">
             <MapPin className="h-5 w-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
             <div className="text-sm flex-1">
-              <p className="font-medium text-blue-800 dark:text-blue-200 mb-1">
-                Delivery Location
+              <p className="font-medium text-blue-800 dark:text-blue-200 mb-2">
+                Delivery Information
               </p>
-              <p className="font-semibold text-blue-900 dark:text-blue-100">
-                {order.storeName}
-              </p>
-              <div className="mt-2 space-y-1">
-                <div className="flex items-center gap-2">
-                  <span className="text-blue-700 dark:text-blue-300 font-medium">
-                    Barangay:
-                  </span>
-                  <span className="text-blue-900 dark:text-blue-100">
-                    {order.storeBarangay || "—"}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-blue-700 dark:text-blue-300 font-medium">
-                    City:
-                  </span>
-                  <span className="text-blue-900 dark:text-blue-100">
-                    {order.storeCity || "—"}
-                  </span>
-                </div>
+
+              {/* Store Name */}
+              <div className="mb-3">
+                <p className="text-blue-700 dark:text-blue-300 text-xs mb-1">
+                  Store:
+                </p>
+                <p className="font-semibold text-blue-900 dark:text-blue-100">
+                  {order.storeName}
+                </p>
+              </div>
+
+              {/* Location Details */}
+              <div className="space-y-2 pt-2 border-t border-blue-200 dark:border-blue-700">
+                <p className="text-blue-700 dark:text-blue-300 text-xs font-medium">
+                  Delivery Location:
+                </p>
+
+                {order.storeBarangay && (
+                  <div className="flex items-start gap-2">
+                    <span className="text-blue-700 dark:text-blue-300 font-medium min-w-[70px]">
+                      Barangay:
+                    </span>
+                    <span className="text-blue-900 dark:text-blue-100 font-semibold">
+                      {order.storeBarangay}
+                    </span>
+                  </div>
+                )}
+
+                {order.storeCity && (
+                  <div className="flex items-start gap-2">
+                    <span className="text-blue-700 dark:text-blue-300 font-medium min-w-[70px]">
+                      City:
+                    </span>
+                    <span className="text-blue-900 dark:text-blue-100 font-semibold">
+                      {order.storeCity}
+                    </span>
+                  </div>
+                )}
+
+                {!order.storeBarangay && !order.storeCity && (
+                  <p className="text-blue-700 dark:text-blue-300 italic">
+                    No location information available
+                  </p>
+                )}
               </div>
             </div>
           </div>

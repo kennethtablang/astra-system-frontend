@@ -10,7 +10,6 @@ import {
   Search,
   Eye,
   Download,
-  Filter,
   RefreshCw,
   Edit,
   AlertCircle,
@@ -103,8 +102,8 @@ const AdminOrders = () => {
   };
 
   const handleEditOrder = (order) => {
-    // Navigate to edit page with order data
-    navigate(`/admin/orders/edit/${order.id}`, { state: { order } });
+    setSelectedOrder(order);
+    setEditModalOpen(true);
   };
 
   const fetchStats = async () => {
@@ -384,6 +383,7 @@ const AdminOrders = () => {
                     <TableHeader>
                       <TableHead>Order ID</TableHead>
                       <TableHead>Store</TableHead>
+                      <TableHead>Location</TableHead>
                       <TableHead>Agent</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Items</TableHead>
@@ -408,17 +408,26 @@ const AdminOrders = () => {
                             </div>
                           </TableCell>
                           <TableCell>
-                            <div>
-                              <p className="font-medium text-gray-900 dark:text-white">
-                                {order.storeName}
-                              </p>
-                              {order.storeCity && (
-                                <p className="text-xs text-gray-500 dark:text-gray-400">
-                                  {order.storeBarangay &&
-                                    `${order.storeBarangay}, `}
-                                  {order.storeCity}
-                                </p>
-                              )}
+                            <p className="font-medium text-gray-900 dark:text-white">
+                              {order.storeName}
+                            </p>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-start gap-1">
+                              <MapPin className="h-3 w-3 text-gray-400 mt-0.5 flex-shrink-0" />
+                              <div className="text-xs text-gray-600 dark:text-gray-400">
+                                {order.storeBarangay && (
+                                  <div>{order.storeBarangay}</div>
+                                )}
+                                {order.storeCity && (
+                                  <div className="font-medium">
+                                    {order.storeCity}
+                                  </div>
+                                )}
+                                {!order.storeBarangay && !order.storeCity && (
+                                  <span>—</span>
+                                )}
+                              </div>
                             </div>
                           </TableCell>
                           <TableCell>
@@ -455,22 +464,18 @@ const AdminOrders = () => {
                                 <Eye className="h-4 w-4" />
                               </button>
                               <button
-                                onClick={() => {
-                                  setSelectedOrder(order);
-                                  setEditModalOpen(true);
-                                }}
-                                className="p-2 text-blue-600 hover:bg-blue-50"
+                                onClick={() => handleEditOrder(order)}
+                                className="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
                                 title="Edit order"
                               >
                                 <Edit className="h-4 w-4" />
                               </button>
-
                               <button
                                 onClick={() => {
                                   setSelectedOrder(order);
                                   setStatusModalOpen(true);
                                 }}
-                                className="p-2 text-green-600 hover:bg-green-50"
+                                className="p-2 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors"
                                 title="Update status"
                               >
                                 <RefreshCw className="h-4 w-4" />
@@ -569,7 +574,7 @@ const AdminOrders = () => {
           setSelectedOrderId(null);
         }}
         orderId={selectedOrderId}
-        onEdit={handleEditOrder}
+        onSuccess={() => fetchOrders()}
       />
       <EditOrderModal
         isOpen={editModalOpen}
