@@ -1,6 +1,6 @@
 // src/components/modals/AdminOrder/StoreSearchModal.jsx
 import { useState, useEffect } from "react";
-import { Search, X, Store as StoreIcon, CheckCircle } from "lucide-react";
+import { Search, Store as StoreIcon, CheckCircle, MapPin } from "lucide-react";
 import { Modal } from "../../ui/Modal";
 import storeService from "../../../services/storeService";
 
@@ -38,7 +38,7 @@ export const StoreSearchModal = ({ isOpen, onClose, onSelectStore }) => {
 
   const selectStore = async (store) => {
     try {
-      // Get full store details with balance
+      // Get full store details
       const result = await storeService.getStoreById(store.id);
       if (result.success) {
         onSelectStore(result.data);
@@ -92,11 +92,11 @@ export const StoreSearchModal = ({ isOpen, onClose, onSelectStore }) => {
                   className="w-full p-4 text-left rounded-lg border border-gray-200 dark:border-gray-700 hover:border-blue-500 dark:hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
                 >
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 flex-1">
                       <div className="h-10 w-10 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center flex-shrink-0">
                         <StoreIcon className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                       </div>
-                      <div>
+                      <div className="min-w-0 flex-1">
                         <p className="font-medium text-gray-900 dark:text-white">
                           {store.name}
                         </p>
@@ -105,21 +105,23 @@ export const StoreSearchModal = ({ isOpen, onClose, onSelectStore }) => {
                             Owner: {store.ownerName}
                           </p>
                         )}
-                        <div className="flex items-center gap-2 mt-1">
-                          {store.city && (
-                            <span className="text-xs text-gray-500 dark:text-gray-500">
-                              {store.city}
-                            </span>
-                          )}
-                          {store.barangay && (
-                            <span className="text-xs text-gray-500 dark:text-gray-500">
-                              • {store.barangay}
-                            </span>
+                        <div className="flex items-center gap-2 mt-1 flex-wrap">
+                          {(store.barangayName || store.cityName) && (
+                            <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-200">
+                              <MapPin className="h-3 w-3" />
+                              {store.barangayName && (
+                                <span>{store.barangayName}</span>
+                              )}
+                              {store.barangayName && store.cityName && (
+                                <span>, </span>
+                              )}
+                              {store.cityName && <span>{store.cityName}</span>}
+                            </div>
                           )}
                         </div>
                       </div>
                     </div>
-                    <CheckCircle className="h-5 w-5 text-blue-600 flex-shrink-0" />
+                    <CheckCircle className="h-5 w-5 text-blue-600 flex-shrink-0 ml-2" />
                   </div>
                 </button>
               ))}

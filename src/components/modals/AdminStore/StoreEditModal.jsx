@@ -4,7 +4,7 @@ import { Modal } from "../../ui/Modal";
 import { Input } from "../../ui/Input";
 import { Select } from "../../ui/Select";
 import { Button } from "../../ui/Button";
-import api from "../../../api/axios";
+import locationService from "../../../services/locationServices";
 
 export const StoreEditModal = ({
   isOpen,
@@ -22,8 +22,8 @@ export const StoreEditModal = ({
       return {
         id: "",
         name: "",
-        barangay: "",
-        city: "",
+        barangayId: "",
+        cityId: "",
         ownerName: "",
         phone: "",
         creditLimit: "0",
@@ -33,8 +33,8 @@ export const StoreEditModal = ({
     return {
       id: selectedStore.id,
       name: selectedStore.name || "",
-      barangay: selectedStore.barangay || "",
-      city: selectedStore.city || "",
+      barangayId: selectedStore.barangayId?.toString() || "",
+      cityId: selectedStore.cityId?.toString() || "",
       ownerName: selectedStore.ownerName || "",
       phone: selectedStore.phone || "",
       creditLimit: selectedStore.creditLimit?.toString() || "0",
@@ -49,25 +49,27 @@ export const StoreEditModal = ({
     if (isOpen) {
       setFormData(initialFormData);
       fetchCities();
-      if (initialFormData.city) {
-        fetchBarangays(initialFormData.city);
+      if (initialFormData.cityId) {
+        fetchBarangays(initialFormData.cityId);
       }
     }
   }, [isOpen, initialFormData]);
 
   // Fetch barangays when city changes
   useEffect(() => {
-    if (formData.city && formData.city !== initialFormData.city) {
-      fetchBarangays(formData.city);
+    if (formData.cityId && formData.cityId !== initialFormData.cityId) {
+      fetchBarangays(formData.cityId);
+      // Reset barangay when city changes
+      setFormData((prev) => ({ ...prev, barangayId: "" }));
     }
-  }, [formData.city]);
+  }, [formData.cityId]);
 
   const fetchCities = async () => {
     try {
       setLoadingLocations(true);
-      const { data } = await api.get("/store/locations/cities");
-      if (data.success) {
-        setCities(data.data || []);
+      const response = await locationService.getCitiesForLookup();
+      if (response.success) {
+        setCities(response.data || []);
       }
     } catch (error) {
       console.error("Failed to fetch cities:", error);
@@ -76,14 +78,14 @@ export const StoreEditModal = ({
     }
   };
 
-  const fetchBarangays = async (city) => {
+  const fetchBarangays = async (cityId) => {
     try {
       setLoadingLocations(true);
-      const { data } = await api.get("/store/locations/barangays", {
-        params: { city },
-      });
-      if (data.success) {
-        setBarangays(data.data || []);
+      const response = await locationService.getBarangaysForLookup(
+        parseInt(cityId)
+      );
+      if (response.success) {
+        setBarangays(response.data || []);
       }
     } catch (error) {
       console.error("Failed to fetch barangays:", error);
@@ -107,10 +109,16 @@ export const StoreEditModal = ({
       return;
     }
 
-    // Convert creditLimit to number
+    // Convert IDs to numbers and creditLimit to decimal
     const submitData = {
-      ...formData,
+      id: parseInt(formData.id),
+      name: formData.name,
+      barangayId: formData.barangayId ? parseInt(formData.barangayId) : null,
+      cityId: formData.cityId ? parseInt(formData.cityId) : null,
+      ownerName: formData.ownerName || null,
+      phone: formData.phone || null,
       creditLimit: parseFloat(formData.creditLimit) || 0,
+      preferredPaymentMethod: formData.preferredPaymentMethod,
     };
 
     await onSubmit(submitData);
@@ -121,8 +129,8 @@ export const StoreEditModal = ({
     setFormData({
       id: "",
       name: "",
-      barangay: "",
-      city: "",
+      barangayId: "",
+      cityId: "",
       ownerName: "",
       phone: "",
       creditLimit: "0",
@@ -146,12 +154,12 @@ export const StoreEditModal = ({
 
   const cityOptions = [
     { value: "", label: "Select City" },
-    ...cities.map((c) => ({ value: c, label: c })),
+    ...cities.map((c) => ({ value: c.id.toString(), label: c.name })),
   ];
 
   const barangayOptions = [
     { value: "", label: "Select Barangay" },
-    ...barangays.map((b) => ({ value: b.barangay, label: b.barangay })),
+    ...barangays.map((b) => ({ value: b.id.toString(), label: b.name })),
   ];
 
   return (
@@ -181,19 +189,19 @@ export const StoreEditModal = ({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Select
             label="City"
-            name="city"
-            value={formData.city}
+            name="cityId"
+            value={formData.cityId}
             onChange={handleInputChange}
             options={cityOptions}
             disabled={loadingLocations}
           />
           <Select
             label="Barangay"
-            name="barangay"
-            value={formData.barangay}
+            name="barangayId"
+            value={formData.barangayId}
             onChange={handleInputChange}
             options={barangayOptions}
-            disabled={loadingLocations || !formData.city}
+            disabled={loadingLocations || !formData.cityId}
           />
         </div>
 

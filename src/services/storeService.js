@@ -1,4 +1,4 @@
-// src/services/storeService.js
+// src/services/storeService.js - FIXED
 import api from '../api/axios';
 
 const storeService = {
@@ -88,28 +88,6 @@ const storeService = {
   async getStoresWithOutstandingBalance() {
     try {
       const { data } = await api.get('/store/outstanding-balances');
-      return data;
-    } catch (error) {
-      throw error.response?.data || error;
-    }
-  },
-
-  // Get barangays
-  async getBarangays(city) {
-    try {
-      const { data } = await api.get('/store/locations/barangays', {
-        params: { city }
-      });
-      return data;
-    } catch (error) {
-      throw error.response?.data || error;
-    }
-  },
-
-  // Get cities
-  async getCities() {
-    try {
-      const { data } = await api.get('/store/locations/cities');
       return data;
     } catch (error) {
       throw error.response?.data || error;

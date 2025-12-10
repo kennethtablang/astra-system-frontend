@@ -1,4 +1,4 @@
-// src/pages/admin/AdminStores.jsx
+// src/pages/admin/AdminStores.jsx - FIXED VERSION
 import { useState, useEffect } from "react";
 import {
   Store,
@@ -10,7 +10,6 @@ import {
   MapPin,
   User,
   DollarSign,
-  AlertCircle,
 } from "lucide-react";
 import DashboardLayout from "../../components/layouts/DashboardLayout";
 import { Card, CardContent } from "../../components/ui/Card";
@@ -30,6 +29,7 @@ import { StoreAddModal } from "../../components/modals/AdminStore/StoreAddModal"
 import { StoreEditModal } from "../../components/modals/AdminStore/StoreEditModal";
 import { StoreDeleteModal } from "../../components/modals/AdminStore/StoreDeleteModal";
 import api from "../../api/axios";
+import locationService from "../../services/locationServices";
 import { toast } from "react-hot-toast";
 
 const AdminStores = () => {
@@ -37,8 +37,8 @@ const AdminStores = () => {
   const [stores, setStores] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterCity, setFilterCity] = useState("All");
-  const [filterBarangay, setFilterBarangay] = useState("All");
+  const [filterCityId, setFilterCityId] = useState("All");
+  const [filterBarangayId, setFilterBarangayId] = useState("All");
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [totalStores, setTotalStores] = useState(0);
@@ -52,13 +52,22 @@ const AdminStores = () => {
   // Fetch Stores
   useEffect(() => {
     fetchStores();
-  }, [currentPage, pageSize, searchTerm, filterCity, filterBarangay]);
+  }, [currentPage, pageSize, searchTerm, filterCityId, filterBarangayId]);
 
   // Fetch Cities and Barangays
   useEffect(() => {
     fetchCities();
-    fetchBarangays();
   }, []);
+
+  // Fetch barangays when city filter changes
+  useEffect(() => {
+    if (filterCityId !== "All") {
+      fetchBarangays(parseInt(filterCityId));
+    } else {
+      setBarangays([]);
+      setFilterBarangayId("All");
+    }
+  }, [filterCityId]);
 
   const fetchStores = async () => {
     try {
@@ -69,8 +78,9 @@ const AdminStores = () => {
       };
 
       if (searchTerm) params.searchTerm = searchTerm;
-      if (filterCity !== "All") params.city = filterCity;
-      if (filterBarangay !== "All") params.barangay = filterBarangay;
+      if (filterCityId !== "All") params.cityId = parseInt(filterCityId);
+      if (filterBarangayId !== "All")
+        params.barangayId = parseInt(filterBarangayId);
 
       const { data } = await api.get("/store", { params });
 
@@ -88,33 +98,27 @@ const AdminStores = () => {
 
   const fetchCities = async () => {
     try {
-      const { data } = await api.get("/store/locations/cities");
-      if (data.success) {
-        setCities(data.data || []);
+      const response = await locationService.getCitiesForLookup();
+      if (response.success) {
+        setCities(response.data || []);
       }
     } catch (error) {
       console.error("Failed to fetch cities:", error);
+      toast.error("Failed to fetch cities");
     }
   };
 
-  const fetchBarangays = async () => {
+  const fetchBarangays = async (cityId) => {
     try {
-      const params = filterCity !== "All" ? { city: filterCity } : {};
-      const { data } = await api.get("/store/locations/barangays", { params });
-      if (data.success) {
-        setBarangays(data.data || []);
+      const response = await locationService.getBarangaysForLookup(cityId);
+      if (response.success) {
+        setBarangays(response.data || []);
       }
     } catch (error) {
       console.error("Failed to fetch barangays:", error);
+      toast.error("Failed to fetch barangays");
     }
   };
-
-  // Refetch barangays when city changes
-  useEffect(() => {
-    if (filterCity !== "All") {
-      fetchBarangays();
-    }
-  }, [filterCity]);
 
   // Handle Add Store
   const handleAddStore = async (formData) => {
@@ -126,7 +130,6 @@ const AdminStores = () => {
         setShowAddModal(false);
         fetchStores();
         fetchCities();
-        fetchBarangays();
       }
     } catch (error) {
       toast.error(error.response?.data?.message || "Failed to add store");
@@ -145,7 +148,6 @@ const AdminStores = () => {
         setSelectedStore(null);
         fetchStores();
         fetchCities();
-        fetchBarangays();
       }
     } catch (error) {
       toast.error(error.response?.data?.message || "Failed to update store");
@@ -197,14 +199,14 @@ const AdminStores = () => {
   // Options
   const cityOptions = [
     { value: "All", label: "All Cities" },
-    ...cities.map((c) => ({ value: c, label: c })),
+    ...cities.map((c) => ({ value: c.id.toString(), label: c.name })),
   ];
 
   const barangayOptions = [
     { value: "All", label: "All Barangays" },
     ...barangays.map((b) => ({
-      value: b.barangay,
-      label: `${b.barangay} (${b.storeCount})`,
+      value: b.id.toString(),
+      label: `${b.name}${b.storeCount ? ` (${b.storeCount})` : ""}`,
     })),
   ];
 
@@ -277,7 +279,7 @@ const AdminStores = () => {
                     Barangays
                   </p>
                   <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                    {barangays.length}
+                    {filterCityId !== "All" ? barangays.length : "—"}
                   </p>
                 </div>
                 <MapPin className="h-8 w-8 text-yellow-600" />
@@ -294,8 +296,10 @@ const AdminStores = () => {
                   <p className="text-2xl font-bold text-gray-900 dark:text-white">
                     {formatCurrency(
                       stores.length > 0
-                        ? stores.reduce((sum, s) => sum + s.creditLimit, 0) /
-                            stores.length
+                        ? stores.reduce(
+                            (sum, s) => sum + (s.creditLimit || 0),
+                            0
+                          ) / stores.length
                         : 0
                     )}
                   </p>
@@ -326,23 +330,24 @@ const AdminStores = () => {
 
               <div className="flex gap-2">
                 <Select
-                  value={filterCity}
+                  value={filterCityId}
                   onChange={(e) => {
-                    setFilterCity(e.target.value);
-                    setFilterBarangay("All");
+                    setFilterCityId(e.target.value);
+                    setFilterBarangayId("All");
                     setCurrentPage(1);
                   }}
                   options={cityOptions}
                   className="w-40"
                 />
                 <Select
-                  value={filterBarangay}
+                  value={filterBarangayId}
                   onChange={(e) => {
-                    setFilterBarangay(e.target.value);
+                    setFilterBarangayId(e.target.value);
                     setCurrentPage(1);
                   }}
                   options={barangayOptions}
                   className="w-48"
+                  disabled={filterCityId === "All"}
                 />
               </div>
             </div>
@@ -402,15 +407,15 @@ const AdminStores = () => {
                           </TableCell>
                           <TableCell>
                             <div className="space-y-1">
-                              {store.barangay && (
+                              {store.barangayName && (
                                 <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
                                   <MapPin className="h-3 w-3 mr-1" />
-                                  {store.barangay}
+                                  {store.barangayName}
                                 </div>
                               )}
-                              {store.city && (
+                              {store.cityName && (
                                 <div className="text-sm text-gray-500 dark:text-gray-500">
-                                  {store.city}
+                                  {store.cityName}
                                 </div>
                               )}
                             </div>

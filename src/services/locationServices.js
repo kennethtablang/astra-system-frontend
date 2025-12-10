@@ -1,4 +1,4 @@
-// src/services/locationService.js
+// src/services/locationServices.js
 import api from '../api/axios';
 
 /**
@@ -38,7 +38,7 @@ const locationServices = {
     }
   },
 
-  // Get cities for lookup
+  // Get cities for lookup (simple list for dropdowns)
   async getCitiesForLookup(searchTerm = null) {
     try {
       const params = searchTerm ? { searchTerm } : {};
@@ -131,7 +131,7 @@ const locationServices = {
     }
   },
 
-  // Get barangays for lookup
+  // Get barangays for lookup (simple list for dropdowns)
   async getBarangaysForLookup(cityId = null, searchTerm = null) {
     try {
       const params = {};
@@ -187,3 +187,53 @@ const locationServices = {
 };
 
 export default locationServices;
+
+// ==================== COMPATIBILITY LAYER ====================
+// These are helper methods for backward compatibility with old Store modal usage
+// They wrap the new API endpoints to maintain compatibility
+
+export const getStoreCitiesLookup = async () => {
+  try {
+    const { data } = await api.get('/city/lookup');
+    // Transform the response to match the old format expected by modals
+    if (data.success && Array.isArray(data.data)) {
+      return {
+        success: true,
+        data: data.data.map(city => city.name)
+      };
+    }
+    return data;
+  } catch (error) {
+    throw error.response?.data || error;
+  }
+};
+
+export const getStoreBarangaysLookup = async (cityName = null) => {
+  try {
+    let params = {};
+    
+    // If cityName is provided, we need to get the city ID first
+    if (cityName) {
+      const cityResponse = await api.get(`/city/name/${encodeURIComponent(cityName)}`);
+      if (cityResponse.data.success && cityResponse.data.data) {
+        params.cityId = cityResponse.data.data.id;
+      }
+    }
+    
+    const { data } = await api.get('/barangay/lookup', { params });
+    
+    // Transform the response to match the old format
+    if (data.success && Array.isArray(data.data)) {
+      return {
+        success: true,
+        data: data.data.map(barangay => ({
+          barangay: barangay.name,
+          storeCount: barangay.storeCount || 0
+        }))
+      };
+    }
+    return data;
+  } catch (error) {
+    throw error.response?.data || error;
+  }
+};

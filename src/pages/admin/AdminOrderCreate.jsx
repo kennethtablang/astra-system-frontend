@@ -1,6 +1,4 @@
-// src/pages/admin/AdminOrderCreate.jsx
-// Add this route to your AppRoutes.jsx:
-// <Route path="/admin/orders/create" element={<AdminOrderCreate />} />
+// src/pages/admin/AdminOrderCreate.jsx - UPDATED
 import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -8,8 +6,8 @@ import {
   Scan,
   Store as StoreIcon,
   X,
-  AlertCircle,
   Package,
+  MapPin,
 } from "lucide-react";
 import DashboardLayout from "../../components/layouts/DashboardLayout";
 import { Card, CardContent } from "../../components/ui/Card";
@@ -42,8 +40,8 @@ const AdminOrderCreate = () => {
     name: "",
     ownerName: "",
     phone: "",
-    barangay: "",
-    city: "",
+    barangayId: "",
+    cityId: "",
     creditLimit: 0,
   });
 
@@ -220,7 +218,11 @@ const AdminOrderCreate = () => {
     }
 
     if (storeType === "new") {
-      if (!newStoreData.name || !newStoreData.ownerName || !newStoreData.city) {
+      if (
+        !newStoreData.name ||
+        !newStoreData.ownerName ||
+        !newStoreData.cityId
+      ) {
         toast.error("Please fill in required customer information");
         return;
       }
@@ -233,7 +235,19 @@ const AdminOrderCreate = () => {
 
       // Create new store if needed
       if (storeType === "new") {
-        const storeResult = await storeService.createStore(newStoreData);
+        const storePayload = {
+          name: newStoreData.name,
+          ownerName: newStoreData.ownerName,
+          phone: newStoreData.phone || null,
+          barangayId: newStoreData.barangayId
+            ? parseInt(newStoreData.barangayId)
+            : null,
+          cityId: newStoreData.cityId ? parseInt(newStoreData.cityId) : null,
+          creditLimit: parseFloat(newStoreData.creditLimit) || 0,
+          preferredPaymentMethod: "Cash",
+        };
+
+        const storeResult = await storeService.createStore(storePayload);
         if (!storeResult.success) {
           toast.error("Failed to create store");
           return;
@@ -339,10 +353,19 @@ const AdminOrderCreate = () => {
                               Owner: {selectedStore.ownerName}
                             </p>
                           )}
-                          {selectedStore.city && (
-                            <p className="text-xs text-gray-500 dark:text-gray-500">
-                              {selectedStore.city}
-                            </p>
+                          {(selectedStore.barangayName ||
+                            selectedStore.cityName) && (
+                            <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-300 mt-1">
+                              <MapPin className="h-3 w-3" />
+                              {selectedStore.barangayName && (
+                                <span>{selectedStore.barangayName}</span>
+                              )}
+                              {selectedStore.barangayName &&
+                                selectedStore.cityName && <span>, </span>}
+                              {selectedStore.cityName && (
+                                <span>{selectedStore.cityName}</span>
+                              )}
+                            </div>
                           )}
                         </div>
                       </div>

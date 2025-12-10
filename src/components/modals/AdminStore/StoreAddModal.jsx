@@ -4,7 +4,7 @@ import { Modal } from "../../ui/Modal";
 import { Input } from "../../ui/Input";
 import { Select } from "../../ui/Select";
 import { Button } from "../../ui/Button";
-import api from "../../../api/axios";
+import locationService from "../../../services/locationServices";
 
 export const StoreAddModal = ({ isOpen, onClose, onSubmit }) => {
   const [cities, setCities] = useState([]);
@@ -13,8 +13,8 @@ export const StoreAddModal = ({ isOpen, onClose, onSubmit }) => {
 
   const [formData, setFormData] = useState({
     name: "",
-    barangay: "",
-    city: "",
+    barangayId: "",
+    cityId: "",
     ownerName: "",
     phone: "",
     creditLimit: "0",
@@ -30,19 +30,20 @@ export const StoreAddModal = ({ isOpen, onClose, onSubmit }) => {
 
   // Fetch barangays when city changes
   useEffect(() => {
-    if (formData.city) {
-      fetchBarangays(formData.city);
+    if (formData.cityId) {
+      fetchBarangays(formData.cityId);
     } else {
       setBarangays([]);
+      setFormData((prev) => ({ ...prev, barangayId: "" }));
     }
-  }, [formData.city]);
+  }, [formData.cityId]);
 
   const fetchCities = async () => {
     try {
       setLoadingLocations(true);
-      const { data } = await api.get("/store/locations/cities");
-      if (data.success) {
-        setCities(data.data || []);
+      const response = await locationService.getCitiesForLookup();
+      if (response.success) {
+        setCities(response.data || []);
       }
     } catch (error) {
       console.error("Failed to fetch cities:", error);
@@ -51,14 +52,12 @@ export const StoreAddModal = ({ isOpen, onClose, onSubmit }) => {
     }
   };
 
-  const fetchBarangays = async (city) => {
+  const fetchBarangays = async (cityId) => {
     try {
       setLoadingLocations(true);
-      const { data } = await api.get("/store/locations/barangays", {
-        params: { city },
-      });
-      if (data.success) {
-        setBarangays(data.data || []);
+      const response = await locationService.getBarangaysForLookup(cityId);
+      if (response.success) {
+        setBarangays(response.data || []);
       }
     } catch (error) {
       console.error("Failed to fetch barangays:", error);
@@ -82,10 +81,15 @@ export const StoreAddModal = ({ isOpen, onClose, onSubmit }) => {
       return;
     }
 
-    // Convert creditLimit to number
+    // Convert IDs to numbers and creditLimit to decimal
     const submitData = {
-      ...formData,
+      name: formData.name,
+      barangayId: formData.barangayId ? parseInt(formData.barangayId) : null,
+      cityId: formData.cityId ? parseInt(formData.cityId) : null,
+      ownerName: formData.ownerName || null,
+      phone: formData.phone || null,
       creditLimit: parseFloat(formData.creditLimit) || 0,
+      preferredPaymentMethod: formData.preferredPaymentMethod,
     };
 
     await onSubmit(submitData);
@@ -95,8 +99,8 @@ export const StoreAddModal = ({ isOpen, onClose, onSubmit }) => {
   const resetForm = () => {
     setFormData({
       name: "",
-      barangay: "",
-      city: "",
+      barangayId: "",
+      cityId: "",
       ownerName: "",
       phone: "",
       creditLimit: "0",
@@ -120,12 +124,12 @@ export const StoreAddModal = ({ isOpen, onClose, onSubmit }) => {
 
   const cityOptions = [
     { value: "", label: "Select City" },
-    ...cities.map((c) => ({ value: c, label: c })),
+    ...cities.map((c) => ({ value: c.id.toString(), label: c.name })),
   ];
 
   const barangayOptions = [
     { value: "", label: "Select Barangay" },
-    ...barangays.map((b) => ({ value: b.barangay, label: b.barangay })),
+    ...barangays.map((b) => ({ value: b.id.toString(), label: b.name })),
   ];
 
   return (
@@ -148,19 +152,19 @@ export const StoreAddModal = ({ isOpen, onClose, onSubmit }) => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Select
             label="City"
-            name="city"
-            value={formData.city}
+            name="cityId"
+            value={formData.cityId}
             onChange={handleInputChange}
             options={cityOptions}
             disabled={loadingLocations}
           />
           <Select
             label="Barangay"
-            name="barangay"
-            value={formData.barangay}
+            name="barangayId"
+            value={formData.barangayId}
             onChange={handleInputChange}
             options={barangayOptions}
-            disabled={loadingLocations || !formData.city}
+            disabled={loadingLocations || !formData.cityId}
           />
         </div>
 
