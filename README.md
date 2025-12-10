@@ -13,23 +13,6 @@
 
 ---
 
-## 📋 Table of Contents
-
-- [Overview](#overview)
-- [Features](#features)
-- [Tech Stack](#tech-stack)
-- [Getting Started](#getting-started)
-- [Project Structure](#project-structure)
-- [Configuration](#configuration)
-- [User Roles](#user-roles)
-- [Key Modules](#key-modules)
-- [API Integration](#api-integration)
-- [Development](#development)
-- [Contributing](#contributing)
-- [License](#license)
-
----
-
 ## 🌟 Overview
 
 ASTRA (Agent Supply and Transport Routing System) is a full-featured distribution and logistics management platform designed to streamline operations for distributors, warehouses, agents, and delivery personnel. The system provides real-time tracking, inventory management, order processing, and route optimization capabilities.
