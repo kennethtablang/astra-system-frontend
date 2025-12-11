@@ -19,6 +19,7 @@ import {
   XCircle,
   Truck,
   MapPin,
+  Printer,
 } from "lucide-react";
 import DashboardLayout from "../../components/layouts/DashboardLayout";
 import { Card, CardContent } from "../../components/ui/Card";
@@ -35,6 +36,7 @@ import { Button } from "../../components/ui/Button";
 import { Select } from "../../components/ui/Select";
 import { LoadingSpinner } from "../../components/ui/Loading";
 import orderService from "../../services/orderService";
+import receiptService from "../../services/receiptService";
 import { toast } from "react-hot-toast";
 
 const AdminOrders = () => {
@@ -54,6 +56,7 @@ const AdminOrders = () => {
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [statusModalOpen, setStatusModalOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const [printing, setPrinting] = useState(null);
   const [stats, setStats] = useState({
     totalOrders: 0,
     pendingOrders: 0,
@@ -114,6 +117,101 @@ const AdminOrders = () => {
       }
     } catch (error) {
       console.error("Failed to fetch stats:", error);
+    }
+  };
+
+  // Print Packing Receipt - For Confirmed, Packed, and Dispatched Orders
+  const handlePrintPackingReceipt = async (orderId, orderStatus) => {
+    // Only allow printing for Confirmed, Packed, and Dispatched orders
+    const allowedStatuses = ["Confirmed", "Packed", "Dispatched"];
+    if (!allowedStatuses.includes(orderStatus)) {
+      toast.error(
+        "Only confirmed, packed, or dispatched orders can print packing receipts"
+      );
+      return;
+    }
+
+    try {
+      setPrinting(orderId);
+
+      // Get receipt data from server
+      const result = await receiptService.generateMobileThermalReceipt(orderId);
+
+      if (result.success) {
+        // Decode base64 receipt data
+        const receiptText = atob(result.data.receiptData);
+
+        // Open print window
+        const printWindow = window.open("", "_blank");
+        if (printWindow) {
+          printWindow.document.write(`
+            <html>
+              <head>
+                <title>Packing Receipt - Order #${orderId}</title>
+                <style>
+                  body {
+                    font-family: 'Courier New', monospace;
+                    font-size: 12px;
+                    max-width: 58mm;
+                    margin: 0 auto;
+                    padding: 10px;
+                    background: white;
+                  }
+                  @media print {
+                    body { 
+                      margin: 0; 
+                      padding: 5px;
+                    }
+                    .no-print {
+                      display: none;
+                    }
+                  }
+                  pre {
+                    margin: 0;
+                    white-space: pre-wrap;
+                    font-size: 11px;
+                    line-height: 1.3;
+                  }
+                  .print-button {
+                    position: fixed;
+                    top: 10px;
+                    right: 10px;
+                    padding: 10px 20px;
+                    background: #3b82f6;
+                    color: white;
+                    border: none;
+                    border-radius: 6px;
+                    cursor: pointer;
+                    font-size: 14px;
+                    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+                    z-index: 1000;
+                  }
+                  .print-button:hover {
+                    background: #2563eb;
+                  }
+                </style>
+              </head>
+              <body>
+                <button class="print-button no-print" onclick="window.print()">
+                  🖨️ Print Receipt
+                </button>
+                <pre>${receiptText}</pre>
+              </body>
+            </html>
+          `);
+          printWindow.document.close();
+          toast.success("Packing receipt opened successfully");
+        } else {
+          toast.error("Failed to open print window. Please allow pop-ups.");
+        }
+      } else {
+        toast.error(result.message || "Failed to generate packing receipt");
+      }
+    } catch (error) {
+      console.error("Error printing packing receipt:", error);
+      toast.error("Failed to print packing receipt");
+    } finally {
+      setPrinting(null);
     }
   };
 
@@ -197,7 +295,7 @@ const AdminOrders = () => {
               Order Management
             </h1>
             <p className="text-gray-600 dark:text-gray-400 mt-1">
-              View and manage all orders
+              View and manage all orders with packing receipt printing
             </p>
           </div>
           <div className="flex gap-2">
@@ -456,6 +554,28 @@ const AdminOrders = () => {
                           </TableCell>
                           <TableCell>
                             <div className="flex items-center justify-end gap-2">
+                              {/* Print Packing Receipt Button - Only for Confirmed Orders */}
+                              {(order.status === "Confirmed" ||
+                                order.status === "Packed" ||
+                                order.status === "Dispatched") && (
+                                <button
+                                  onClick={() =>
+                                    handlePrintPackingReceipt(
+                                      order.id,
+                                      order.status
+                                    )
+                                  }
+                                  disabled={printing === order.id}
+                                  className="p-2 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                  title="Print packing receipt"
+                                >
+                                  {printing === order.id ? (
+                                    <LoadingSpinner size="sm" />
+                                  ) : (
+                                    <Printer className="h-4 w-4" />
+                                  )}
+                                </button>
+                              )}
                               <button
                                 onClick={() => handleViewOrder(order.id)}
                                 className="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"

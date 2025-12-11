@@ -165,20 +165,20 @@ const DashboardLayout = ({ children }) => {
           },
         ],
       },
-      {
-        name: "Operations",
-        icon: MapPin,
-        type: "group",
-        key: "operations",
-        items: [
-          {
-            name: "Distributors",
-            href: "/admin/distributors",
-            icon: Warehouse,
-          },
-          { name: "Routes", href: "/admin/routes", icon: MapPin },
-        ],
-      },
+      // {
+      //   name: "Operations",
+      //   icon: MapPin,
+      //   type: "group",
+      //   key: "operations",
+      //   items: [
+      //     {
+      //       name: "Distributors",
+      //       href: "/admin/distributors",
+      //       icon: Warehouse,
+      //     },
+      //     { name: "Routes", href: "/admin/routes", icon: MapPin },
+      //   ],
+      // },
       {
         name: "Finance",
         icon: DollarSign,
