@@ -193,6 +193,11 @@ const DashboardLayout = ({ children }) => {
           },
           { name: "Invoices", href: "/admin/finance/invoices", icon: FileText },
           {
+            name: "Remittance",
+            href: "/admin/finance/remittance",
+            icon: Users,
+          },
+          {
             name: "Transactions",
             href: "/admin/finance/transactions",
             icon: Activity,
@@ -407,9 +412,8 @@ const DashboardLayout = ({ children }) => {
 
       {/* Sidebar */}
       <div
-        className={`fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-gray-800 shadow-lg transform transition-transform duration-300 ease-in-out lg:translate-x-0 ${
-          sidebarOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
+        className={`fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-gray-800 shadow-lg transform transition-transform duration-300 ease-in-out lg:translate-x-0 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"
+          }`}
       >
         <div className="flex flex-col h-full">
           {/* Logo */}
@@ -441,18 +445,16 @@ const DashboardLayout = ({ children }) => {
                   <Link
                     key={item.name}
                     to={item.href}
-                    className={`flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors ${
-                      active
+                    className={`flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors ${active
                         ? "bg-blue-50 text-blue-600 dark:bg-blue-900/50 dark:text-blue-400"
                         : "text-gray-700 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-700/50 dark:hover:text-white"
-                    }`}
+                      }`}
                   >
                     <Icon
-                      className={`mr-3 h-5 w-5 ${
-                        active
+                      className={`mr-3 h-5 w-5 ${active
                           ? "text-blue-600 dark:text-blue-400"
                           : "text-gray-400 dark:text-gray-500"
-                      }`}
+                        }`}
                     />
                     {item.name}
                   </Link>
@@ -468,26 +470,23 @@ const DashboardLayout = ({ children }) => {
                   <div key={item.name}>
                     <button
                       onClick={() => toggleGroup(item.key)}
-                      className={`w-full flex items-center justify-between px-4 py-3 text-sm font-medium rounded-lg transition-colors ${
-                        hasActiveChild
+                      className={`w-full flex items-center justify-between px-4 py-3 text-sm font-medium rounded-lg transition-colors ${hasActiveChild
                           ? "bg-blue-50 text-blue-600 dark:bg-blue-900/50 dark:text-blue-400"
                           : "text-gray-700 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-700/50 dark:hover:text-white"
-                      }`}
+                        }`}
                     >
                       <div className="flex items-center">
                         <Icon
-                          className={`mr-3 h-5 w-5 ${
-                            hasActiveChild
+                          className={`mr-3 h-5 w-5 ${hasActiveChild
                               ? "text-blue-600 dark:text-blue-400"
                               : "text-gray-400 dark:text-gray-500"
-                          }`}
+                            }`}
                         />
                         {item.name}
                       </div>
                       <ChevronRight
-                        className={`h-4 w-4 transition-transform ${
-                          isExpanded ? "rotate-90" : ""
-                        }`}
+                        className={`h-4 w-4 transition-transform ${isExpanded ? "rotate-90" : ""
+                          }`}
                       />
                     </button>
 
@@ -501,18 +500,16 @@ const DashboardLayout = ({ children }) => {
                             <Link
                               key={subItem.name}
                               to={subItem.href}
-                              className={`flex items-center px-4 py-2 text-sm rounded-lg transition-colors ${
-                                active
+                              className={`flex items-center px-4 py-2 text-sm rounded-lg transition-colors ${active
                                   ? "bg-blue-50 text-blue-600 dark:bg-blue-900/50 dark:text-blue-400"
                                   : "text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-700/50 dark:hover:text-white"
-                              }`}
+                                }`}
                             >
                               <SubIcon
-                                className={`mr-3 h-4 w-4 ${
-                                  active
+                                className={`mr-3 h-4 w-4 ${active
                                     ? "text-blue-600 dark:text-blue-400"
                                     : "text-gray-400 dark:text-gray-500"
-                                }`}
+                                  }`}
                               />
                               {subItem.name}
                             </Link>
@@ -549,9 +546,8 @@ const DashboardLayout = ({ children }) => {
                   </p>
                 </div>
                 <ChevronDown
-                  className={`h-4 w-4 text-gray-400 dark:text-gray-500 transition-transform ${
-                    userMenuOpen ? "rotate-180" : ""
-                  }`}
+                  className={`h-4 w-4 text-gray-400 dark:text-gray-500 transition-transform ${userMenuOpen ? "rotate-180" : ""
+                    }`}
                 />
               </button>
 
