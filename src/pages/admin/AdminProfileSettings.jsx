@@ -40,7 +40,7 @@ export const AdminProfileSettings = () => {
             lastName: result.data.lastName || "",
             email: result.data.email || "",
             phoneNumber: result.data.phoneNumber || "",
-            role: result.data.role || "",
+            role: result.data.role || result.data.roles?.[0] || "",
           });
           return;
         }
