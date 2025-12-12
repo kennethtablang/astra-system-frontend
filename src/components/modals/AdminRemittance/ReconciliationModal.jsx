@@ -20,7 +20,7 @@ export const ReconciliationModal = ({
     useEffect(() => {
         if (isOpen && dispatcher) {
             // Default to selecting all payments
-            setSelectedPayments(dispatcher.payments.map((p) => p.id));
+            setSelectedPayments(dispatcher.payments.map((p) => p.paymentId));
             setReconcileNotes("");
         }
     }, [isOpen, dispatcher]);
@@ -43,7 +43,7 @@ export const ReconciliationModal = ({
     const getSelectedTotal = () => {
         if (!dispatcher) return 0;
         return dispatcher.payments
-            .filter((p) => selectedPayments.includes(p.id))
+            .filter((p) => selectedPayments.includes(p.paymentId))
             .reduce((sum, p) => sum + (p.amount || 0), 0);
     };
 
@@ -143,7 +143,7 @@ export const ReconciliationModal = ({
                                     selectedPayments.length ===
                                         dispatcher.payments.length
                                         ? []
-                                        : dispatcher.payments.map((p) => p.id)
+                                        : dispatcher.payments.map((p) => p.paymentId)
                                 )
                             }
                         >
@@ -156,23 +156,23 @@ export const ReconciliationModal = ({
                     <div className="max-h-60 overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-lg">
                         {dispatcher.payments.map((payment) => (
                             <div
-                                key={payment.id}
-                                className={`flex items-center gap-3 p-3 border-b border-gray-200 dark:border-gray-700 last:border-b-0 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 ${selectedPayments.includes(payment.id)
+                                key={payment.paymentId}
+                                className={`flex items-center gap-3 p-3 border-b border-gray-200 dark:border-gray-700 last:border-b-0 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 ${selectedPayments.includes(payment.paymentId)
                                     ? "bg-green-50 dark:bg-green-900/20"
                                     : ""
                                     }`}
-                                onClick={() => togglePaymentSelection(payment.id)}
+                                onClick={() => togglePaymentSelection(payment.paymentId)}
                             >
                                 <input
                                     type="checkbox"
-                                    checked={selectedPayments.includes(payment.id)}
-                                    onChange={() => togglePaymentSelection(payment.id)}
+                                    checked={selectedPayments.includes(payment.paymentId)}
+                                    onChange={() => togglePaymentSelection(payment.paymentId)}
                                     className="h-4 w-4 text-blue-600 rounded"
                                 />
                                 <div className="flex-1">
                                     <div className="flex justify-between">
                                         <span className="font-mono text-sm text-gray-900 dark:text-white">
-                                            Payment #{payment.id}
+                                            Payment #{payment.paymentId}
                                         </span>
                                         <span className="font-semibold text-green-600">
                                             {formatCurrency(payment.amount)}

@@ -20,6 +20,7 @@ import { Button } from "../../components/ui/Button";
 import { LoadingSpinner } from "../../components/ui/Loading";
 import { RecordPaymentModal } from "../../components/modals/AdminFinance/RecordPaymentModal";
 import { ViewPaymentModal } from "../../components/modals/AdminFinance/ViewPaymentModal";
+import { ViewOrderDetailsModal } from "../../components/modals/AdminOrder/ViewOrderDetailsModal";
 import { paymentService, invoiceService } from "../../services/paymentService";
 
 // Main Finance Page
@@ -29,6 +30,8 @@ const AdminFinance = () => {
   const [recordPaymentOpen, setRecordPaymentOpen] = useState(false);
   const [viewPaymentOpen, setViewPaymentOpen] = useState(false);
   const [selectedPaymentId, setSelectedPaymentId] = useState(null);
+  const [viewOrderOpen, setViewOrderOpen] = useState(false);
+  const [selectedOrderId, setSelectedOrderId] = useState(null);
 
   // Stats
   const [arSummary, setArSummary] = useState(null);
@@ -259,9 +262,10 @@ const AdminFinance = () => {
                             </td>
                             <td className="px-4 py-3">
                               <button
-                                onClick={() =>
-                                  navigate(`/admin/orders/${payment.orderId}`)
-                                }
+                                onClick={() => {
+                                  setSelectedOrderId(payment.orderId);
+                                  setViewOrderOpen(true);
+                                }}
                                 className="font-mono text-sm text-blue-600 hover:underline"
                               >
                                 #{payment.orderId}
@@ -360,6 +364,15 @@ const AdminFinance = () => {
             setSelectedPaymentId(null);
           }}
           paymentId={selectedPaymentId}
+        />
+
+        <ViewOrderDetailsModal
+          isOpen={viewOrderOpen}
+          onClose={() => {
+            setViewOrderOpen(false);
+            setSelectedOrderId(null);
+          }}
+          orderId={selectedOrderId}
         />
       </div>
     </DashboardLayout>

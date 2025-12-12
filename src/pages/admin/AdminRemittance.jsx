@@ -291,11 +291,11 @@ const AdminRemittance = () => {
                                                     <tbody className="divide-y divide-gray-200 dark:divide-gray-600">
                                                         {dispatcher.payments.map((payment) => (
                                                             <tr
-                                                                key={payment.id}
+                                                                key={payment.paymentId}
                                                                 className="text-sm"
                                                             >
                                                                 <td className="py-2 font-mono text-gray-900 dark:text-white">
-                                                                    #{payment.id}
+                                                                    #{payment.paymentId}
                                                                 </td>
                                                                 <td className="py-2">
                                                                     <button
