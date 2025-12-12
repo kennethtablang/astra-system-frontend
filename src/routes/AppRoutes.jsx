@@ -31,8 +31,8 @@ import AdminDeliveriesLive from "../pages/admin/AdminDeliveriesLive";
 import AdminDeliveriesPhotos from "../pages/admin/AdminDeliveriesPhotos";
 
 // Dispatcher specific pages (shown in admin interface for testing/demo)
-import DispatcherDeliveries from "../pages/admin/DispatcherDeliveries";
-import DispatcherDeliveryDetails from "../pages/admin/DispatcherDeliveryDetails";
+import DispatcherDeliveries from "../pages/dispatcher/DispatcherDeliveries";
+import DispatcherDeliveryDetails from "../pages/dispatcher/DispatcherDeliveryDetails";
 
 import AdminStores from "../pages/admin/AdminStores";
 import AdminStoreCity from "../pages/admin/AdminStoreCity";
