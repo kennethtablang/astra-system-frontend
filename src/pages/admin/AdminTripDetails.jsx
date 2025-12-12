@@ -472,11 +472,45 @@ const AdminTripDetails = () => {
                           </p>
                           {(assignment.storeBarangay ||
                             assignment.storeCity) && (
-                            <p className="text-xs text-gray-500 dark:text-gray-500">
-                              {assignment.storeBarangay &&
-                                `${assignment.storeBarangay}, `}
-                              {assignment.storeCity}
-                            </p>
+                              <p className="text-xs text-gray-500 dark:text-gray-500">
+                                {assignment.storeBarangay &&
+                                  `${assignment.storeBarangay}, `}
+                                {assignment.storeCity}
+                              </p>
+                            )}
+                        </div>
+
+                        {/* Delivery Status */}
+                        <div className="flex flex-col items-center gap-1">
+                          <Badge
+                            variant={
+                              assignment.status === "Delivered"
+                                ? "success"
+                                : assignment.status === "InTransit" ||
+                                  assignment.status === "AtStore"
+                                  ? "info"
+                                  : assignment.status === "Returned" ||
+                                    assignment.status === "Cancelled"
+                                    ? "danger"
+                                    : "warning"
+                            }
+                          >
+                            {assignment.status === "InTransit"
+                              ? "In Transit"
+                              : assignment.status === "AtStore"
+                                ? "At Store"
+                                : assignment.status}
+                          </Badge>
+                        </div>
+
+                        {/* Payment Status */}
+                        <div className="flex flex-col items-center gap-1">
+                          {assignment.isPaid ? (
+                            <Badge variant="success">Paid</Badge>
+                          ) : assignment.totalPaid > 0 ? (
+                            <Badge variant="warning">Partial</Badge>
+                          ) : (
+                            <Badge variant="danger">Unpaid</Badge>
                           )}
                         </div>
 
@@ -484,9 +518,11 @@ const AdminTripDetails = () => {
                           <p className="font-semibold text-gray-900 dark:text-white">
                             ₱{assignment.orderTotal.toFixed(2)}
                           </p>
-                          <p className="text-xs text-gray-500 dark:text-gray-500">
-                            {assignment.status}
-                          </p>
+                          {assignment.totalPaid > 0 && !assignment.isPaid && (
+                            <p className="text-xs text-green-600">
+                              Paid: ₱{assignment.totalPaid?.toFixed(2) || "0.00"}
+                            </p>
+                          )}
                         </div>
 
                         <Button
