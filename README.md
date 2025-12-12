@@ -13,7 +13,7 @@
 
 ---
 
-## 🌟 Overview
+## Overview
 
 ASTRA (Agent Supply and Transport Routing System) is a full-featured distribution and logistics management platform designed to streamline operations for distributors, warehouses, agents, and delivery personnel. The system provides real-time tracking, inventory management, order processing, and route optimization capabilities.
 
@@ -28,23 +28,23 @@ ASTRA (Agent Supply and Transport Routing System) is a full-featured distributio
 
 ---
 
-## ✨ Features
+## Features
 
-### 🛒 Order Management
+### Order Management
 - Create orders for existing (Suki) and new (Walk-in) customers
 - Barcode scanning for quick product lookup
 - Order status workflow management (Pending → Confirmed → Packed → Dispatched → Delivered)
 - Priority order handling
 - Order history and analytics
 
-### 📦 Inventory Management
+### Inventory Management
 - Multi-warehouse inventory tracking
 - Real-time stock level monitoring
 - Low stock alerts and reorder notifications
 - Inventory adjustments and movements
 - Product categorization and SKU management
 
-### 🚚 Trip & Delivery Management
+### Trip & Delivery Management
 - Automated trip creation and assignment
 - Route optimization for multiple stops
 - Real-time GPS tracking
@@ -52,20 +52,20 @@ ASTRA (Agent Supply and Transport Routing System) is a full-featured distributio
 - Delivery exception reporting
 - Trip manifest generation (PDF)
 
-### 👥 Store Management
+### Store Management
 - Customer (store) database with location mapping
 - City and barangay hierarchical location system
 - Credit limit management
 - Store performance analytics
 
-### 📊 Analytics & Reporting
+### Analytics & Reporting
 - Dashboard with key performance indicators
 - Sales reports and trends
 - Delivery performance metrics
 - Custom report generation
 - Export capabilities (CSV, PDF)
 
-### 🔐 User Management
+### User Management
 - Role-based access control (Admin, Agent, Dispatcher, etc.)
 - User approval workflow
 - Profile management
@@ -73,7 +73,7 @@ ASTRA (Agent Supply and Transport Routing System) is a full-featured distributio
 
 ---
 
-## 🛠 Tech Stack
+## Tech Stack
 
 ### Frontend
 - **Framework**: React 18.x
@@ -95,7 +95,7 @@ ASTRA (Agent Supply and Transport Routing System) is a full-featured distributio
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 
@@ -150,7 +150,7 @@ The built files will be in the `dist` directory.
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 astra/
@@ -190,7 +190,7 @@ astra/
 
 ---
 
-## ⚙️ Configuration
+## Configuration
 
 ### API Configuration
 
@@ -213,7 +213,7 @@ The application uses Axios with interceptors for API communication. Configuratio
 
 ---
 
-## 👤 User Roles
+## User Roles
 
 ### 1. **Admin**
 - Full system access
@@ -247,7 +247,7 @@ The application uses Axios with interceptors for API communication. Configuratio
 
 ---
 
-## 🔑 Key Modules
+## Key Modules
 
 ### 1. Order Management (`/admin/orders`)
 
@@ -318,7 +318,7 @@ The application uses Axios with interceptors for API communication. Configuratio
 
 ---
 
-## 🔌 API Integration
+## API Integration
 
 ### Service Architecture
 
@@ -378,7 +378,7 @@ api.interceptors.response.use(
 
 ---
 
-## 💻 Development
+## Development
 
 ### Code Style
 
@@ -448,7 +448,7 @@ npm run preview
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
 We welcome contributions! Please follow these steps:
 
@@ -468,13 +468,13 @@ We welcome contributions! Please follow these steps:
 
 ---
 
-## 📄 License
+## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ---
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
 - React team for the amazing framework
 - TailwindCSS for the utility-first CSS framework
