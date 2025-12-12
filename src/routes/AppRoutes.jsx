@@ -83,6 +83,8 @@ import AccountantReports from "../pages/accountant/AccountantReports";
 
 // Dispatcher Pages (Actual dispatcher role)
 import DispatcherDashboard from "../pages/dispatcher/DispatcherDashboard";
+import DispatcherTrips from "../pages/dispatcher/DispatcherTrips";
+import DispatcherOrders from "../pages/dispatcher/DispatcherOrders";
 
 const AppRoutes = () => {
   const { isAuthenticated } = useAuth();
@@ -228,6 +230,8 @@ const AppRoutes = () => {
       {/* Dispatcher Routes - Actual dispatcher interface */}
       <Route element={<ProtectedRoute allowedRoles={["Dispatcher"]} />}>
         <Route path="/dispatcher/dashboard" element={<DispatcherDashboard />} />
+        <Route path="/dispatcher/trips" element={<DispatcherTrips />} />
+        <Route path="/dispatcher/orders" element={<DispatcherOrders />} />
         <Route
           path="/dispatcher/deliveries"
           element={<DispatcherDeliveries />}
