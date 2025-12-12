@@ -87,8 +87,17 @@ export const AdminProfileSettings = () => {
 
       if (result.success) {
         toast.success("Profile updated successfully");
-        // Update context if method exists, otherwise might need page refresh
-        // Assuming context might auto-refresh or we can manually trigger
+        // Update context with new data
+        if (updateContextProfile) {
+          updateContextProfile({
+            ...authUser,
+            firstName: formData.firstName,
+            middleName: formData.middleName,
+            lastName: formData.lastName,
+            email: formData.email,
+            phoneNumber: formData.phoneNumber
+          });
+        }
       } else {
         toast.error(result.message || "Failed to update profile");
       }
