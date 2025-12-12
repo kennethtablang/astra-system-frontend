@@ -46,6 +46,7 @@ import AdminFinance from "../pages/admin/AdminFinance";
 import { AdminPayments } from "../pages/admin/AdminPayments";
 import { AdminInvoices } from "../pages/admin/AdminInvoices";
 import { AdminTransactions } from "../pages/admin/AdminTransactions";
+import AdminRemittance from "../pages/admin/AdminRemittance";
 import { AdminReports } from "../pages/admin/AdminReports";
 import { AdminSalesReports } from "../pages/admin/AdminSalesReports";
 import { AdminPerformance } from "../pages/admin/AdminPerformance";
@@ -151,6 +152,10 @@ const AppRoutes = () => {
         <Route path="/admin/finance" element={<AdminFinance />} />
         <Route path="/admin/finance/payments" element={<AdminPayments />} />
         <Route path="/admin/finance/invoices" element={<AdminInvoices />} />
+        <Route
+          path="/admin/finance/remittance"
+          element={<AdminRemittance />}
+        />
         <Route
           path="/admin/finance/transactions"
           element={<AdminTransactions />}
