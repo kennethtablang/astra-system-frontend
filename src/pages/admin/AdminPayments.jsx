@@ -20,6 +20,7 @@ import { Button } from "../../components/ui/Button";
 import { Select } from "../../components/ui/Select";
 import { LoadingSpinner } from "../../components/ui/Loading";
 import { Modal } from "../../components/ui/Modal";
+import { ViewOrderDetailsModal } from "../../components/modals/AdminOrder/ViewOrderDetailsModal";
 import { paymentService } from "../../services/paymentService";
 import { toast } from "react-hot-toast";
 
@@ -41,6 +42,8 @@ export const AdminPayments = () => {
   const [viewModalOpen, setViewModalOpen] = useState(false);
   const [selectedPayment, setSelectedPayment] = useState(null);
   const [loadingPayment, setLoadingPayment] = useState(false);
+  const [viewOrderOpen, setViewOrderOpen] = useState(false);
+  const [selectedOrderId, setSelectedOrderId] = useState(null);
 
   useEffect(() => {
     fetchPayments();
@@ -296,9 +299,10 @@ export const AdminPayments = () => {
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <button
-                              onClick={() =>
-                                navigate(`/admin/orders/${payment.orderId}`)
-                              }
+                              onClick={() => {
+                                setSelectedOrderId(payment.orderId);
+                                setViewOrderOpen(true);
+                              }}
                               className="text-blue-600 hover:underline font-mono text-sm"
                             >
                               #{payment.orderId}
@@ -516,6 +520,15 @@ export const AdminPayments = () => {
           </div>
         )}
       </Modal>
+
+      <ViewOrderDetailsModal
+        isOpen={viewOrderOpen}
+        onClose={() => {
+          setViewOrderOpen(false);
+          setSelectedOrderId(null);
+        }}
+        orderId={selectedOrderId}
+      />
     </DashboardLayout>
   );
 };
