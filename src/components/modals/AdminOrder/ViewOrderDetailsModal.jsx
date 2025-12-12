@@ -1,4 +1,4 @@
-// src/components/modals/AdminOrder/ViewOrderDetailsModal.jsx - UPDATED WITH LOCATION INFO
+// src/components/modals/AdminOrder/ViewOrderDetailsModal.jsx - WITH PAYMENT RECORDING
 import { useState, useEffect } from "react";
 import {
   X,
@@ -12,10 +12,12 @@ import {
   CheckCircle,
   Truck,
   AlertCircle,
+  CreditCard,
 } from "lucide-react";
 import { toast } from "react-hot-toast";
 import orderService from "../../../services/orderService";
 import receiptService from "../../../services/receiptService";
+import { RecordDeliveryPaymentModal } from "../AdminDelivery/RecordDeliveryPaymentModal";
 
 const Modal = ({ isOpen, onClose, title, children, size = "xl" }) => {
   if (!isOpen) return null;
@@ -114,6 +116,7 @@ export const ViewOrderDetailsModal = ({
   const [printing, setPrinting] = useState(false);
   const [markingAtStore, setMarkingAtStore] = useState(false);
   const [markingDelivered, setMarkingDelivered] = useState(false);
+  const [paymentModalOpen, setPaymentModalOpen] = useState(false);
 
   useEffect(() => {
     if (isOpen && orderId) {
@@ -305,6 +308,14 @@ export const ViewOrderDetailsModal = ({
   const canPrintReceipt =
     order.status === "AtStore" || order.status === "Delivered";
   const canMarkDelivered = order.status === "AtStore";
+  const canReceivePayment =
+    order.status === "Delivered" &&
+    (order.remainingBalance > 0 || (order.totalPaid || 0) < order.total);
+
+  const handlePaymentSuccess = () => {
+    fetchOrderDetails();
+    onSuccess?.();
+  };
 
   return (
     <Modal
@@ -319,7 +330,7 @@ export const ViewOrderDetailsModal = ({
           <div>
             <div className="flex items-center gap-3 mb-2">
               <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                Order #{order.id}
+                Order ##{order.id}
               </h2>
               {getStatusBadge(order.status)}
             </div>
@@ -364,6 +375,17 @@ export const ViewOrderDetailsModal = ({
             >
               <CheckCircle className="h-4 w-4" />
               {markingDelivered ? "Updating..." : "Mark Delivered"}
+            </Button>
+          )}
+
+          {canReceivePayment && (
+            <Button
+              variant="primary"
+              onClick={() => setPaymentModalOpen(true)}
+              className="flex items-center gap-2"
+            >
+              <CreditCard className="h-4 w-4" />
+              Receive Payment
             </Button>
           )}
         </div>
@@ -586,6 +608,34 @@ export const ViewOrderDetailsModal = ({
                 {formatCurrency(order.total)}
               </span>
             </div>
+            {order.status === "Delivered" && (
+              <>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600 dark:text-gray-400">Paid</span>
+                  <span className="font-medium text-green-600 dark:text-green-400">
+                    {formatCurrency(order.totalPaid || 0)}
+                  </span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600 dark:text-gray-400">
+                    Balance
+                  </span>
+                  <span
+                    className={`font-bold ${
+                      (order.remainingBalance ||
+                        order.total - (order.totalPaid || 0)) > 0
+                        ? "text-red-600 dark:text-red-400"
+                        : "text-green-600 dark:text-green-400"
+                    }`}
+                  >
+                    {formatCurrency(
+                      order.remainingBalance ??
+                        order.total - (order.totalPaid || 0)
+                    )}
+                  </span>
+                </div>
+              </>
+            )}
           </div>
         </div>
 
@@ -596,6 +646,14 @@ export const ViewOrderDetailsModal = ({
           </Button>
         </div>
       </div>
+
+      {/* Payment Modal */}
+      <RecordDeliveryPaymentModal
+        isOpen={paymentModalOpen}
+        onClose={() => setPaymentModalOpen(false)}
+        order={order}
+        onSuccess={handlePaymentSuccess}
+      />
     </Modal>
   );
 };
