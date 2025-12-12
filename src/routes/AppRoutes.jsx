@@ -64,6 +64,8 @@ import AgentOrdersList from "../pages/agent/AgentOrdersList";
 import AgentCreateOrder from "../pages/agent/AgentCreateOrder";
 import AgentOrderDetail from "../pages/agent/AgentOrderDetail";
 import AgentStoresList from "../pages/agent/AgentStoresList";
+import AgentProducts from "../pages/agent/AgentProducts";
+import AgentProfile from "../pages/agent/AgentProfile";
 
 // DistributorAdmin Pages
 import DistributorDashboard from "../pages/distributor/DistributorDashboard";
@@ -72,6 +74,12 @@ import DistributorInventory from "../pages/distributor/DistributorInventory";
 import DistributorTrips from "../pages/distributor/DistributorTrips";
 import DistributorOrders from "../pages/distributor/DistributorOrders";
 import DistributorReports from "../pages/distributor/DistributorReports";
+
+// Accountant Pages
+import AccountantDashboard from "../pages/accountant/AccountantDashboard";
+import AccountantPayments from "../pages/accountant/AccountantPayments";
+import AccountantInvoices from "../pages/accountant/AccountantInvoices";
+import AccountantReports from "../pages/accountant/AccountantReports";
 
 // Dispatcher Pages (Actual dispatcher role)
 import DispatcherDashboard from "../pages/dispatcher/DispatcherDashboard";
@@ -213,6 +221,8 @@ const AppRoutes = () => {
         <Route path="/agent/orders/create" element={<AgentCreateOrder />} />
         <Route path="/agent/orders/:id" element={<AgentOrderDetail />} />
         <Route path="/agent/stores" element={<AgentStoresList />} />
+        <Route path="/agent/products" element={<AgentProducts />} />
+        <Route path="/agent/profile" element={<AgentProfile />} />
       </Route>
 
       {/* Dispatcher Routes - Actual dispatcher interface */}
@@ -226,6 +236,14 @@ const AppRoutes = () => {
           path="/dispatcher/deliveries/:orderId"
           element={<DispatcherDeliveryDetails />}
         />
+      </Route>
+
+      {/* Accountant Routes */}
+      <Route element={<ProtectedRoute allowedRoles={["Accountant"]} />}>
+        <Route path="/accountant/dashboard" element={<AccountantDashboard />} />
+        <Route path="/accountant/payments" element={<AccountantPayments />} />
+        <Route path="/accountant/invoices" element={<AccountantInvoices />} />
+        <Route path="/accountant/reports" element={<AccountantReports />} />
       </Route>
 
       {/* Fallback Routes */}
