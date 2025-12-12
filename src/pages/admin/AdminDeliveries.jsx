@@ -4,7 +4,6 @@ import { useNavigate } from "react-router-dom";
 import {
   Package,
   Search,
-  Filter,
   MapPin,
   Clock,
   CheckCircle,
@@ -12,10 +11,10 @@ import {
   Navigation,
   Camera,
   Eye,
-  Download,
   RefreshCw,
   Truck,
   XCircle,
+  DollarSign,
 } from "lucide-react";
 import DashboardLayout from "../../components/layouts/DashboardLayout";
 import { Card, CardContent } from "../../components/ui/Card";
@@ -24,8 +23,8 @@ import { Button } from "../../components/ui/Button";
 import { Select } from "../../components/ui/Select";
 import { LoadingSpinner } from "../../components/ui/Loading";
 import orderService from "../../services/orderService";
-import tripService from "../../services/tripService";
 import deliveryService from "../../services/deliveryService";
+import { RecordDeliveryPaymentModal } from "../../components/modals/AdminDelivery/RecordDeliveryPaymentModal";
 import { toast } from "react-hot-toast";
 
 const AdminDeliveries = () => {
@@ -39,7 +38,6 @@ const AdminDeliveries = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [totalDeliveries, setTotalDeliveries] = useState(0);
-  const [setTrips] = useState([]);
   const [stats, setStats] = useState({
     totalDeliveries: 0,
     inTransit: 0,
@@ -47,21 +45,13 @@ const AdminDeliveries = () => {
     exceptions: 0,
   });
 
+  // Payment modal state
+  const [paymentModalOpen, setPaymentModalOpen] = useState(false);
+  const [selectedOrderForPayment, setSelectedOrderForPayment] = useState(null);
+
   useEffect(() => {
     fetchDeliveries();
-    fetchTrips();
   }, [currentPage, pageSize, filterStatus, filterTrip]);
-
-  const fetchTrips = async () => {
-    try {
-      const result = await tripService.getActiveTrips();
-      if (result.success) {
-        setTrips(result.data || []);
-      }
-    } catch (error) {
-      console.error("Failed to fetch trips:", error);
-    }
-  };
 
   const fetchDeliveries = async () => {
     try {
@@ -166,6 +156,25 @@ const AdminDeliveries = () => {
     } catch (error) {
       console.error("Error fetching photos:", error);
       toast.error("Failed to load photos");
+    }
+  };
+
+  const handleRecordPayment = (order) => {
+    setSelectedOrderForPayment(order);
+    setPaymentModalOpen(true);
+  };
+
+  const getPaymentStatusBadge = (order) => {
+    const total = order.total || 0;
+    const paid = order.totalPaid || 0;
+    const remaining = order.remainingBalance ?? (total - paid);
+
+    if (remaining <= 0) {
+      return <Badge variant="success">Paid</Badge>;
+    } else if (paid > 0) {
+      return <Badge variant="warning">Partial</Badge>;
+    } else {
+      return <Badge variant="danger">Unpaid</Badge>;
     }
   };
 
@@ -412,20 +421,25 @@ const AdminDeliveries = () => {
                               </p>
                               {(delivery.storeBarangay ||
                                 delivery.storeCity) && (
-                                <p className="text-sm text-gray-500 dark:text-gray-400">
-                                  {delivery.storeBarangay &&
-                                    `${delivery.storeBarangay}, `}
-                                  {delivery.storeCity}
-                                </p>
-                              )}
+                                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                                    {delivery.storeBarangay &&
+                                      `${delivery.storeBarangay}, `}
+                                    {delivery.storeCity}
+                                  </p>
+                                )}
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             {getStatusBadge(delivery.status)}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="font-medium text-gray-900 dark:text-white">
-                              {formatCurrency(delivery.total)}
+                            <div>
+                              <div className="font-medium text-gray-900 dark:text-white">
+                                {formatCurrency(delivery.total)}
+                              </div>
+                              <div className="mt-1">
+                                {getPaymentStatusBadge(delivery)}
+                              </div>
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
@@ -453,18 +467,29 @@ const AdminDeliveries = () => {
                               </button>
                               {(delivery.status === "InTransit" ||
                                 delivery.status === "AtStore") && (
-                                <button
-                                  onClick={() =>
-                                    navigate(
-                                      `/admin/deliveries/track/${delivery.id}`
-                                    )
-                                  }
-                                  className="p-2 text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/20 rounded-lg transition-colors"
-                                  title="Track delivery"
-                                >
-                                  <Navigation className="h-4 w-4" />
-                                </button>
-                              )}
+                                  <button
+                                    onClick={() =>
+                                      navigate(
+                                        `/admin/deliveries/track/${delivery.id}`
+                                      )
+                                    }
+                                    className="p-2 text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/20 rounded-lg transition-colors"
+                                    title="Track delivery"
+                                  >
+                                    <Navigation className="h-4 w-4" />
+                                  </button>
+                                )}
+                              {delivery.status === "Delivered" &&
+                                (delivery.remainingBalance > 0 ||
+                                  (delivery.totalPaid || 0) < delivery.total) && (
+                                  <button
+                                    onClick={() => handleRecordPayment(delivery)}
+                                    className="p-2 text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-lg transition-colors"
+                                    title="Record payment"
+                                  >
+                                    <DollarSign className="h-4 w-4" />
+                                  </button>
+                                )}
                             </div>
                           </td>
                         </tr>
@@ -520,11 +545,10 @@ const AdminDeliveries = () => {
                             <button
                               key={pageNum}
                               onClick={() => setCurrentPage(pageNum)}
-                              className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
-                                currentPage === pageNum
-                                  ? "bg-blue-600 text-white"
-                                  : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                              }`}
+                              className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${currentPage === pageNum
+                                ? "bg-blue-600 text-white"
+                                : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                                }`}
                             >
                               {pageNum}
                             </button>
@@ -552,6 +576,19 @@ const AdminDeliveries = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Payment Recording Modal */}
+      <RecordDeliveryPaymentModal
+        isOpen={paymentModalOpen}
+        onClose={() => {
+          setPaymentModalOpen(false);
+          setSelectedOrderForPayment(null);
+        }}
+        order={selectedOrderForPayment}
+        onSuccess={() => {
+          fetchDeliveries();
+        }}
+      />
     </DashboardLayout>
   );
 };
