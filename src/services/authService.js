@@ -112,6 +112,16 @@ const authService = {
     }
   },
 
+  // Set 2FA Enabled Status
+  async setTwoFactorEnabled(enabled) {
+    try {
+      const { data } = await api.post('/auth/2fa/status', { enabled });
+      return data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
+  },
+
   // Get Current User
   async getCurrentUser() {
     try {
