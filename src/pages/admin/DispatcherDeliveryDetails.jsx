@@ -22,6 +22,7 @@ import { Button } from "../../components/ui/Button";
 import { LoadingSpinner } from "../../components/ui/Loading";
 import orderService from "../../services/orderService";
 import deliveryService from "../../services/deliveryService";
+import { RecordDeliveryPaymentModal } from "../../components/modals/AdminDelivery/RecordDeliveryPaymentModal";
 import { toast } from "react-hot-toast";
 
 const DispatcherDeliveryDetails = () => {
@@ -33,6 +34,7 @@ const DispatcherDeliveryDetails = () => {
   const [loading, setLoading] = useState(true);
   const [markingDelivered, setMarkingDelivered] = useState(false);
   const [reportingException, setReportingException] = useState(false);
+  const [paymentModalOpen, setPaymentModalOpen] = useState(false);
 
   // Form states for marking delivered
   const [recipientName, setRecipientName] = useState("");
@@ -110,7 +112,10 @@ const DispatcherDeliveryDetails = () => {
 
       if (result.success) {
         toast.success("Order marked as delivered successfully!");
-        navigate("/dispatcher/deliveries");
+        // Refresh order details to get updated status
+        await fetchOrderDetails();
+        // Open payment modal
+        setPaymentModalOpen(true);
       } else {
         toast.error(result.message || "Failed to mark order as delivered");
       }
@@ -239,6 +244,14 @@ const DispatcherDeliveryDetails = () => {
                 Order #{order.id}
               </h1>
               {getStatusBadge(order.status)}
+              {/* Payment Status Badge */}
+              {order.isPaid ? (
+                <Badge variant="success">Paid</Badge>
+              ) : order.totalPaid > 0 ? (
+                <Badge variant="warning">Partial</Badge>
+              ) : (
+                <Badge variant="danger">Unpaid</Badge>
+              )}
             </div>
             <p className="text-gray-600 dark:text-gray-400 mt-1">
               Delivery details and actions
@@ -589,6 +602,19 @@ const DispatcherDeliveryDetails = () => {
           </div>
         </div>
       </div>
+
+      {/* Payment Recording Modal */}
+      <RecordDeliveryPaymentModal
+        isOpen={paymentModalOpen}
+        onClose={() => {
+          setPaymentModalOpen(false);
+          navigate("/dispatcher/deliveries");
+        }}
+        order={order}
+        onSuccess={() => {
+          fetchOrderDetails();
+        }}
+      />
     </DashboardLayout>
   );
 };
