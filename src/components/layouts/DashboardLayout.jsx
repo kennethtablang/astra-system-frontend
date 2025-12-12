@@ -244,6 +244,44 @@ const DashboardLayout = ({ children }) => {
         ],
       },
     ],
+    DistributorAdmin: [
+      {
+        name: "Dashboard",
+        href: "/distributor/dashboard",
+        icon: Home,
+        type: "single",
+      },
+      {
+        name: "Warehouses",
+        href: "/distributor/warehouses",
+        icon: Warehouse,
+        type: "single",
+      },
+      {
+        name: "Inventory",
+        href: "/distributor/inventory",
+        icon: Package,
+        type: "single",
+      },
+      {
+        name: "Trips",
+        href: "/distributor/trips",
+        icon: Truck,
+        type: "single",
+      },
+      {
+        name: "Orders",
+        href: "/distributor/orders",
+        icon: ShoppingCart,
+        type: "single",
+      },
+      {
+        name: "Reports",
+        href: "/distributor/reports",
+        icon: BarChart3,
+        type: "single",
+      },
+    ],
     Agent: [
       {
         name: "Dashboard",
@@ -446,14 +484,14 @@ const DashboardLayout = ({ children }) => {
                     key={item.name}
                     to={item.href}
                     className={`flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors ${active
-                        ? "bg-blue-50 text-blue-600 dark:bg-blue-900/50 dark:text-blue-400"
-                        : "text-gray-700 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-700/50 dark:hover:text-white"
+                      ? "bg-blue-50 text-blue-600 dark:bg-blue-900/50 dark:text-blue-400"
+                      : "text-gray-700 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-700/50 dark:hover:text-white"
                       }`}
                   >
                     <Icon
                       className={`mr-3 h-5 w-5 ${active
-                          ? "text-blue-600 dark:text-blue-400"
-                          : "text-gray-400 dark:text-gray-500"
+                        ? "text-blue-600 dark:text-blue-400"
+                        : "text-gray-400 dark:text-gray-500"
                         }`}
                     />
                     {item.name}
@@ -471,15 +509,15 @@ const DashboardLayout = ({ children }) => {
                     <button
                       onClick={() => toggleGroup(item.key)}
                       className={`w-full flex items-center justify-between px-4 py-3 text-sm font-medium rounded-lg transition-colors ${hasActiveChild
-                          ? "bg-blue-50 text-blue-600 dark:bg-blue-900/50 dark:text-blue-400"
-                          : "text-gray-700 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-700/50 dark:hover:text-white"
+                        ? "bg-blue-50 text-blue-600 dark:bg-blue-900/50 dark:text-blue-400"
+                        : "text-gray-700 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-700/50 dark:hover:text-white"
                         }`}
                     >
                       <div className="flex items-center">
                         <Icon
                           className={`mr-3 h-5 w-5 ${hasActiveChild
-                              ? "text-blue-600 dark:text-blue-400"
-                              : "text-gray-400 dark:text-gray-500"
+                            ? "text-blue-600 dark:text-blue-400"
+                            : "text-gray-400 dark:text-gray-500"
                             }`}
                         />
                         {item.name}
@@ -501,14 +539,14 @@ const DashboardLayout = ({ children }) => {
                               key={subItem.name}
                               to={subItem.href}
                               className={`flex items-center px-4 py-2 text-sm rounded-lg transition-colors ${active
-                                  ? "bg-blue-50 text-blue-600 dark:bg-blue-900/50 dark:text-blue-400"
-                                  : "text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-700/50 dark:hover:text-white"
+                                ? "bg-blue-50 text-blue-600 dark:bg-blue-900/50 dark:text-blue-400"
+                                : "text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-700/50 dark:hover:text-white"
                                 }`}
                             >
                               <SubIcon
                                 className={`mr-3 h-4 w-4 ${active
-                                    ? "text-blue-600 dark:text-blue-400"
-                                    : "text-gray-400 dark:text-gray-500"
+                                  ? "text-blue-600 dark:text-blue-400"
+                                  : "text-gray-400 dark:text-gray-500"
                                   }`}
                               />
                               {subItem.name}

@@ -65,6 +65,14 @@ import AgentCreateOrder from "../pages/agent/AgentCreateOrder";
 import AgentOrderDetail from "../pages/agent/AgentOrderDetail";
 import AgentStoresList from "../pages/agent/AgentStoresList";
 
+// DistributorAdmin Pages
+import DistributorDashboard from "../pages/distributor/DistributorDashboard";
+import DistributorWarehouses from "../pages/distributor/DistributorWarehouses";
+import DistributorInventory from "../pages/distributor/DistributorInventory";
+import DistributorTrips from "../pages/distributor/DistributorTrips";
+import DistributorOrders from "../pages/distributor/DistributorOrders";
+import DistributorReports from "../pages/distributor/DistributorReports";
+
 // Dispatcher Pages (Actual dispatcher role)
 import DispatcherDashboard from "../pages/dispatcher/DispatcherDashboard";
 
@@ -186,6 +194,16 @@ const AppRoutes = () => {
           path="/admin/settings/security"
           element={<AdminSettingsSecurity />}
         />
+      </Route>
+
+      {/* DistributorAdmin Routes */}
+      <Route element={<ProtectedRoute allowedRoles={["DistributorAdmin"]} />}>
+        <Route path="/distributor/dashboard" element={<DistributorDashboard />} />
+        <Route path="/distributor/warehouses" element={<DistributorWarehouses />} />
+        <Route path="/distributor/inventory" element={<DistributorInventory />} />
+        <Route path="/distributor/trips" element={<DistributorTrips />} />
+        <Route path="/distributor/orders" element={<DistributorOrders />} />
+        <Route path="/distributor/reports" element={<DistributorReports />} />
       </Route>
 
       {/* Agent Routes */}
