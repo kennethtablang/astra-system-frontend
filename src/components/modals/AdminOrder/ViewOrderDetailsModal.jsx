@@ -18,6 +18,7 @@ import { toast } from "react-hot-toast";
 import orderService from "../../../services/orderService";
 import receiptService from "../../../services/receiptService";
 import { RecordDeliveryPaymentModal } from "../AdminDelivery/RecordDeliveryPaymentModal";
+import deliveryService from "../../../services/deliveryService";
 
 const Modal = ({ isOpen, onClose, title, children, size = "xl" }) => {
   if (!isOpen) return null;
@@ -117,6 +118,8 @@ export const ViewOrderDetailsModal = ({
   const [markingAtStore, setMarkingAtStore] = useState(false);
   const [markingDelivered, setMarkingDelivered] = useState(false);
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
+  const [photos, setPhotos] = useState([]);
+  const [loadingPhotos, setLoadingPhotos] = useState(false);
 
   useEffect(() => {
     if (isOpen && orderId) {
@@ -138,6 +141,26 @@ export const ViewOrderDetailsModal = ({
       toast.error("Error loading order details");
     } finally {
       setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (isOpen && orderId) {
+      fetchDeliveryPhotos();
+    }
+  }, [isOpen, orderId]);
+
+  const fetchDeliveryPhotos = async () => {
+    try {
+      setLoadingPhotos(true);
+      const result = await deliveryService.getDeliveryPhotos(orderId);
+      if (result.success) {
+        setPhotos(result.data || []);
+      }
+    } catch (error) {
+      console.error("Error fetching photos:", error);
+    } finally {
+      setLoadingPhotos(false);
     }
   };
 
@@ -524,6 +547,67 @@ export const ViewOrderDetailsModal = ({
           )}
         </div>
 
+        {/* Proof of Delivery Section */}
+        {order.status === "Delivered" && (
+          <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <CheckCircle className="h-5 w-5 text-green-600" />
+              <h3 className="font-semibold text-gray-900 dark:text-white">
+                Proof of Delivery
+              </h3>
+            </div>
+
+            {loadingPhotos ? (
+              <div className="flex items-center gap-2 text-sm text-gray-500">
+                <div className="animate-spin h-4 w-4 border-2 border-blue-500 rounded-full border-t-transparent"></div>
+                Loading proof...
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {/* Recipient Details */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                  {order.receivedBy && (
+                    <div>
+                      <span className="text-gray-600 dark:text-gray-400">Received By: </span>
+                      <span className="font-medium text-gray-900 dark:text-white">{order.receivedBy}</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Photos Grid */}
+                {photos.length > 0 ? (
+                  <div>
+                    <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Attached Photos:</p>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                      {photos.map((photo) => (
+                        <a
+                          key={photo.id}
+                          href={photo.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="block group relative aspect-square rounded-lg overflow-hidden bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-all"
+                        >
+                          <img
+                            src={photo.url}
+                            alt="Proof of Delivery"
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          />
+                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 text-sm text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 p-3 rounded-lg">
+                    <AlertCircle className="h-4 w-4" />
+                    <span>No proof of delivery photos attached</span>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Order Items */}
         <div>
           <h3 className="font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
@@ -621,16 +705,15 @@ export const ViewOrderDetailsModal = ({
                     Balance
                   </span>
                   <span
-                    className={`font-bold ${
-                      (order.remainingBalance ||
-                        order.total - (order.totalPaid || 0)) > 0
-                        ? "text-red-600 dark:text-red-400"
-                        : "text-green-600 dark:text-green-400"
-                    }`}
+                    className={`font-bold ${(order.remainingBalance ||
+                      order.total - (order.totalPaid || 0)) > 0
+                      ? "text-red-600 dark:text-red-400"
+                      : "text-green-600 dark:text-green-400"
+                      }`}
                   >
                     {formatCurrency(
                       order.remainingBalance ??
-                        order.total - (order.totalPaid || 0)
+                      order.total - (order.totalPaid || 0)
                     )}
                   </span>
                 </div>
