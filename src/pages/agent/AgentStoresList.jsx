@@ -1,8 +1,18 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useState, useEffect } from "react";
-import { Plus, Search, Edit, Trash2, MapPin, Phone, User } from "lucide-react";
+import {
+  Plus,
+  Search,
+  Edit,
+  Trash2,
+  MapPin,
+  Phone,
+  User,
+  Store,
+  DollarSign
+} from "lucide-react";
 import DashboardLayout from "../../components/layouts/DashboardLayout";
-import { Card, CardHeader, CardContent } from "../../components/ui/Card";
+import { Card, CardContent } from "../../components/ui/Card";
 import {
   Table,
   TableHeader,
@@ -12,56 +22,68 @@ import {
   TableCell,
 } from "../../components/ui/Table";
 import { Button } from "../../components/ui/Button";
-import { Input } from "../../components/ui/Input";
-import { Select } from "../../components/ui/Select";
-import { Modal } from "../../components/ui/Modal";
+import { Combobox } from "../../components/ui/Combobox";
 import { LoadingSpinner } from "../../components/ui/Loading";
-import { EmptyState } from "../../components/ui/EmptyState";
+import { Badge } from "../../components/ui/Badge";
+import { AgentStoreAddModal } from "../../components/modals/AgentStore/AgentStoreAddModal";
+import { AgentStoreEditModal } from "../../components/modals/AgentStore/AgentStoreEditModal";
 import api from "../../api/axios";
 import { toast } from "react-hot-toast";
 
 const AgentStoresList = () => {
+  // State Management
   const [stores, setStores] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [showModal, setShowModal] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterCityId, setFilterCityId] = useState("");
+  const [filterBarangayId, setFilterBarangayId] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [totalStores, setTotalStores] = useState(0);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [editingStore, setEditingStore] = useState(null);
-  const [filters, setFilters] = useState({
-    searchTerm: "",
-    city: "",
-    barangay: "",
-  });
   const [cities, setCities] = useState([]);
   const [barangays, setBarangays] = useState([]);
 
-  const [formData, setFormData] = useState({
-    name: "",
-    barangay: "",
-    city: "",
-    ownerName: "",
-    phone: "",
-    creditLimit: 0,
-    preferredPaymentMethod: "Cash",
-  });
-
+  // Fetch Stores
   useEffect(() => {
     fetchStores();
-    fetchCities();
-  }, [filters]);
+  }, [currentPage, pageSize, searchTerm, filterCityId, filterBarangayId]);
 
+  // Fetch Cities on Mount
   useEffect(() => {
-    if (filters.city) {
-      fetchBarangays(filters.city);
+    fetchCities();
+  }, []);
+
+  // Fetch barangays when city filter changes
+  useEffect(() => {
+    if (filterCityId) {
+      fetchBarangays(parseInt(filterCityId));
+    } else {
+      setBarangays([]);
+      setFilterBarangayId("");
     }
-  }, [filters.city]);
+  }, [filterCityId]);
 
   const fetchStores = async () => {
     try {
       setLoading(true);
-      const { data } = await api.get("/stores", {
-        params: { ...filters, pageSize: 100, pageNumber: 1 },
-      });
+      const params = {
+        pageNumber: currentPage,
+        pageSize: pageSize,
+      };
+
+      if (searchTerm) params.searchTerm = searchTerm;
+      if (filterCityId) params.cityId = parseInt(filterCityId);
+      if (filterBarangayId) params.barangayId = parseInt(filterBarangayId);
+
+      const { data } = await api.get("/store", { params });
+
       if (data.success) {
         setStores(data.data.items || []);
+        // API might return totalCount, if not we fall back to length of items (which might be paged)
+        setTotalStores(data.data.totalCount || data.data.items?.length || 0);
       }
     } catch (error) {
       toast.error("Failed to load stores");
@@ -73,7 +95,7 @@ const AgentStoresList = () => {
 
   const fetchCities = async () => {
     try {
-      const { data } = await api.get("/stores/cities");
+      const { data } = await api.get("/city/lookup");
       if (data.success) {
         setCities(data.data || []);
       }
@@ -82,10 +104,10 @@ const AgentStoresList = () => {
     }
   };
 
-  const fetchBarangays = async (city) => {
+  const fetchBarangays = async (cityId) => {
     try {
-      const { data } = await api.get("/stores/barangays", {
-        params: { city },
+      const { data } = await api.get("/barangay/lookup", {
+        params: { cityId: parseInt(cityId) },
       });
       if (data.success) {
         setBarangays(data.data || []);
@@ -95,72 +117,52 @@ const AgentStoresList = () => {
     }
   };
 
-  const handleOpenModal = (store = null) => {
-    if (store) {
-      setEditingStore(store);
-      setFormData({
-        name: store.name,
-        barangay: store.barangay,
-        city: store.city,
-        ownerName: store.ownerName || "",
-        phone: store.phone || "",
-        creditLimit: store.creditLimit,
-        preferredPaymentMethod: store.preferredPaymentMethod || "Cash",
-      });
-    } else {
-      setEditingStore(null);
-      setFormData({
-        name: "",
-        barangay: "",
-        city: "",
-        ownerName: "",
-        phone: "",
-        creditLimit: 0,
-        preferredPaymentMethod: "Cash",
-      });
-    }
-    setShowModal(true);
+  const handleOpenAddModal = () => {
+    setShowAddModal(true);
   };
 
-  const handleCloseModal = () => {
-    setShowModal(false);
-    setEditingStore(null);
+  const handleOpenEditModal = (store) => {
+    setEditingStore(store);
+    setShowEditModal(true);
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
+  // Create Store
+  const handleCreateStore = async (storeData) => {
     try {
-      if (editingStore) {
-        const { data } = await api.put(`/stores/${editingStore.id}`, formData);
-        if (data.success) {
-          toast.success("Store updated successfully");
-          fetchStores();
-          handleCloseModal();
-        }
-      } else {
-        const { data } = await api.post("/stores", formData);
-        if (data.success) {
-          toast.success("Store created successfully");
-          fetchStores();
-          handleCloseModal();
-        }
+      const { data } = await api.post("/store", storeData);
+      if (data.success) {
+        toast.success("Store created successfully");
+        setShowAddModal(false);
+        fetchStores();
       }
     } catch (error) {
-      toast.error(
-        error.response?.data?.message ||
-          `Failed to ${editingStore ? "update" : "create"} store`
-      );
+      toast.error(error.response?.data?.message || "Failed to create store");
     }
   };
 
+  // Update Store
+  const handleUpdateStore = async (storeData) => {
+    try {
+      const { data } = await api.put(`/store/${storeData.id}`, storeData);
+      if (data.success) {
+        toast.success("Store updated successfully");
+        setShowEditModal(false);
+        setEditingStore(null);
+        fetchStores();
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to update store");
+    }
+  };
+
+  // Delete Store
   const handleDelete = async (storeId) => {
     if (!window.confirm("Are you sure you want to delete this store?")) {
       return;
     }
 
     try {
-      const { data } = await api.delete(`/stores/${storeId}`);
+      const { data } = await api.delete(`/store/${storeId}`);
       if (data.success) {
         toast.success("Store deleted successfully");
         fetchStores();
@@ -170,64 +172,174 @@ const AgentStoresList = () => {
     }
   };
 
-  const paymentMethods = [
-    { value: "Cash", label: "Cash" },
-    { value: "GCash", label: "GCash" },
-    { value: "Maya", label: "Maya" },
-    { value: "BankTransfer", label: "Bank Transfer" },
+  // Formatting + Helpers
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat("en-PH", {
+      style: "currency",
+      currency: "PHP",
+    }).format(amount);
+  };
+
+  const pageSizeOptions = [
+    { value: "10", label: "10" },
+    { value: "25", label: "25" },
+    { value: "50", label: "50" },
+    { value: "100", label: "100" },
   ];
+
+  // Pagination Logic
+  const totalPages = Math.ceil(totalStores / pageSize);
+  const startIndex = (currentPage - 1) * pageSize + 1;
+  const endIndex = Math.min(currentPage * pageSize, totalStores);
 
   return (
     <DashboardLayout>
       <div className="space-y-6">
         {/* Page Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Stores</h1>
-            <p className="text-gray-600 mt-1">Manage your store accounts</p>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+              Agent Stores
+            </h1>
+            <p className="text-gray-600 dark:text-gray-400 mt-1">
+              Manage your customer stores
+            </p>
           </div>
-          <Button onClick={() => handleOpenModal()}>
-            <Plus className="h-4 w-4 mr-2" />
+          <Button
+            onClick={handleOpenAddModal}
+            className="flex items-center gap-2"
+          >
+            <Plus className="h-4 w-4" />
             Add Store
           </Button>
         </div>
 
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Total Stores
+                  </p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                    {totalStores}
+                  </p>
+                </div>
+                <Store className="h-8 w-8 text-blue-600" />
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Cities Covered
+                  </p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                    {cities.length}
+                  </p>
+                </div>
+                <MapPin className="h-8 w-8 text-green-600" />
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Barangays
+                  </p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                    {filterCityId ? barangays.length : (cities.length > 0 ? "—" : 0)}
+                  </p>
+                </div>
+                <MapPin className="h-8 w-8 text-yellow-600" />
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Avg Credit Limit
+                  </p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white truncate">
+                    {formatCurrency(
+                      stores.length > 0
+                        ? stores.reduce(
+                          (sum, s) => sum + (s.creditLimit || 0),
+                          0
+                        ) / stores.length
+                        : 0
+                    )}
+                  </p>
+                </div>
+                <DollarSign className="h-8 w-8 text-purple-600" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
         {/* Filters */}
         <Card>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Input
-                placeholder="Search stores..."
-                icon={Search}
-                value={filters.searchTerm}
-                onChange={(e) =>
-                  setFilters({ ...filters, searchTerm: e.target.value })
-                }
-              />
-              <Select
-                options={[
-                  { value: "", label: "All Cities" },
-                  ...cities.map((city) => ({ value: city, label: city })),
-                ]}
-                value={filters.city}
-                onChange={(e) =>
-                  setFilters({ ...filters, city: e.target.value })
-                }
-              />
-              <Select
-                options={[
-                  { value: "", label: "All Barangays" },
-                  ...barangays.map((b) => ({
-                    value: b.barangay,
-                    label: b.barangay,
-                  })),
-                ]}
-                value={filters.barangay}
-                onChange={(e) =>
-                  setFilters({ ...filters, barangay: e.target.value })
-                }
-                disabled={!filters.city}
-              />
+          <CardContent className="p-4">
+            <div className="flex flex-col sm:flex-row gap-3">
+              <div className="flex-1 relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search by store name, owner, or phone..."
+                  value={searchTerm}
+                  onChange={(e) => {
+                    setSearchTerm(e.target.value);
+                    setCurrentPage(1);
+                  }}
+                  className="w-full pl-9 pr-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                />
+              </div>
+
+              <div className="flex gap-2">
+                <Combobox
+                  placeholder="All Cities"
+                  options={[
+                    { value: "", label: "All Cities" },
+                    ...cities.map((city) => ({
+                      value: city?.id?.toString() || "",
+                      label: city?.name || "Unknown",
+                      key: city?.id || Math.random()
+                    })),
+                  ]}
+                  value={filterCityId}
+                  onChange={(value) => {
+                    setFilterCityId(value);
+                    setCurrentPage(1);
+                  }}
+                  className="w-40"
+                />
+                <Combobox
+                  placeholder="All Barangays"
+                  options={[
+                    { value: "", label: "All Barangays" },
+                    ...barangays.map((b) => ({
+                      value: b?.id?.toString() || "",
+                      label: b?.name || "Unknown",
+                      key: b?.id || Math.random()
+                    })),
+                  ]}
+                  value={filterBarangayId}
+                  onChange={(value) => {
+                    setFilterBarangayId(value);
+                    setCurrentPage(1);
+                  }}
+                  disabled={!filterCityId}
+                  className="w-48"
+                />
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -239,181 +351,214 @@ const AgentStoresList = () => {
               <div className="flex items-center justify-center py-12">
                 <LoadingSpinner size="lg" />
               </div>
-            ) : stores.length > 0 ? (
-              <Table>
-                <TableHeader>
-                  <TableHead>Store Name</TableHead>
-                  <TableHead>Location</TableHead>
-                  <TableHead>Owner</TableHead>
-                  <TableHead>Contact</TableHead>
-                  <TableHead>Credit Limit</TableHead>
-                  <TableHead>Payment Method</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableHeader>
-                <TableBody>
-                  {stores.map((store) => (
-                    <TableRow key={store.id}>
-                      <TableCell>
-                        <div className="flex items-center">
-                          <MapPin className="h-4 w-4 text-gray-400 mr-2" />
-                          <span className="font-medium">{store.name}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div>
-                          <p className="text-sm">{store.barangay}</p>
-                          <p className="text-xs text-gray-500">{store.city}</p>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center">
-                          <User className="h-4 w-4 text-gray-400 mr-2" />
-                          {store.ownerName || "N/A"}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center">
-                          <Phone className="h-4 w-4 text-gray-400 mr-2" />
-                          {store.phone || "N/A"}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        ₱{store.creditLimit.toLocaleString()}
-                      </TableCell>
-                      <TableCell>{store.preferredPaymentMethod}</TableCell>
-                      <TableCell>
-                        <div className="flex space-x-2">
-                          <button
-                            onClick={() => handleOpenModal(store)}
-                            className="text-blue-600 hover:text-blue-700"
-                          >
-                            <Edit className="h-4 w-4" />
-                          </button>
-                          <button
-                            onClick={() => handleDelete(store.id)}
-                            className="text-red-600 hover:text-red-700"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            ) : (
-              <EmptyState
-                icon={MapPin}
-                title="No stores yet"
-                description="Add your first store to get started"
-                action={
-                  <Button onClick={() => handleOpenModal()}>
+            ) : stores.length === 0 ? (
+              <div className="text-center py-12">
+                <Store className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+                  No stores found
+                </h3>
+                <p className="text-gray-500 dark:text-gray-400 mt-2">
+                  Try adjusting your search or filters
+                </p>
+                <div className="mt-4">
+                  <Button onClick={handleOpenAddModal}>
                     <Plus className="h-4 w-4 mr-2" />
                     Add Store
                   </Button>
-                }
-              />
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableHead>Store</TableHead>
+                      <TableHead>Location</TableHead>
+                      <TableHead>Contact</TableHead>
+                      <TableHead>Credit Limit</TableHead>
+                      <TableHead>Payment Method</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableHeader>
+                    <TableBody>
+                      {stores.map((store) => (
+                        <TableRow key={store.id}>
+                          <TableCell>
+                            <div className="flex items-center gap-3">
+                              <div className="h-10 w-10 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center flex-shrink-0">
+                                <Store className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                              </div>
+                              <div>
+                                <p className="font-medium text-gray-900 dark:text-white">
+                                  {store.name}
+                                </p>
+                                {store.ownerName && (
+                                  <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
+                                    <User className="h-3 w-3 mr-1" />
+                                    {store.ownerName}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="space-y-1">
+                              {store.barangayName && (
+                                <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                                  <MapPin className="h-3 w-3 mr-1" />
+                                  {store.barangayName}
+                                </div>
+                              )}
+                              {store.cityName && (
+                                <div className="text-sm text-gray-500 dark:text-gray-500 pl-4">
+                                  {store.cityName}
+                                </div>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            {store.phone && (
+                              <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                                <Phone className="h-3 w-3 mr-1" />
+                                {store.phone}
+                              </div>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <div className="font-medium text-gray-900 dark:text-white">
+                              {formatCurrency(store.creditLimit)}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            {store.preferredPaymentMethod ? (
+                              <Badge variant="info">
+                                {store.preferredPaymentMethod}
+                              </Badge>
+                            ) : (
+                              <span className="text-gray-400">—</span>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center justify-end gap-2">
+                              <button
+                                onClick={() => handleOpenEditModal(store)}
+                                className="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+                                title="Edit store"
+                              >
+                                <Edit className="h-4 w-4" />
+                              </button>
+                              <button
+                                onClick={() => handleDelete(store.id)}
+                                className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                                title="Delete store"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+
+                {/* Pagination */}
+                <div className="border-t border-gray-200 dark:border-gray-700 px-4 py-3">
+                  <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+                    <div className="flex items-center gap-2 text-sm">
+                      <select
+                        value={pageSize}
+                        onChange={(e) => {
+                          setPageSize(Number(e.target.value));
+                          setCurrentPage(1);
+                        }}
+                        className="border border-gray-300 dark:border-gray-600 rounded-md p-1 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                      >
+                        {pageSizeOptions.map(opt => (
+                          <option key={opt.value} value={opt.value}>{opt.label}</option>
+                        ))}
+                      </select>
+                      <span className="text-gray-700 dark:text-gray-300 whitespace-nowrap">
+                        {startIndex}-{endIndex} of {totalStores}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() =>
+                          setCurrentPage((prev) => Math.max(1, prev - 1))
+                        }
+                        disabled={currentPage === 1}
+                      >
+                        Previous
+                      </Button>
+
+                      <div className="flex items-center gap-1">
+                        {[...Array(Math.min(5, totalPages))].map((_, idx) => {
+                          let pageNum;
+                          if (totalPages <= 5) {
+                            pageNum = idx + 1;
+                          } else if (currentPage <= 3) {
+                            pageNum = idx + 1;
+                          } else if (currentPage >= totalPages - 2) {
+                            pageNum = totalPages - 4 + idx;
+                          } else {
+                            pageNum = currentPage - 2 + idx;
+                          }
+
+                          return (
+                            <button
+                              key={pageNum}
+                              onClick={() => setCurrentPage(pageNum)}
+                              className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${currentPage === pageNum
+                                  ? "bg-blue-600 text-white"
+                                  : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                                }`}
+                            >
+                              {pageNum}
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() =>
+                          setCurrentPage((prev) =>
+                            Math.min(totalPages, prev + 1)
+                          )
+                        }
+                        disabled={currentPage === totalPages}
+                      >
+                        Next
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </>
             )}
           </CardContent>
         </Card>
+
+        {/* Modals */}
+        <AgentStoreAddModal
+          isOpen={showAddModal}
+          onClose={() => setShowAddModal(false)}
+          onSubmit={handleCreateStore}
+        />
+
+        <AgentStoreEditModal
+          isOpen={showEditModal}
+          onClose={() => {
+            setShowEditModal(false);
+            setEditingStore(null);
+          }}
+          onSubmit={handleUpdateStore}
+          selectedStore={editingStore}
+        />
       </div>
-
-      {/* Add/Edit Store Modal */}
-      <Modal
-        isOpen={showModal}
-        onClose={handleCloseModal}
-        title={editingStore ? "Edit Store" : "Add New Store"}
-        size="lg"
-      >
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <Input
-            label="Store Name *"
-            value={formData.name}
-            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-            required
-          />
-
-          <div className="grid grid-cols-2 gap-4">
-            <Input
-              label="City *"
-              value={formData.city}
-              onChange={(e) =>
-                setFormData({ ...formData, city: e.target.value })
-              }
-              required
-            />
-            <Input
-              label="Barangay *"
-              value={formData.barangay}
-              onChange={(e) =>
-                setFormData({ ...formData, barangay: e.target.value })
-              }
-              required
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <Input
-              label="Owner Name"
-              icon={User}
-              value={formData.ownerName}
-              onChange={(e) =>
-                setFormData({ ...formData, ownerName: e.target.value })
-              }
-            />
-            <Input
-              label="Phone Number"
-              icon={Phone}
-              type="tel"
-              value={formData.phone}
-              onChange={(e) =>
-                setFormData({ ...formData, phone: e.target.value })
-              }
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <Input
-              label="Credit Limit"
-              type="number"
-              min="0"
-              step="0.01"
-              value={formData.creditLimit}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  creditLimit: parseFloat(e.target.value) || 0,
-                })
-              }
-            />
-            <Select
-              label="Preferred Payment Method"
-              options={paymentMethods}
-              value={formData.preferredPaymentMethod}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  preferredPaymentMethod: e.target.value,
-                })
-              }
-            />
-          </div>
-
-          <div className="flex space-x-3 pt-4">
-            <Button
-              type="button"
-              variant="outline"
-              className="flex-1"
-              onClick={handleCloseModal}
-            >
-              Cancel
-            </Button>
-            <Button type="submit" className="flex-1">
-              {editingStore ? "Update Store" : "Create Store"}
-            </Button>
-          </div>
-        </form>
-      </Modal>
     </DashboardLayout>
   );
 };

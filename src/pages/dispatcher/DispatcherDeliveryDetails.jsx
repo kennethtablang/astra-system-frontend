@@ -362,8 +362,8 @@ const DispatcherDeliveryDetails = () => {
                       Balance
                     </span>
                     <span className={`font-bold ${(order.remainingBalance ?? (order.total - (order.totalPaid || 0))) > 0
-                        ? "text-red-600 dark:text-red-400"
-                        : "text-green-600 dark:text-green-400"
+                      ? "text-red-600 dark:text-red-400"
+                      : "text-green-600 dark:text-green-400"
                       }`}>
                       {formatCurrency(order.remainingBalance ?? (order.total - (order.totalPaid || 0)))}
                     </span>
@@ -418,19 +418,63 @@ const DispatcherDeliveryDetails = () => {
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Delivery Photos * (Required)
                       </label>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        multiple
-                        capture="environment"
-                        onChange={(e) => handleFileChange(e, setDeliveryPhotos)}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                      />
-                      {deliveryPhotos.length > 0 && (
-                        <p className="text-sm text-green-600 mt-2">
-                          {deliveryPhotos.length} photo(s) selected
-                        </p>
-                      )}
+                      <div className="space-y-3">
+                        {/* Hidden Input */}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          multiple
+                          capture="environment"
+                          id="delivery-photo-upload"
+                          onChange={(e) => handleFileChange(e, setDeliveryPhotos)}
+                          className="hidden"
+                        />
+
+                        {/* Custom Button */}
+                        <label
+                          htmlFor="delivery-photo-upload"
+                          className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                        >
+                          <Camera className="h-8 w-8 text-gray-400 mb-2" />
+                          <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                            Tap to Take Photo
+                          </span>
+                          <span className="text-xs text-gray-400 mt-1">
+                            (or upload from gallery)
+                          </span>
+                        </label>
+
+                        {/* Preview Grid */}
+                        {deliveryPhotos.length > 0 && (
+                          <div className="grid grid-cols-3 gap-2">
+                            {Array.from(deliveryPhotos).map((file, index) => (
+                              <div key={index} className="relative aspect-square rounded-lg overflow-hidden bg-gray-100">
+                                <img
+                                  src={URL.createObjectURL(file)}
+                                  alt={`Preview ${index}`}
+                                  className="w-full h-full object-cover"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const newPhotos = [...deliveryPhotos];
+                                    newPhotos.splice(index, 1);
+                                    setDeliveryPhotos(newPhotos);
+                                  }}
+                                  className="absolute top-1 right-1 bg-black/50 text-white rounded-full p-1 hover:bg-red-500 transition-colors"
+                                >
+                                  <AlertCircle className="h-4 w-4" />
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        {deliveryPhotos.length > 0 && (
+                          <p className="text-sm text-green-600 text-center font-medium">
+                            {deliveryPhotos.length} photo(s) ready to upload
+                          </p>
+                        )}
+                      </div>
                     </div>
 
                     <div>

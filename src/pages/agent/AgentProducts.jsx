@@ -2,46 +2,71 @@
 import { useState, useEffect } from "react";
 import {
   Package,
+  Plus,
+  Edit,
+  Trash2,
   Search,
-  Filter,
-  Grid,
-  List,
-  Tag,
-  DollarSign,
-  AlertCircle,
-  CheckCircle,
 } from "lucide-react";
 import DashboardLayout from "../../components/layouts/DashboardLayout";
 import { Card, CardContent } from "../../components/ui/Card";
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+} from "../../components/ui/Table";
 import { Badge } from "../../components/ui/Badge";
+import { Button } from "../../components/ui/Button";
 import { Select } from "../../components/ui/Select";
 import { LoadingSpinner } from "../../components/ui/Loading";
-import productService from "../../services/productService";
+import { AgentProductAddModal } from "../../components/modals/AgentProduct/AgentProductAddModal";
+import { AgentProductEditModal } from "../../components/modals/AgentProduct/AgentProductEditModal";
+import api from "../../api/axios";
 import { toast } from "react-hot-toast";
 
 const AgentProducts = () => {
-  const [loading, setLoading] = useState(true);
+  // State Management
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("all");
-  const [viewMode, setViewMode] = useState("grid");
+  const [filterCategory, setFilterCategory] = useState("All");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [totalProducts, setTotalProducts] = useState(0);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState(null);
 
+  // Fetch Products
   useEffect(() => {
     fetchProducts();
     fetchCategories();
-  }, []);
+  }, [currentPage, pageSize, searchTerm, filterCategory]);
 
   const fetchProducts = async () => {
     try {
       setLoading(true);
-      const result = await productService.getProducts();
-      if (result.success) {
-        setProducts(result.data?.items || result.data || []);
+      const params = {
+        pageNumber: currentPage,
+        pageSize: pageSize,
+      };
+
+      if (searchTerm) params.searchTerm = searchTerm;
+      if (filterCategory !== "All") params.category = filterCategory;
+
+      const { data } = await api.get("/product", { params });
+
+      if (data.success) {
+        setProducts(data.data.items || []);
+        // Check if totalCount is available, otherwise default
+        setTotalProducts(data.data.totalCount || 0);
       }
     } catch (error) {
-      console.error("Error fetching products:", error);
-      toast.error("Failed to load products");
+      toast.error("Failed to fetch products");
+      console.error(error);
     } finally {
       setLoading(false);
     }
@@ -49,217 +74,366 @@ const AgentProducts = () => {
 
   const fetchCategories = async () => {
     try {
-      const result = await productService.getCategories();
-      if (result.success) {
-        setCategories(result.data || []);
+      const { data } = await api.get("/product/categories");
+      if (data.success) {
+        setCategories(data.data || []);
       }
     } catch (error) {
-      console.error("Error fetching categories:", error);
+      console.error("Failed to fetch categories:", error);
     }
   };
 
-  const getStockBadge = (stock) => {
-    if (stock === 0) {
-      return { variant: "danger", text: "Out of Stock", icon: AlertCircle };
+  // Handle Add Product
+  const handleAddProduct = async (formData) => {
+    try {
+      const { data } = await api.post("/product", formData);
+
+      if (!data.success) {
+        toast.error(data.message || "Failed to add product");
+        return;
+      }
+
+      toast.success("Product added successfully");
+      setShowAddModal(false);
+      fetchProducts();
+    } catch (error) {
+      console.error("Error adding product:", error);
+      toast.error(error.response?.data?.message || "Failed to add product");
     }
-    if (stock <= 10) {
-      return { variant: "warning", text: "Low Stock", icon: AlertCircle };
-    }
-    return { variant: "success", text: "In Stock", icon: CheckCircle };
   };
 
-  const filteredProducts = products.filter((product) => {
-    const matchesSearch =
-      product.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.sku?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory =
-      selectedCategory === "all" ||
-      product.categoryId?.toString() === selectedCategory ||
-      product.categoryName?.toLowerCase() === selectedCategory.toLowerCase();
-    return matchesSearch && matchesCategory;
-  });
+  // Handle Edit Product
+  const handleEditProduct = async (formData) => {
+    try {
+      const { data } = await api.put(`/product/${formData.id}`, formData);
 
+      if (!data.success) {
+        toast.error(data.message || "Failed to update product");
+        return;
+      }
+
+      toast.success("Product updated successfully");
+      setShowEditModal(false);
+      setSelectedProduct(null);
+      fetchProducts();
+    } catch (error) {
+      console.error("Error updating product:", error);
+      toast.error(error.response?.data?.message || "Failed to update product");
+    }
+  };
+
+  // Handle Delete Product
+  const handleDeleteProduct = async (productId) => {
+    if (!window.confirm("Are you sure you want to delete this product?")) {
+      return;
+    }
+
+    try {
+      const { data } = await api.delete(`/product/${productId}`);
+
+      if (!data.success) {
+        toast.error(data.message || "Failed to delete product");
+        return;
+      }
+
+      toast.success("Product deleted successfully");
+      fetchProducts();
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to delete product");
+      console.error(error);
+    }
+  };
+
+  const openEditModal = (product) => {
+    setSelectedProduct(product);
+    setShowEditModal(true);
+  };
+
+  // Pagination Calculations
+  const totalPages = Math.ceil(totalProducts / pageSize);
+  const startIndex = (currentPage - 1) * pageSize + 1;
+  const endIndex = Math.min(currentPage * pageSize, totalProducts);
+
+  // Format currency
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat("en-PH", {
+      style: "currency",
+      currency: "PHP",
+    }).format(amount);
+  };
+
+  // Options
   const categoryOptions = [
-    { value: "all", label: "All Categories" },
-    ...categories.map((cat) => ({
-      value: cat.id?.toString(),
-      label: cat.name,
-    })),
+    { value: "All", label: "All Categories" },
+    ...categories.map((c) => ({ value: c, label: c })),
   ];
 
-  if (loading) {
-    return (
-      <DashboardLayout>
-        <div className="flex items-center justify-center h-64">
-          <LoadingSpinner size="lg" />
-        </div>
-      </DashboardLayout>
-    );
-  }
+  const pageSizeOptions = [
+    { value: "10", label: "10" },
+    { value: "25", label: "25" },
+    { value: "50", label: "50" },
+    { value: "100", label: "100" },
+  ];
 
   return (
     <DashboardLayout>
       <div className="space-y-6">
         {/* Page Header */}
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-            Product Catalog
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-1">
-            Browse products for order creation
-          </p>
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+              Product Catalog
+            </h1>
+            <p className="text-gray-600 dark:text-gray-400 mt-1">
+              Manage your product inventory
+            </p>
+          </div>
+          <Button
+            onClick={() => setShowAddModal(true)}
+            className="flex items-center gap-2"
+          >
+            <Plus className="h-4 w-4" />
+            Add Product
+          </Button>
         </div>
 
         {/* Filters */}
         <Card>
-          <CardContent className="p-3">
+          <CardContent className="p-4">
             <div className="flex flex-col sm:flex-row gap-3">
               <div className="flex-1 relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <input
                   type="text"
-                  placeholder="Search products by name or SKU..."
+                  placeholder="Search by name or SKU..."
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onChange={(e) => {
+                    setSearchTerm(e.target.value);
+                    setCurrentPage(1);
+                  }}
                   className="w-full pl-9 pr-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 />
               </div>
               <Select
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
+                value={filterCategory}
+                onChange={(e) => {
+                  setFilterCategory(e.target.value);
+                  setCurrentPage(1);
+                }}
                 options={categoryOptions}
                 className="w-48"
               />
-              <div className="flex gap-1 border border-gray-300 dark:border-gray-600 rounded-lg p-1">
-                <button
-                  onClick={() => setViewMode("grid")}
-                  className={`p-2 rounded ${
-                    viewMode === "grid"
-                      ? "bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400"
-                      : "text-gray-400 hover:text-gray-600"
-                  }`}
-                >
-                  <Grid className="h-4 w-4" />
-                </button>
-                <button
-                  onClick={() => setViewMode("list")}
-                  className={`p-2 rounded ${
-                    viewMode === "list"
-                      ? "bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400"
-                      : "text-gray-400 hover:text-gray-600"
-                  }`}
-                >
-                  <List className="h-4 w-4" />
-                </button>
-              </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* Products Count */}
-        <div className="flex items-center justify-between">
-          <p className="text-sm text-gray-600 dark:text-gray-400">
-            Showing {filteredProducts.length} of {products.length} products
-          </p>
-        </div>
-
-        {/* Products Display */}
-        {filteredProducts.length === 0 ? (
-          <Card>
-            <CardContent className="py-12">
-              <div className="text-center">
+        {/* Products Table */}
+        <Card>
+          <CardContent className="p-0">
+            {loading ? (
+              <div className="flex items-center justify-center py-12">
+                <LoadingSpinner size="lg" />
+              </div>
+            ) : products.length === 0 ? (
+              <div className="text-center py-12">
                 <Package className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                 <h3 className="text-lg font-medium text-gray-900 dark:text-white">
                   No products found
                 </h3>
                 <p className="text-gray-500 dark:text-gray-400 mt-2">
-                  Try adjusting your search or filter
+                  {searchTerm
+                    ? "Try adjusting your search"
+                    : "Get started by adding your first product"}
                 </p>
               </div>
-            </CardContent>
-          </Card>
-        ) : viewMode === "grid" ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {filteredProducts.map((product) => {
-              const stockInfo = getStockBadge(product.currentStock || 0);
-              return (
-                <Card
-                  key={product.id}
-                  className="hover:shadow-lg transition-shadow"
-                >
-                  <CardContent className="p-4">
-                    {/* Product Image Placeholder */}
-                    <div className="aspect-square bg-gray-100 dark:bg-gray-800 rounded-lg mb-3 flex items-center justify-center">
-                      <Package className="h-12 w-12 text-gray-400" />
+            ) : (
+              <>
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableHead>SKU</TableHead>
+                      <TableHead>Product Name</TableHead>
+                      <TableHead>Category</TableHead>
+                      <TableHead>Price</TableHead>
+                      <TableHead>Unit</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Created</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableHeader>
+                    <TableBody>
+                      {products.map((product) => (
+                        <TableRow key={product.id}>
+                          <TableCell>
+                            <span className="font-mono text-xs bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">
+                              {product.sku}
+                            </span>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-3">
+                              <div className="h-10 w-10 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center flex-shrink-0">
+                                <Package className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                              </div>
+                              <div>
+                                <p className="font-medium text-gray-900 dark:text-white">
+                                  {product.name}
+                                </p>
+                                {product.isBarcoded && product.barcode && (
+                                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                                    {product.barcode}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            {product.category ? (
+                              <Badge variant="info">{product.category}</Badge>
+                            ) : (
+                              <span className="text-gray-400">—</span>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <span className="font-semibold text-gray-900 dark:text-white">
+                              {formatCurrency(product.price)}
+                            </span>
+                          </TableCell>
+                          <TableCell>
+                            <span className="text-sm text-gray-600 dark:text-gray-400">
+                              {product.unitOfMeasure || "—"}
+                            </span>
+                          </TableCell>
+                          <TableCell>
+                            {product.isPerishable ? (
+                              <Badge variant="warning">Perishable</Badge>
+                            ) : (
+                              <Badge variant="success">Non-Perishable</Badge>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <div className="text-sm">
+                              {new Date(
+                                product.createdAt || Date.now()
+                              ).toLocaleDateString()}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center justify-end gap-2">
+                              <button
+                                onClick={() => openEditModal(product)}
+                                className="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+                                title="Edit product"
+                              >
+                                <Edit className="h-4 w-4" />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteProduct(product.id)}
+                                className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                                title="Delete product"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+
+                {/* Pagination */}
+                <div className="border-t border-gray-200 dark:border-gray-700 px-4 py-3">
+                  <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+                    <div className="flex items-center gap-2 text-sm">
+                      <Select
+                        value={pageSize.toString()}
+                        onChange={(e) => {
+                          setPageSize(Number(e.target.value));
+                          setCurrentPage(1);
+                        }}
+                        options={pageSizeOptions}
+                        className="w-20"
+                      />
+                      <span className="text-gray-700 dark:text-gray-300 whitespace-nowrap">
+                        {startIndex}-{endIndex} of {totalProducts}
+                      </span>
                     </div>
 
-                    {/* Product Info */}
-                    <div className="space-y-2">
-                      <h3 className="font-semibold text-gray-900 dark:text-white line-clamp-2">
-                        {product.name}
-                      </h3>
-                      <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-                        <Tag className="h-3 w-3" />
-                        {product.categoryName || "Uncategorized"}
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() =>
+                          setCurrentPage((prev) => Math.max(1, prev - 1))
+                        }
+                        disabled={currentPage === 1}
+                      >
+                        Previous
+                      </Button>
+
+                      <div className="flex items-center gap-1">
+                        {[...Array(Math.min(5, totalPages))].map((_, idx) => {
+                          let pageNum;
+                          if (totalPages <= 5) {
+                            pageNum = idx + 1;
+                          } else if (currentPage <= 3) {
+                            pageNum = idx + 1;
+                          } else if (currentPage >= totalPages - 2) {
+                            pageNum = totalPages - 4 + idx;
+                          } else {
+                            pageNum = currentPage - 2 + idx;
+                          }
+
+                          return (
+                            <button
+                              key={pageNum}
+                              onClick={() => setCurrentPage(pageNum)}
+                              className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${currentPage === pageNum
+                                  ? "bg-blue-600 text-white"
+                                  : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                                }`}
+                            >
+                              {pageNum}
+                            </button>
+                          );
+                        })}
                       </div>
-                      <div className="flex items-center justify-between">
-                        <span className="font-bold text-green-600 dark:text-green-400">
-                          ₱{product.price?.toLocaleString() || 0}
-                        </span>
-                        <Badge variant={stockInfo.variant} className="text-xs">
-                          {stockInfo.text}
-                        </Badge>
-                      </div>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
-                        SKU: {product.sku || "N/A"}
-                      </p>
+
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() =>
+                          setCurrentPage((prev) =>
+                            Math.min(totalPages, prev + 1)
+                          )
+                        }
+                        disabled={currentPage === totalPages}
+                      >
+                        Next
+                      </Button>
                     </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
-        ) : (
-          <Card>
-            <CardContent className="p-0">
-              <div className="divide-y divide-gray-200 dark:divide-gray-700">
-                {filteredProducts.map((product) => {
-                  const stockInfo = getStockBadge(product.currentStock || 0);
-                  return (
-                    <div
-                      key={product.id}
-                      className="flex items-center gap-4 p-4 hover:bg-gray-50 dark:hover:bg-gray-800/50"
-                    >
-                      <div className="h-16 w-16 bg-gray-100 dark:bg-gray-800 rounded-lg flex items-center justify-center flex-shrink-0">
-                        <Package className="h-8 w-8 text-gray-400" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-gray-900 dark:text-white truncate">
-                          {product.name}
-                        </h3>
-                        <div className="flex items-center gap-4 mt-1 text-sm text-gray-500 dark:text-gray-400">
-                          <span className="flex items-center gap-1">
-                            <Tag className="h-3 w-3" />
-                            {product.categoryName || "Uncategorized"}
-                          </span>
-                          <span>SKU: {product.sku || "N/A"}</span>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-bold text-green-600 dark:text-green-400">
-                          ₱{product.price?.toLocaleString() || 0}
-                        </p>
-                        <Badge variant={stockInfo.variant} className="mt-1">
-                          {stockInfo.text}
-                        </Badge>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </CardContent>
-          </Card>
-        )}
+                  </div>
+                </div>
+              </>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Modals */}
+        <AgentProductAddModal
+          isOpen={showAddModal}
+          onClose={() => setShowAddModal(false)}
+          onSubmit={handleAddProduct}
+        />
+
+        <AgentProductEditModal
+          isOpen={showEditModal}
+          onClose={() => {
+            setShowEditModal(false);
+            setSelectedProduct(null);
+          }}
+          onSubmit={handleEditProduct}
+          selectedProduct={selectedProduct}
+        />
       </div>
     </DashboardLayout>
   );

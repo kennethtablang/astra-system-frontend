@@ -42,12 +42,14 @@ const DispatcherDeliveries = () => {
     try {
       setLoading(true);
 
-      if (!user?.id) {
+      const userId = user?.userId || user?.UserId || user?.id;
+
+      if (!userId) {
         toast.error("User information not available");
         return;
       }
 
-      const result = await tripService.getActiveTrips(user.id);
+      const result = await tripService.getActiveTrips(userId);
 
       if (result.success && result.data && result.data.length > 0) {
         // Get the first active trip (assuming one trip at a time per dispatcher)
@@ -79,7 +81,7 @@ const DispatcherDeliveries = () => {
 
     try {
       const location = await deliveryService.getCurrentLocation();
-      
+
       const result = await deliveryService.updateLocation({
         tripId: activeTrip.id,
         latitude: location.latitude,
