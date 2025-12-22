@@ -32,3 +32,21 @@ export const CardFooter = ({ children, className = "" }) => {
     </div>
   );
 };
+
+export const CardTitle = ({ children, className = "" }) => {
+  return (
+    <h3
+      className={`text-lg font-medium leading-none tracking-tight text-gray-900 dark:text-gray-100 ${className}`}
+    >
+      {children}
+    </h3>
+  );
+};
+
+export const CardDescription = ({ children, className = "" }) => {
+  return (
+    <p className={`text-sm text-gray-500 dark:text-gray-400 ${className}`}>
+      {children}
+    </p>
+  );
+};
