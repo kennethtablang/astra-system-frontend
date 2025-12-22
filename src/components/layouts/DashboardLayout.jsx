@@ -123,16 +123,6 @@ const DashboardLayout = ({ children }) => {
             href: "/admin/deliveries/exceptions",
             icon: AlertCircle,
           },
-          {
-            name: "Deliveries (Dispatcher)",
-            href: "/admin/deliveries-dispatcher",
-            icon: AlertCircle,
-          },
-          {
-            name: "Delivery Details (Dispatcher)",
-            href: "/admin/deliveries/details-dispatcher",
-            icon: AlertCircle,
-          },
         ],
       },
       {
@@ -165,20 +155,6 @@ const DashboardLayout = ({ children }) => {
           },
         ],
       },
-      // {
-      //   name: "Operations",
-      //   icon: MapPin,
-      //   type: "group",
-      //   key: "operations",
-      //   items: [
-      //     {
-      //       name: "Distributors",
-      //       href: "/admin/distributors",
-      //       icon: Warehouse,
-      //     },
-      //     { name: "Routes", href: "/admin/routes", icon: MapPin },
-      //   ],
-      // },
       {
         name: "Finance",
         icon: DollarSign,
