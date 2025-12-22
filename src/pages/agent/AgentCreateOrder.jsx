@@ -6,7 +6,6 @@ import DashboardLayout from "../../components/layouts/DashboardLayout";
 import { Card, CardHeader, CardContent } from "../../components/ui/Card";
 import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
-import { Select } from "../../components/ui/Select";
 import { Modal } from "../../components/ui/Modal";
 import api from "../../api/axios";
 import { toast } from "react-hot-toast";

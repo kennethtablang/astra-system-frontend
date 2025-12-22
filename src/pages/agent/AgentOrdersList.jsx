@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Plus, Search, Filter, Download } from "lucide-react";
 import DashboardLayout from "../../components/layouts/DashboardLayout";
-import { Card, CardHeader, CardContent } from "../../components/ui/Card";
+import { Card, CardContent } from "../../components/ui/Card";
 import {
   Table,
   TableHeader,
