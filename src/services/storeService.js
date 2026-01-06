@@ -23,10 +23,10 @@ const storeService = {
   },
 
   // Get stores for lookup
-  async getStoresForLookup(searchTerm) {
+  async getStoresForLookup(searchTerm, cityId = null, barangayId = null) {
     try {
       const { data } = await api.get('/store/lookup', {
-        params: { searchTerm }
+        params: { searchTerm, cityId, barangayId }
       });
       return data;
     } catch (error) {

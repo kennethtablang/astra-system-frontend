@@ -291,7 +291,8 @@ export const ViewOrderDetailsModal = ({
 
   const formatDateTime = (date) => {
     if (!date) return "N/A";
-    return new Date(date).toLocaleString("en-PH", {
+    const safeDate = date.endsWith("Z") ? date : `${date}Z`;
+    return new Date(safeDate).toLocaleString("en-PH", {
       month: "short",
       day: "numeric",
       year: "numeric",
@@ -676,14 +677,7 @@ export const ViewOrderDetailsModal = ({
                 {formatCurrency(order.subTotal)}
               </span>
             </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-600 dark:text-gray-400">
-                Tax (12%)
-              </span>
-              <span className="font-medium text-gray-900 dark:text-white">
-                {formatCurrency(order.tax)}
-              </span>
-            </div>
+
             <div className="pt-2 border-t border-gray-200 dark:border-gray-600 flex justify-between">
               <span className="font-semibold text-gray-900 dark:text-white">
                 Total

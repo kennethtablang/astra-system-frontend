@@ -255,6 +255,20 @@ const AdminOrders = () => {
     }).format(amount);
   };
 
+  // Format Date Time Safe
+  const formatDateTime = (dateString) => {
+    if (!dateString) return "—";
+    const safeDate = dateString.endsWith("Z") ? dateString : `${dateString}Z`;
+    return new Date(safeDate).toLocaleString("en-PH", {
+      year: 'numeric',
+      month: 'numeric',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: 'numeric',
+      hour12: true
+    });
+  };
+
   // Pagination
   const totalPages = Math.ceil(totalOrders / pageSize);
   const startIndex = (currentPage - 1) * pageSize + 1;
@@ -546,10 +560,7 @@ const AdminOrders = () => {
                           </TableCell>
                           <TableCell>
                             <div className="text-sm text-gray-600 dark:text-gray-400">
-                              {new Date(order.createdAt).toLocaleDateString()}
-                              <div className="text-xs text-gray-500 dark:text-gray-500">
-                                {new Date(order.createdAt).toLocaleTimeString()}
-                              </div>
+                              {formatDateTime(order.createdAt)}
                             </div>
                           </TableCell>
                           <TableCell>
@@ -558,24 +569,24 @@ const AdminOrders = () => {
                               {(order.status === "Confirmed" ||
                                 order.status === "Packed" ||
                                 order.status === "Dispatched") && (
-                                <button
-                                  onClick={() =>
-                                    handlePrintPackingReceipt(
-                                      order.id,
-                                      order.status
-                                    )
-                                  }
-                                  disabled={printing === order.id}
-                                  className="p-2 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                                  title="Print packing receipt"
-                                >
-                                  {printing === order.id ? (
-                                    <LoadingSpinner size="sm" />
-                                  ) : (
-                                    <Printer className="h-4 w-4" />
-                                  )}
-                                </button>
-                              )}
+                                  <button
+                                    onClick={() =>
+                                      handlePrintPackingReceipt(
+                                        order.id,
+                                        order.status
+                                      )
+                                    }
+                                    disabled={printing === order.id}
+                                    className="p-2 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                    title="Print packing receipt"
+                                  >
+                                    {printing === order.id ? (
+                                      <LoadingSpinner size="sm" />
+                                    ) : (
+                                      <Printer className="h-4 w-4" />
+                                    )}
+                                  </button>
+                                )}
                               <button
                                 onClick={() => handleViewOrder(order.id)}
                                 className="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
@@ -655,11 +666,10 @@ const AdminOrders = () => {
                             <button
                               key={pageNum}
                               onClick={() => setCurrentPage(pageNum)}
-                              className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
-                                currentPage === pageNum
+                              className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${currentPage === pageNum
                                   ? "bg-blue-600 text-white"
                                   : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                              }`}
+                                }`}
                             >
                               {pageNum}
                             </button>

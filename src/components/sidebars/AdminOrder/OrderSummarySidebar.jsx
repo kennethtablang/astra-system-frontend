@@ -20,8 +20,7 @@ export const OrderSummarySidebar = ({
     (sum, item) => sum + item.quantity * item.unitPrice,
     0
   );
-  const tax = subtotal * 0.12; // 12% VAT
-  const total = subtotal + tax;
+  const total = subtotal;
   const totalItems = items.length;
   const totalUnits = items.reduce((sum, item) => sum + item.quantity, 0);
 
@@ -41,12 +40,7 @@ export const OrderSummarySidebar = ({
             </span>
           </div>
 
-          <div className="flex justify-between text-sm">
-            <span className="text-gray-600 dark:text-gray-400">Tax (12%)</span>
-            <span className="text-gray-900 dark:text-white font-medium">
-              ₱{tax.toFixed(2)}
-            </span>
-          </div>
+
 
           <div className="pt-3 border-t border-gray-200 dark:border-gray-700">
             <div className="flex justify-between">

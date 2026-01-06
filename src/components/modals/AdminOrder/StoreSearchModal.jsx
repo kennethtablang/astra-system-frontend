@@ -1,28 +1,86 @@
 // src/components/modals/AdminOrder/StoreSearchModal.jsx
 import { useState, useEffect } from "react";
-import { Search, Store as StoreIcon, CheckCircle, MapPin } from "lucide-react";
+import { Search, Store as StoreIcon, CheckCircle, MapPin, Filter } from "lucide-react";
 import { Modal } from "../../ui/Modal";
 import storeService from "../../../services/storeService";
+import locationService from "../../../services/locationService";
 
 export const StoreSearchModal = ({ isOpen, onClose, onSelectStore }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [loading, setLoading] = useState(false);
 
+  // Location Filters
+  const [cities, setCities] = useState([]);
+  const [barangays, setBarangays] = useState([]);
+  const [selectedCity, setSelectedCity] = useState("");
+  const [selectedBarangay, setSelectedBarangay] = useState("");
+
   useEffect(() => {
     if (isOpen) {
       setSearchTerm("");
       setSearchResults([]);
+      fetchCities();
+      // Initial Load of stores (optional, or wait for input)
+      handleSearch("", "", "");
     }
   }, [isOpen]);
 
-  const handleSearch = async (term) => {
-    setSearchTerm(term);
+  // Fetch cities for filter
+  const fetchCities = async () => {
+    try {
+      const result = await locationService.getCitiesForLookup();
+      if (result.success) {
+        setCities(result.data || []);
+      }
+    } catch (error) {
+      console.error("Error fetching cities:", error);
+    }
+  };
 
-    if (term.length >= 2) {
+  // Fetch barangays when city changes
+  useEffect(() => {
+    if (selectedCity) {
+      fetchBarangays(selectedCity);
+    } else {
+      setBarangays([]);
+      setSelectedBarangay("");
+    }
+  }, [selectedCity]);
+
+  const fetchBarangays = async (cityId) => {
+    try {
+      const result = await locationService.getBarangaysForLookup(cityId);
+      if (result.success) {
+        setBarangays(result.data || []);
+      }
+    } catch (error) {
+      console.error("Error fetching barangays:", error);
+    }
+  };
+
+  const handleSearch = async (term, city, barangay) => {
+    // Determine values to use (passed args or state)
+    const termVal = term !== undefined ? term : searchTerm;
+    const cityVal = city !== undefined ? city : selectedCity;
+    const barangayVal = barangay !== undefined ? barangay : selectedBarangay;
+
+    setSearchTerm(termVal);
+
+    // Search if we have a term OR filters applied
+    // Relaxed condition: if filters are present, 0 chars is fine.
+    // If no filters, keep 2 char limit to avoid dumping entire DB (though we have Take(100))
+    const shouldSearch =
+      termVal.length >= 2 || cityVal !== "" || barangayVal !== "";
+
+    if (shouldSearch) {
       setLoading(true);
       try {
-        const result = await storeService.getStoresForLookup(term);
+        const result = await storeService.getStoresForLookup(
+          termVal,
+          cityVal || null,
+          barangayVal || null
+        );
         if (result.success) {
           setSearchResults(result.data || []);
         }
@@ -34,6 +92,19 @@ export const StoreSearchModal = ({ isOpen, onClose, onSelectStore }) => {
     } else {
       setSearchResults([]);
     }
+  };
+
+  const handleCityChange = (e) => {
+    const cityId = e.target.value;
+    setSelectedCity(cityId);
+    setSelectedBarangay(""); // Reset barangay
+    handleSearch(undefined, cityId, "");
+  };
+
+  const handleBarangayChange = (e) => {
+    const barangayId = e.target.value;
+    setSelectedBarangay(barangayId);
+    handleSearch(undefined, undefined, barangayId);
   };
 
   const selectStore = async (store) => {
@@ -52,6 +123,32 @@ export const StoreSearchModal = ({ isOpen, onClose, onSelectStore }) => {
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Select Store" size="lg">
       <div className="space-y-4">
+        {/* Filters */}
+        <div className="grid grid-cols-2 gap-3">
+          <select
+            value={selectedCity}
+            onChange={handleCityChange}
+            className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
+          >
+            <option value="">All Cities</option>
+            {cities.map((city, index) => (
+              <option key={`${city.id}-${index}`} value={city.id}>{city.name}</option>
+            ))}
+          </select>
+
+          <select
+            value={selectedBarangay}
+            onChange={handleBarangayChange}
+            disabled={!selectedCity}
+            className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm disabled:opacity-50"
+          >
+            <option value="">All Barangays</option>
+            {barangays.map((bg, index) => (
+              <option key={`${bg.id}-${index}`} value={bg.id}>{bg.name}</option>
+            ))}
+          </select>
+        </div>
+
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
           <input
@@ -65,9 +162,9 @@ export const StoreSearchModal = ({ isOpen, onClose, onSelectStore }) => {
         </div>
 
         <div className="max-h-96 overflow-y-auto">
-          {searchTerm.length < 2 ? (
+          {searchTerm.length < 2 && !selectedCity && !selectedBarangay ? (
             <p className="text-center text-gray-500 dark:text-gray-400 py-8">
-              Type at least 2 characters to search
+              Type to search or select a location filter
             </p>
           ) : loading ? (
             <p className="text-center text-gray-500 dark:text-gray-400 py-8">
@@ -85,9 +182,9 @@ export const StoreSearchModal = ({ isOpen, onClose, onSelectStore }) => {
             </div>
           ) : (
             <div className="space-y-2">
-              {searchResults.map((store) => (
+              {searchResults.map((store, index) => (
                 <button
-                  key={store.id}
+                  key={`${store.id}-${index}`}
                   onClick={() => selectStore(store)}
                   className="w-full p-4 text-left rounded-lg border border-gray-200 dark:border-gray-700 hover:border-blue-500 dark:hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
                 >

@@ -1,5 +1,5 @@
 // src/pages/admin/AdminOrderCreate.jsx - UPDATED
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Search,
@@ -23,6 +23,7 @@ import inventoryService from "../../services/inventoryService";
 import orderService from "../../services/orderService";
 import storeService from "../../services/storeService";
 import { toast } from "react-hot-toast";
+import { getImageUrl } from "../../utils/imageUrl";
 
 const AdminOrderCreate = () => {
   const navigate = useNavigate();
@@ -51,6 +52,50 @@ const AdminOrderCreate = () => {
   const [searching, setSearching] = useState(false);
   const [orderItems, setOrderItems] = useState([]);
   const [inventoryWarnings, setInventoryWarnings] = useState({});
+
+  // Product Grid State
+  const [categories, setCategories] = useState([]);
+  const [activeCategory, setActiveCategory] = useState("all");
+  const [products, setProducts] = useState([]);
+  const [loadingProducts, setLoadingProducts] = useState(false);
+
+  useEffect(() => {
+    fetchCategories();
+    fetchProducts();
+  }, []);
+
+  const fetchCategories = async () => {
+    try {
+      const result = await productService.getCategories();
+      if (result.success) {
+        setCategories(result.data || []);
+      }
+    } catch (error) {
+      console.error("Error fetching categories:", error);
+    }
+  };
+
+  const fetchProducts = async (categoryId = null) => {
+    setLoadingProducts(true);
+    try {
+      const params = { pageSize: 100, sortBy: 'name' }; // Fetch a reasonable amount
+      if (categoryId) params.categoryId = categoryId;
+
+      const result = await productService.getProducts(params);
+      if (result.success) {
+        setProducts(result.data.items || []);
+      }
+    } catch (error) {
+      console.error("Error fetching products:", error);
+    } finally {
+      setLoadingProducts(false);
+    }
+  };
+
+  const handleCategorySelect = (categoryId) => {
+    setActiveCategory(categoryId);
+    fetchProducts(categoryId === "all" ? null : categoryId);
+  };
 
   // Order Options
   const [selectedWarehouse] = useState(1); // Default warehouse
@@ -155,9 +200,11 @@ const AdminOrderCreate = () => {
         toast.success(`${product.name} added to order`);
       }
 
-      // Clear search
-      setSearchTerm("");
-      setSearchResults([]);
+      // Clear search but don't reset grid
+      if (searchTerm) {
+        setSearchTerm("");
+        fetchProducts(activeCategory === "all" ? null : activeCategory);
+      }
     } catch (error) {
       console.error("Error adding product:", error);
       toast.error("Failed to add product");
@@ -355,18 +402,18 @@ const AdminOrderCreate = () => {
                           )}
                           {(selectedStore.barangayName ||
                             selectedStore.cityName) && (
-                            <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-300 mt-1">
-                              <MapPin className="h-3 w-3" />
-                              {selectedStore.barangayName && (
-                                <span>{selectedStore.barangayName}</span>
-                              )}
-                              {selectedStore.barangayName &&
-                                selectedStore.cityName && <span>, </span>}
-                              {selectedStore.cityName && (
-                                <span>{selectedStore.cityName}</span>
-                              )}
-                            </div>
-                          )}
+                              <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-300 mt-1">
+                                <MapPin className="h-3 w-3" />
+                                {selectedStore.barangayName && (
+                                  <span>{selectedStore.barangayName}</span>
+                                )}
+                                {selectedStore.barangayName &&
+                                  selectedStore.cityName && <span>, </span>}
+                                {selectedStore.cityName && (
+                                  <span>{selectedStore.cityName}</span>
+                                )}
+                              </div>
+                            )}
                         </div>
                       </div>
                       <Button
@@ -397,14 +444,31 @@ const AdminOrderCreate = () => {
               />
             )}
 
-            {/* Product Search */}
+            {/* Product Selection */}
             <Card>
               <CardContent className="p-6">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                  Add Products
-                </h3>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                    Add Products
+                  </h3>
+                  <div className="flex items-center gap-2">
+                    <select
+                      value={activeCategory}
+                      onChange={(e) => handleCategorySelect(e.target.value)}
+                      className="text-sm p-2 pr-8 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="all">All Items</option>
+                      {categories.map((category, index) => (
+                        <option key={`${category.id}-${index}`} value={category.id}>
+                          {category.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
 
-                <div className="flex gap-3 mb-4">
+                {/* Search Bar */}
+                <div className="flex gap-3 mb-6">
                   <div className="flex-1 relative">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
                     <input
@@ -422,31 +486,61 @@ const AdminOrderCreate = () => {
                   </Button>
                 </div>
 
-                {/* Search Results */}
-                {searchResults.length > 0 && (
-                  <div className="border border-gray-200 dark:border-gray-700 rounded-lg divide-y divide-gray-200 dark:divide-gray-700 max-h-64 overflow-y-auto">
-                    {searchResults.map((product) => (
+                {/* Category Tabs */}
+
+
+                {/* Product Grid */}
+                {loadingProducts && !searching ? (
+                  <div className="py-12 text-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                    <p className="mt-2 text-gray-500">Loading products...</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3 max-h-[600px] overflow-y-auto p-1">
+                    {(searchTerm ? searchResults : products).map((product, index) => (
                       <button
-                        key={product.id}
+                        key={`${product.id}-${index}`}
                         onClick={() => addProductToOrder(product)}
-                        className="w-full p-3 text-left hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center justify-between"
+                        className="flex flex-col text-left group bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden hover:shadow-md transition-all hover:border-blue-500 dark:hover:border-blue-500"
                       >
-                        <div className="flex items-center gap-3">
-                          <Package className="h-5 w-5 text-gray-400" />
-                          <div>
-                            <p className="font-medium text-gray-900 dark:text-white">
-                              {product.name}
-                            </p>
-                            <p className="text-sm text-gray-600 dark:text-gray-400">
+                        {/* Product Image */}
+                        <div className="h-28 w-full bg-gray-100 dark:bg-gray-900 relative">
+                          {product.imageUrl ? (
+                            <img
+                              src={getImageUrl(product.imageUrl)}
+                              alt={product.name}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center">
+                              <Package className="h-8 w-8 text-gray-400" />
+                            </div>
+                          )}
+                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors" />
+                        </div>
+
+                        {/* Product Details */}
+                        <div className="p-3">
+                          <p className="font-semibold text-gray-900 dark:text-white line-clamp-2 text-sm mb-1 h-10">
+                            {product.name}
+                          </p>
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded">
                               {product.sku}
-                            </p>
+                            </span>
+                            <span className="font-bold text-blue-600 dark:text-blue-400">
+                              ₱{product.price.toFixed(2)}
+                            </span>
                           </div>
                         </div>
-                        <p className="font-semibold text-gray-900 dark:text-white">
-                          ₱{product.price.toFixed(2)}
-                        </p>
                       </button>
                     ))}
+                    {(searchTerm ? searchResults : products).length === 0 && (
+                      <div className="col-span-full py-12 text-center text-gray-500">
+                        <Package className="h-12 w-12 mx-auto mb-3 opacity-20" />
+                        <p>No products found</p>
+                      </div>
+                    )}
                   </div>
                 )}
 

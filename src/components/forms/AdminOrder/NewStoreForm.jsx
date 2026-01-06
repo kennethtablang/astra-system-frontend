@@ -1,12 +1,59 @@
-// src/components/forms/AdminOrder/NewStoreForm.jsx
+import { useState, useEffect } from "react";
 import { Card, CardContent } from "../../ui/Card";
 import { Input } from "../../ui/Input";
+import locationService from "../../../services/locationService";
 
 export const NewStoreForm = ({ formData, onChange }) => {
+  const [cities, setCities] = useState([]);
+  const [barangays, setBarangays] = useState([]);
+
+  useEffect(() => {
+    fetchCities();
+  }, []);
+
+  useEffect(() => {
+    if (formData.cityId) {
+      fetchBarangays(formData.cityId);
+    } else {
+      setBarangays([]);
+    }
+  }, [formData.cityId]);
+
+  const fetchCities = async () => {
+    try {
+      const result = await locationService.getCitiesForLookup();
+      if (result.success) {
+        setCities(result.data || []);
+      }
+    } catch (error) {
+      console.error("Error fetching cities:", error);
+    }
+  };
+
+  const fetchBarangays = async (cityId) => {
+    try {
+      const result = await locationService.getBarangaysForLookup(cityId);
+      if (result.success) {
+        setBarangays(result.data || []);
+      }
+    } catch (error) {
+      console.error("Error fetching barangays:", error);
+    }
+  };
+
   const handleChange = (field, value) => {
     onChange({
       ...formData,
       [field]: value,
+    });
+  };
+
+  const handleCityChange = (e) => {
+    const cityId = e.target.value;
+    onChange({
+      ...formData,
+      cityId: cityId,
+      barangayId: "", // Reset barangay when city changes
     });
   };
 
@@ -42,20 +89,43 @@ export const NewStoreForm = ({ formData, onChange }) => {
             placeholder="e.g., 09123456789"
           />
 
-          <Input
-            label="City *"
-            value={formData.city}
-            onChange={(e) => handleChange("city", e.target.value)}
-            placeholder="e.g., Meycauayan"
-            required
-          />
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              City *
+            </label>
+            <select
+              value={formData.cityId}
+              onChange={handleCityChange}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
+              required
+            >
+              <option value="">Select City</option>
+              {cities.map((city, index) => (
+                <option key={`${city.id}-${index}`} value={city.id}>
+                  {city.name}
+                </option>
+              ))}
+            </select>
+          </div>
 
-          <Input
-            label="Barangay"
-            value={formData.barangay}
-            onChange={(e) => handleChange("barangay", e.target.value)}
-            placeholder="e.g., Malhacan"
-          />
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Barangay
+            </label>
+            <select
+              value={formData.barangayId}
+              onChange={(e) => handleChange("barangayId", e.target.value)}
+              disabled={!formData.cityId}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm disabled:opacity-50"
+            >
+              <option value="">Select Barangay</option>
+              {barangays.map((bg, index) => (
+                <option key={`${bg.id}-${index}`} value={bg.id}>
+                  {bg.name}
+                </option>
+              ))}
+            </select>
+          </div>
 
           <Input
             label="Credit Limit"
