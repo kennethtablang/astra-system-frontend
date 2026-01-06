@@ -10,6 +10,9 @@ export const ProductAddModal = ({ isOpen, onClose, onSubmit }) => {
   const [categories, setCategories] = useState([]);
   const [loadingCategories, setLoadingCategories] = useState(false);
 
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
+
   const [formData, setFormData] = useState({
     sku: "",
     name: "",
@@ -27,6 +30,15 @@ export const ProductAddModal = ({ isOpen, onClose, onSubmit }) => {
       fetchCategories();
     }
   }, [isOpen]);
+
+  // Clean up preview url
+  useEffect(() => {
+    return () => {
+      if (imagePreview) {
+        URL.revokeObjectURL(imagePreview);
+      }
+    };
+  }, [imagePreview]);
 
   const fetchCategories = async () => {
     try {
@@ -54,6 +66,14 @@ export const ProductAddModal = ({ isOpen, onClose, onSubmit }) => {
     }));
   };
 
+  const handleImageChange = (e) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setSelectedImage(file);
+      setImagePreview(URL.createObjectURL(file));
+    }
+  };
+
   const handleSubmit = async () => {
     // Validate required fields
     if (!formData.sku || !formData.name || !formData.price) {
@@ -73,19 +93,26 @@ export const ProductAddModal = ({ isOpen, onClose, onSubmit }) => {
       return;
     }
 
-    // Convert and prepare data for backend CreateProductDto
-    const submitData = {
-      sku: formData.sku.trim(),
-      name: formData.name.trim(),
-      categoryId: formData.categoryId
-        ? parseInt(formData.categoryId, 10)
-        : null,
-      price: parseFloat(formData.price),
-      unitOfMeasure: formData.unitOfMeasure.trim() || null,
-      isPerishable: formData.isPerishable,
-      isBarcoded: formData.isBarcoded,
-      barcode: formData.isBarcoded ? formData.barcode.trim() : null,
-    };
+    // Create FormData object
+    const submitData = new FormData();
+    submitData.append("sku", formData.sku.trim());
+    submitData.append("name", formData.name.trim());
+    if (formData.categoryId) {
+      submitData.append("categoryId", formData.categoryId);
+    }
+    submitData.append("price", formData.price);
+    if (formData.unitOfMeasure) {
+      submitData.append("unitOfMeasure", formData.unitOfMeasure.trim());
+    }
+    submitData.append("isPerishable", formData.isPerishable);
+    submitData.append("isBarcoded", formData.isBarcoded);
+    if (formData.isBarcoded && formData.barcode) {
+      submitData.append("barcode", formData.barcode.trim());
+    }
+
+    if (selectedImage) {
+      submitData.append("image", selectedImage);
+    }
 
     await onSubmit(submitData);
     resetForm();
@@ -102,6 +129,8 @@ export const ProductAddModal = ({ isOpen, onClose, onSubmit }) => {
       isBarcoded: false,
       barcode: "",
     });
+    setSelectedImage(null);
+    setImagePreview(null);
   };
 
   const handleClose = () => {
@@ -138,6 +167,54 @@ export const ProductAddModal = ({ isOpen, onClose, onSubmit }) => {
       size="lg"
     >
       <div className="space-y-4">
+        {/* Image Upload */}
+        <div className="flex justify-center mb-4">
+          <div className="relative">
+            <div className="w-32 h-32 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center bg-gray-50 dark:bg-gray-700/50 overflow-hidden">
+              {imagePreview ? (
+                <img
+                  src={imagePreview}
+                  alt="Preview"
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="text-center p-2">
+                  <span className="text-sm text-gray-500 dark:text-gray-400">
+                    No image
+                  </span>
+                </div>
+              )}
+            </div>
+            <label
+              htmlFor="product-image"
+              className="absolute bottom-0 right-0 bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-full cursor-pointer shadow-lg transform translate-x-1/4 translate-y-1/4"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="17 8 12 3 7 8" />
+                <line x1="12" y1="3" x2="12" y2="15" />
+              </svg>
+            </label>
+            <input
+              type="file"
+              id="product-image"
+              accept="image/*"
+              className="hidden"
+              onChange={handleImageChange}
+            />
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Input
             label="SKU *"

@@ -6,6 +6,8 @@ import { Select } from "../../ui/Select";
 import { Button } from "../../ui/Button";
 import api from "../../../api/axios";
 
+import { getImageUrl } from "../../../utils/imageUrl";
+
 export const ProductEditModal = ({
   isOpen,
   onClose,
@@ -14,6 +16,10 @@ export const ProductEditModal = ({
 }) => {
   const [categories, setCategories] = useState([]);
   const [loadingCategories, setLoadingCategories] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
+  const [removeImage, setRemoveImage] = useState(false);
+
   const [formData, setFormData] = useState({
     id: "",
     sku: "",
@@ -40,9 +46,22 @@ export const ProductEditModal = ({
         isBarcoded: selectedProduct.isBarcoded || false,
         barcode: selectedProduct.barcode || "",
       });
+      // Set initial preview from existing product image
+      setImagePreview(selectedProduct.imageUrl ? getImageUrl(selectedProduct.imageUrl) : null);
+      setSelectedImage(null);
+      setRemoveImage(false);
       fetchCategories();
     }
   }, [isOpen, selectedProduct]);
+
+  // Clean up preview url when component unmounts or image changes
+  useEffect(() => {
+    return () => {
+      if (selectedImage && imagePreview) {
+        URL.revokeObjectURL(imagePreview);
+      }
+    };
+  }, [selectedImage, imagePreview]);
 
   const fetchCategories = async () => {
     try {
@@ -66,6 +85,24 @@ export const ProductEditModal = ({
     }));
   };
 
+  const handleImageChange = (e) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setSelectedImage(file);
+      setImagePreview(URL.createObjectURL(file));
+      setRemoveImage(false);
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setSelectedImage(null);
+    setImagePreview(null);
+    setRemoveImage(true);
+    // Reset file input if possible, but state control is sufficient
+    const fileInput = document.getElementById("edit-product-image");
+    if (fileInput) fileInput.value = "";
+  };
+
   const handleSubmit = async () => {
     if (!formData.sku || !formData.name || !formData.price) {
       alert("Please fill in all required fields");
@@ -77,17 +114,28 @@ export const ProductEditModal = ({
       return;
     }
 
-    const submitData = {
-      id: formData.id,
-      sku: formData.sku,
-      name: formData.name,
-      categoryId: formData.categoryId ? parseInt(formData.categoryId) : null,
-      price: parseFloat(formData.price) || 0,
-      unitOfMeasure: formData.unitOfMeasure || null,
-      isPerishable: formData.isPerishable,
-      isBarcoded: formData.isBarcoded,
-      barcode: formData.barcode || null,
-    };
+    const submitData = new FormData();
+    submitData.append("id", formData.id);
+    submitData.append("sku", formData.sku);
+    submitData.append("name", formData.name);
+    if (formData.categoryId) {
+      submitData.append("categoryId", formData.categoryId);
+    }
+    submitData.append("price", formData.price);
+    if (formData.unitOfMeasure) {
+      submitData.append("unitOfMeasure", formData.unitOfMeasure);
+    }
+    submitData.append("isPerishable", formData.isPerishable);
+    submitData.append("isBarcoded", formData.isBarcoded);
+    if (formData.isBarcoded && formData.barcode) {
+      submitData.append("barcode", formData.barcode);
+    }
+
+    // Image handling
+    submitData.append("removeImage", removeImage);
+    if (selectedImage) {
+      submitData.append("image", selectedImage);
+    }
 
     await onSubmit(submitData);
     onClose();
@@ -126,6 +174,83 @@ export const ProductEditModal = ({
             <strong>Created:</strong>{" "}
             {selectedProduct?.createdAt &&
               new Date(selectedProduct.createdAt).toLocaleDateString()}
+          </div>
+        </div>
+
+        {/* Image Upload */}
+        <div className="flex justify-center mb-4">
+          <div className="relative group">
+            <div className="w-32 h-32 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center bg-gray-50 dark:bg-gray-700/50 overflow-hidden">
+              {imagePreview ? (
+                <img
+                  src={imagePreview}
+                  alt="Preview"
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="text-center p-2">
+                  <span className="text-sm text-gray-500 dark:text-gray-400">
+                    No image
+                  </span>
+                </div>
+              )}
+            </div>
+
+            <div className="absolute -bottom-2 -right-2 flex gap-1">
+              <label
+                htmlFor="edit-product-image"
+                className="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-full cursor-pointer shadow-lg"
+                title="Change Image"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="17 8 12 3 7 8" />
+                  <line x1="12" y1="3" x2="12" y2="15" />
+                </svg>
+              </label>
+
+              {imagePreview && (
+                <button
+                  type="button"
+                  onClick={handleRemoveImage}
+                  className="bg-red-600 hover:bg-red-700 text-white p-2 rounded-full shadow-lg"
+                  title="Remove Image"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <polyline points="3 6 5 6 21 6" />
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                  </svg>
+                </button>
+              )}
+            </div>
+
+            <input
+              type="file"
+              id="edit-product-image"
+              accept="image/*"
+              className="hidden"
+              onChange={handleImageChange}
+            />
           </div>
         </div>
 

@@ -30,6 +30,8 @@ import { ProductDeleteModal } from "../../components/modals/AdminProduct/Product
 import api from "../../api/axios";
 import { toast } from "react-hot-toast";
 
+import { getImageUrl } from "../../utils/imageUrl";
+
 const AdminProducts = () => {
   // State Management
   const [products, setProducts] = useState([]);
@@ -90,7 +92,14 @@ const AdminProducts = () => {
   // Handle Add Product
   const handleAddProduct = async (formData) => {
     try {
-      const { data } = await api.post("/product", formData);
+      // Use multipart/form-data for file upload support
+      const config = {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      };
+
+      const { data } = await api.post("/product", formData, config);
 
       if (!data.success) {
         toast.error(data.message || "Failed to add product");
@@ -110,7 +119,17 @@ const AdminProducts = () => {
   // Handle Edit Product
   const handleEditProduct = async (formData) => {
     try {
-      const { data } = await api.put(`/product/${formData.id}`, formData);
+      // Use multipart/form-data for file upload support
+      const config = {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      };
+
+      // Extract ID from FormData for the URL
+      const id = formData.get("id");
+
+      const { data } = await api.put(`/product/${id}`, formData, config);
 
       if (!data.success) {
         toast.error(data.message || "Failed to update product");
@@ -262,6 +281,7 @@ const AdminProducts = () => {
                 <div className="overflow-x-auto">
                   <Table>
                     <TableHeader>
+                      <TableHead>Image</TableHead>
                       <TableHead>SKU</TableHead>
                       <TableHead>Product Name</TableHead>
                       <TableHead>Category</TableHead>
@@ -274,6 +294,19 @@ const AdminProducts = () => {
                     <TableBody>
                       {products.map((product) => (
                         <TableRow key={product.id}>
+                          <TableCell>
+                            <div className="h-12 w-12 rounded-lg bg-gray-100 dark:bg-gray-700 overflow-hidden flex items-center justify-center border border-gray-200 dark:border-gray-600">
+                              {product.imageUrl ? (
+                                <img
+                                  src={getImageUrl(product.imageUrl)}
+                                  alt={product.name}
+                                  className="h-full w-full object-cover"
+                                />
+                              ) : (
+                                <Package className="h-6 w-6 text-gray-400" />
+                              )}
+                            </div>
+                          </TableCell>
                           <TableCell>
                             <span className="font-mono text-xs bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">
                               {product.sku}
@@ -297,8 +330,8 @@ const AdminProducts = () => {
                             </div>
                           </TableCell>
                           <TableCell>
-                            {product.category ? (
-                              <Badge variant="info">{product.category}</Badge>
+                            {product.categoryName ? (
+                              <Badge variant="info">{product.categoryName}</Badge>
                             ) : (
                               <span className="text-gray-400">—</span>
                             )}
@@ -398,11 +431,10 @@ const AdminProducts = () => {
                             <button
                               key={pageNum}
                               onClick={() => setCurrentPage(pageNum)}
-                              className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
-                                currentPage === pageNum
-                                  ? "bg-blue-600 text-white"
-                                  : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                              }`}
+                              className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${currentPage === pageNum
+                                ? "bg-blue-600 text-white"
+                                : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                                }`}
                             >
                               {pageNum}
                             </button>
