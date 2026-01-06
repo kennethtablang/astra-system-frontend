@@ -5,6 +5,8 @@ import { Input } from "../../ui/Input";
 import { Select } from "../../ui/Select";
 import { Button } from "../../ui/Button";
 import locationService from "../../../services/locationServices";
+import { LocationPickerModal } from "./LocationPickerModal";
+import { MapPin } from "lucide-react";
 
 export const StoreEditModal = ({
   isOpen,
@@ -15,6 +17,7 @@ export const StoreEditModal = ({
   const [cities, setCities] = useState([]);
   const [barangays, setBarangays] = useState([]);
   const [loadingLocations, setLoadingLocations] = useState(false);
+  const [isLocationPickerOpen, setIsLocationPickerOpen] = useState(false);
 
   // Derive form data from selectedStore
   const initialFormData = useMemo(() => {
@@ -33,8 +36,12 @@ export const StoreEditModal = ({
     return {
       id: selectedStore.id,
       name: selectedStore.name || "",
+      addressLine1: selectedStore.addressLine1 || "",
+      addressLine2: selectedStore.addressLine2 || "",
       barangayId: selectedStore.barangayId?.toString() || "",
       cityId: selectedStore.cityId?.toString() || "",
+      latitude: selectedStore.latitude || "",
+      longitude: selectedStore.longitude || "",
       ownerName: selectedStore.ownerName || "",
       phone: selectedStore.phone || "",
       creditLimit: selectedStore.creditLimit?.toString() || "0",
@@ -113,8 +120,12 @@ export const StoreEditModal = ({
     const submitData = {
       id: parseInt(formData.id),
       name: formData.name,
+      addressLine1: formData.addressLine1 || null,
+      addressLine2: formData.addressLine2 || null,
       barangayId: formData.barangayId ? parseInt(formData.barangayId) : null,
       cityId: formData.cityId ? parseInt(formData.cityId) : null,
+      latitude: formData.latitude ? parseFloat(formData.latitude) : null,
+      longitude: formData.longitude ? parseFloat(formData.longitude) : null,
       ownerName: formData.ownerName || null,
       phone: formData.phone || null,
       creditLimit: parseFloat(formData.creditLimit) || 0,
@@ -129,13 +140,25 @@ export const StoreEditModal = ({
     setFormData({
       id: "",
       name: "",
+      addressLine1: "",
+      addressLine2: "",
       barangayId: "",
       cityId: "",
+      latitude: "",
+      longitude: "",
       ownerName: "",
       phone: "",
       creditLimit: "0",
       preferredPaymentMethod: "Cash",
     });
+  };
+
+  const handleLocationSelect = (latlng) => {
+    setFormData((prev) => ({
+      ...prev,
+      latitude: latlng.lat,
+      longitude: latlng.lng,
+    }));
   };
 
   const handleClose = () => {
@@ -205,6 +228,52 @@ export const StoreEditModal = ({
           />
         </div>
 
+        <Input
+          label="Address Line 1"
+          name="addressLine1"
+          value={formData.addressLine1}
+          onChange={handleInputChange}
+          placeholder="e.g., Block 1 Lot 2 Street Name"
+        />
+
+        <Input
+          label="Address Line 2 (Optional)"
+          name="addressLine2"
+          value={formData.addressLine2}
+          onChange={handleInputChange}
+          placeholder="e.g., Subdivision / Landmark"
+        />
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Input
+            label="Latitude"
+            name="latitude"
+            value={formData.latitude}
+            onChange={handleInputChange}
+            placeholder="0.000000"
+          />
+          <div className="flex items-end gap-2">
+            <div className="flex-1">
+              <Input
+                label="Longitude"
+                name="longitude"
+                value={formData.longitude}
+                onChange={handleInputChange}
+                placeholder="0.000000"
+              />
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsLocationPickerOpen(true)}
+              className="mb-[2px]"
+              title="Pick Location on Map"
+            >
+              <MapPin className="h-5 w-5" />
+            </Button>
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Input
             label="Owner Name"
@@ -257,6 +326,17 @@ export const StoreEditModal = ({
           <Button onClick={handleSubmit}>Update Store</Button>
         </div>
       </div>
-    </Modal>
+
+      <LocationPickerModal
+        isOpen={isLocationPickerOpen}
+        onClose={() => setIsLocationPickerOpen(false)}
+        onSelect={handleLocationSelect}
+        initialLocation={
+          formData.latitude && formData.longitude
+            ? { lat: parseFloat(formData.latitude), lng: parseFloat(formData.longitude) }
+            : null
+        }
+      />
+    </Modal >
   );
 };
