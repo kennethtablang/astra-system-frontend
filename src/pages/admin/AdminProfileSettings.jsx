@@ -4,15 +4,35 @@ import DashboardLayout from "../../components/layouts/DashboardLayout";
 import { Card, CardContent } from "../../components/ui/Card";
 import { Button } from "../../components/ui/Button";
 import { LoadingSpinner } from "../../components/ui/Loading";
-import { User, Phone, Mail, Shield, Save } from "lucide-react";
+import { User, Phone, Mail, Shield, Save, MapPin, RefreshCw } from "lucide-react";
 import userService from "../../services/userService";
 import { toast } from "react-hot-toast";
 import { useAuth } from "../../contexts/AuthContext";
+import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import "leaflet/dist/leaflet.css";
+import L from "leaflet";
+
+// Fix for Leaflet default icon issues
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png",
+  iconUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png",
+  shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
+});
+
+const userIcon = new L.Icon({
+  iconUrl: "https://cdn-icons-png.flaticon.com/512/3603/3603850.png",
+  iconSize: [35, 35],
+  iconAnchor: [17, 35],
+  popupAnchor: [0, -35],
+});
 
 export const AdminProfileSettings = () => {
   const { user: authUser, updateProfile: updateContextProfile } = useAuth();
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
+  const [currentLocation, setCurrentLocation] = useState(null);
+  const [gettingLocation, setGettingLocation] = useState(false);
 
   const [formData, setFormData] = useState({
     firstName: "",
@@ -63,6 +83,36 @@ export const AdminProfileSettings = () => {
       setFetching(false);
     }
   };
+
+  const getUserLocation = () => {
+    if (!navigator.geolocation) {
+      toast.error("Geolocation is not supported by your browser");
+      return;
+    }
+
+    setGettingLocation(true);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setCurrentLocation({
+          lat: position.coords.latitude,
+          lng: position.coords.longitude
+        });
+        setGettingLocation(false);
+        toast.success("Location updated");
+      },
+      (error) => {
+        console.error(error);
+        toast.error("Unable to retrieve your location");
+        setGettingLocation(false);
+      },
+      { enableHighAccuracy: true }
+    );
+  };
+
+  // Get location on mount
+  useEffect(() => {
+    getUserLocation();
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -258,6 +308,65 @@ export const AdminProfileSettings = () => {
                   </div>
                 </div>
 
+
+
+                {/* Location Section */}
+                <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+                      Current Location
+                    </h3>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={getUserLocation}
+                      disabled={gettingLocation}
+                    >
+                      <RefreshCw className={`h-4 w-4 mr-2 ${gettingLocation ? 'animate-spin' : ''}`} />
+                      Update My Location
+                    </Button>
+                  </div>
+
+                  <div className="h-[300px] w-full rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 z-0 relative">
+                    {currentLocation ? (
+                      <MapContainer
+                        center={[currentLocation.lat, currentLocation.lng]}
+                        zoom={15}
+                        style={{ height: "100%", width: "100%" }}
+                      >
+                        <TileLayer
+                          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                        />
+                        <Marker position={[currentLocation.lat, currentLocation.lng]} icon={userIcon}>
+                          <Popup>You are here</Popup>
+                        </Marker>
+                      </MapContainer>
+                    ) : (
+                      <div className="h-full flex items-center justify-center bg-gray-50 dark:bg-gray-800">
+                        <div className="text-center text-gray-500">
+                          <MapPin className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                          <p>Location not available</p>
+                          <Button
+                            type="button"
+                            variant="link"
+                            onClick={getUserLocation}
+                            className="mt-2"
+                          >
+                            Try again
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  <p className="text-sm text-gray-500 mt-2">
+                    {currentLocation
+                      ? `Lat: ${currentLocation.lat.toFixed(6)}, Lng: ${currentLocation.lng.toFixed(6)}`
+                      : "Click update to get your current coordinates"}
+                  </p>
+                </div>
+
                 <div className="pt-4 flex justify-end">
                   <Button
                     type="submit"
@@ -277,6 +386,6 @@ export const AdminProfileSettings = () => {
           </Card>
         </div>
       </div>
-    </DashboardLayout>
+    </DashboardLayout >
   );
 };

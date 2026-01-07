@@ -2,8 +2,7 @@
 import { useNavigate } from "react-router-dom";
 import DashboardLayout from "../../components/layouts/DashboardLayout";
 import { Card, CardContent } from "../../components/ui/Card";
-import { Button } from "../../components/ui/Button";
-import { ArrowLeft, Bell } from "lucide-react";
+import { Bell } from "lucide-react";
 
 export const AdminSettingsNotifications = () => {
   const navigate = useNavigate();
@@ -11,23 +10,13 @@ export const AdminSettingsNotifications = () => {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        {/* Header */}
-        <div className="flex items-center gap-4">
-          <Button
-            variant="ghost"
-            onClick={() => navigate("/admin/settings")}
-            className="p-2"
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-              Notification Settings
-            </h1>
-            <p className="text-gray-600 dark:text-gray-400 mt-1">
-              Manage alerts and email preferences
-            </p>
-          </div>
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+            Notification Settings
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400 mt-1">
+            Manage alerts and email preferences
+          </p>
         </div>
 
         <div className="max-w-2xl mx-auto">

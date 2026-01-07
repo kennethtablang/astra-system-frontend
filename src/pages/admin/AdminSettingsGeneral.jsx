@@ -5,7 +5,7 @@ import DashboardLayout from "../../components/layouts/DashboardLayout";
 import { Card, CardContent } from "../../components/ui/Card";
 import { Button } from "../../components/ui/Button";
 import { LoadingSpinner } from "../../components/ui/Loading";
-import { ArrowLeft, Building, Save, Mail, Phone, MapPin } from "lucide-react";
+import { Building, Save, Mail, Phone, MapPin } from "lucide-react";
 import { toast } from "react-hot-toast";
 
 export const AdminSettingsGeneral = () => {
@@ -50,23 +50,13 @@ export const AdminSettingsGeneral = () => {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        {/* Header */}
-        <div className="flex items-center gap-4">
-          <Button
-            variant="ghost"
-            onClick={() => navigate("/admin/settings")}
-            className="p-2"
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-              General Settings
-            </h1>
-            <p className="text-gray-600 dark:text-gray-400 mt-1">
-              Configure company details and contact information
-            </p>
-          </div>
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+            General Settings
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400 mt-1">
+            Configure company details and contact information
+          </p>
         </div>
 
         <div className="max-w-2xl mx-auto">
