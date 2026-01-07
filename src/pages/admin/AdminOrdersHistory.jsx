@@ -27,6 +27,7 @@ import { Button } from "../../components/ui/Button";
 import { Select } from "../../components/ui/Select";
 import { LoadingSpinner } from "../../components/ui/Loading";
 import orderService from "../../services/orderService";
+import { ViewOrderDetailsModal } from "../../components/modals/AdminOrder/ViewOrderDetailsModal";
 import { toast } from "react-hot-toast";
 
 const AdminOrdersHistory = () => {
@@ -41,6 +42,8 @@ const AdminOrdersHistory = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
   const [totalOrders, setTotalOrders] = useState(0);
+  const [selectedOrderId, setSelectedOrderId] = useState(null);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [stats, setStats] = useState({
     totalDelivered: 0,
     totalCancelled: 0,
@@ -184,6 +187,11 @@ const AdminOrdersHistory = () => {
     { value: "100", label: "100" },
   ];
 
+  const handleViewOrder = (orderId) => {
+    setSelectedOrderId(orderId);
+    setIsViewModalOpen(true);
+  };
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -197,10 +205,7 @@ const AdminOrdersHistory = () => {
               Completed, cancelled, and returned orders
             </p>
           </div>
-          <Button variant="outline" className="flex items-center gap-2">
-            <Download className="h-4 w-4" />
-            Export History
-          </Button>
+
         </div>
 
         {/* Stats Cards */}
@@ -395,9 +400,7 @@ const AdminOrdersHistory = () => {
                           <TableCell>
                             <div className="flex items-center justify-end gap-2">
                               <button
-                                onClick={() =>
-                                  navigate(`/admin/orders/${order.id}`)
-                                }
+                                onClick={() => handleViewOrder(order.id)}
                                 className="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
                                 title="View details"
                               >
@@ -458,11 +461,10 @@ const AdminOrdersHistory = () => {
                             <button
                               key={pageNum}
                               onClick={() => setCurrentPage(pageNum)}
-                              className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
-                                currentPage === pageNum
-                                  ? "bg-blue-600 text-white"
-                                  : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                              }`}
+                              className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${currentPage === pageNum
+                                ? "bg-blue-600 text-white"
+                                : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                                }`}
                             >
                               {pageNum}
                             </button>
@@ -489,6 +491,15 @@ const AdminOrdersHistory = () => {
             )}
           </CardContent>
         </Card>
+        <ViewOrderDetailsModal
+          isOpen={isViewModalOpen}
+          onClose={() => {
+            setIsViewModalOpen(false);
+            setSelectedOrderId(null);
+          }}
+          orderId={selectedOrderId}
+          onSuccess={() => fetchOrders()}
+        />
       </div>
     </DashboardLayout>
   );
