@@ -109,13 +109,20 @@ const AdminTrips = () => {
   };
 
   const calculateStats = (tripsData) => {
+    // Filter for today's trips
+    const today = new Date().toISOString().split("T")[0];
+    const todaysTrips = tripsData.filter((t) => {
+      const date = t.departureAt || t.createdAt;
+      return date && date.startsWith(today);
+    });
+
     const stats = {
       totalTrips: tripsData.length,
       inProgress: tripsData.filter(
         (t) => t.status === "Started" || t.status === "InProgress"
       ).length,
       completed: tripsData.filter((t) => t.status === "Completed").length,
-      totalValue: tripsData.reduce((sum, t) => sum + (t.totalValue || 0), 0),
+      totalValue: todaysTrips.reduce((sum, t) => sum + (t.totalValue || 0), 0),
     };
     setStats(stats);
   };
@@ -249,11 +256,12 @@ const AdminTrips = () => {
             </p>
           </div>
           <Button
+            size="sm"
             onClick={() => setShowCreateModal(true)}
             className="flex items-center gap-2"
           >
             <Plus className="h-4 w-4" />
-            Create Trip
+            Create
           </Button>
         </div>
 
@@ -312,7 +320,7 @@ const AdminTrips = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Total Value
+                    Total Value (Today)
                   </p>
                   <p className="text-2xl font-bold text-gray-900 dark:text-white">
                     {formatCurrency(stats.totalValue)}
@@ -378,17 +386,18 @@ const AdminTrips = () => {
                 </h3>
                 <p className="text-gray-500 dark:text-gray-400 mt-2">
                   {searchTerm ||
-                  filterStatus !== "All" ||
-                  filterWarehouse !== "All"
+                    filterStatus !== "All" ||
+                    filterWarehouse !== "All"
                     ? "Try adjusting your search or filters"
                     : "Get started by creating your first trip"}
                 </p>
                 <Button
+                  size="sm"
                   onClick={() => navigate("/admin/trips/create")}
                   className="mt-4"
                 >
                   <Plus className="h-4 w-4 mr-2" />
-                  Create Trip
+                  Create
                 </Button>
               </div>
             ) : (
@@ -485,17 +494,17 @@ const AdminTrips = () => {
                                 trip.status === "Assigned" ||
                                 trip.status === "Started" ||
                                 trip.status === "InProgress") && (
-                                <button
-                                  onClick={() => {
-                                    setSelectedTrip(trip);
-                                    setShowStatusModal(true);
-                                  }}
-                                  className="p-2 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors"
-                                  title="Update status"
-                                >
-                                  <Play className="h-4 w-4" />
-                                </button>
-                              )}
+                                  <button
+                                    onClick={() => {
+                                      setSelectedTrip(trip);
+                                      setShowStatusModal(true);
+                                    }}
+                                    className="p-2 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors"
+                                    title="Update status"
+                                  >
+                                    <Play className="h-4 w-4" />
+                                  </button>
+                                )}
                               <button
                                 onClick={() => {
                                   setSelectedTripId(trip.id);
@@ -515,16 +524,16 @@ const AdminTrips = () => {
                               </button>
                               {(trip.status === "Started" ||
                                 trip.status === "InProgress") && (
-                                <button
-                                  onClick={() =>
-                                    navigate(`/admin/trips/${trip.id}/track`)
-                                  }
-                                  className="p-2 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors"
-                                  title="Track trip"
-                                >
-                                  <Navigation className="h-4 w-4" />
-                                </button>
-                              )}
+                                  <button
+                                    onClick={() =>
+                                      navigate(`/admin/trips/${trip.id}/track`)
+                                    }
+                                    className="p-2 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors"
+                                    title="Track trip"
+                                  >
+                                    <Navigation className="h-4 w-4" />
+                                  </button>
+                                )}
                               {trip.status === "Created" && (
                                 <>
                                   <button
@@ -601,11 +610,10 @@ const AdminTrips = () => {
                             <button
                               key={pageNum}
                               onClick={() => setCurrentPage(pageNum)}
-                              className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
-                                currentPage === pageNum
+                              className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${currentPage === pageNum
                                   ? "bg-blue-600 text-white"
                                   : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                              }`}
+                                }`}
                             >
                               {pageNum}
                             </button>
