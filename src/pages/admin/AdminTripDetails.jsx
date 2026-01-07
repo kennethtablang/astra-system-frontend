@@ -266,7 +266,7 @@ const AdminTripDetails = () => {
                   onClick={handleCancelTrip}
                   className="text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
                 >
-                  Cancel Trip
+                  Cancel
                 </Button>
               </>
             )}
@@ -452,7 +452,7 @@ const AdminTripDetails = () => {
                     .map((assignment) => (
                       <div
                         key={assignment.id}
-                        className="flex items-center gap-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+                        className="flex flex-col sm:flex-row sm:items-center gap-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
                       >
                         <div className="flex-shrink-0 w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
                           <span className="text-blue-600 dark:text-blue-400 font-semibold">
