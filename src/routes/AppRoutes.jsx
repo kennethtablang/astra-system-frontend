@@ -50,6 +50,7 @@ import { AdminTransactions } from "../pages/admin/AdminTransactions";
 import AdminRemittance from "../pages/admin/AdminRemittance";
 import { AdminReports } from "../pages/admin/AdminReports";
 import { AdminSalesReports } from "../pages/admin/AdminSalesReports";
+import { AdminProductReports } from "../pages/admin/AdminProductReports";
 import { AdminPerformance } from "../pages/admin/AdminPerformance";
 import { AdminCustomReports } from "../pages/admin/AdminCustomReports";
 import { AdminSettings } from "../pages/admin/AdminSettings";
@@ -184,6 +185,7 @@ const AppRoutes = () => {
         {/* Reports */}
         <Route path="/admin/reports" element={<AdminReports />} />
         <Route path="/admin/reports/sales" element={<AdminSalesReports />} />
+        <Route path="/admin/reports/products" element={<AdminProductReports />} />
         <Route
           path="/admin/reports/performance"
           element={<AdminPerformance />}
