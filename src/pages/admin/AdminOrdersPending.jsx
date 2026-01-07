@@ -10,9 +10,11 @@ import {
   XCircle,
   AlertCircle,
   Package,
+  RefreshCw,
 } from "lucide-react";
 import DashboardLayout from "../../components/layouts/DashboardLayout";
 import { ViewOrderDetailsModal } from "../../components/modals/AdminOrder/ViewOrderDetailsModal";
+import { UpdateOrderStatusModal } from "../../components/modals/AdminOrder/UpdateOrderStatusModal";
 import { Card, CardContent } from "../../components/ui/Card";
 import {
   Table,
@@ -41,6 +43,8 @@ const AdminOrdersPending = () => {
   const [totalOrders, setTotalOrders] = useState(0);
   const [selectedOrderId, setSelectedOrderId] = useState(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [statusModalOpen, setStatusModalOpen] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState(null);
 
   // Fetch Pending Orders
   useEffect(() => {
@@ -299,6 +303,16 @@ const AdminOrdersPending = () => {
                               >
                                 <Eye className="h-4 w-4" />
                               </button>
+                              <button
+                                onClick={() => {
+                                  setSelectedOrder(order);
+                                  setStatusModalOpen(true);
+                                }}
+                                className="p-2 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors"
+                                title="Update status"
+                              >
+                                <RefreshCw className="h-4 w-4" />
+                              </button>
                             </div>
                           </TableCell>
                         </TableRow>
@@ -354,11 +368,10 @@ const AdminOrdersPending = () => {
                             <button
                               key={pageNum}
                               onClick={() => setCurrentPage(pageNum)}
-                              className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
-                                currentPage === pageNum
+                              className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${currentPage === pageNum
                                   ? "bg-blue-600 text-white"
                                   : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                              }`}
+                                }`}
                             >
                               {pageNum}
                             </button>
@@ -410,6 +423,12 @@ const AdminOrdersPending = () => {
         }}
         orderId={selectedOrderId}
         onEdit={handleEditOrder}
+      />
+      <UpdateOrderStatusModal
+        isOpen={statusModalOpen}
+        onClose={() => setStatusModalOpen(false)}
+        order={selectedOrder}
+        onSuccess={() => fetchPendingOrders()}
       />
     </DashboardLayout>
   );
