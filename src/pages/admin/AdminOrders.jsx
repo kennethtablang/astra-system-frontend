@@ -320,10 +320,7 @@ const AdminOrders = () => {
               <Plus className="h-4 w-4" />
               Create Order
             </Button>
-            <Button variant="outline" className="flex items-center gap-2">
-              <Download className="h-4 w-4" />
-              Export
-            </Button>
+
           </div>
         </div>
 
@@ -667,8 +664,8 @@ const AdminOrders = () => {
                               key={pageNum}
                               onClick={() => setCurrentPage(pageNum)}
                               className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${currentPage === pageNum
-                                  ? "bg-blue-600 text-white"
-                                  : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                                ? "bg-blue-600 text-white"
+                                : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                                 }`}
                             >
                               {pageNum}
