@@ -14,6 +14,9 @@ import {
   Truck,
   RefreshCw,
 } from "lucide-react";
+import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import "leaflet/dist/leaflet.css";
+import L from "leaflet";
 import DashboardLayout from "../../components/layouts/DashboardLayout";
 import { Card, CardContent } from "../../components/ui/Card";
 import { Badge } from "../../components/ui/Badge";
@@ -24,6 +27,29 @@ import tripService from "../../services/tripService";
 import deliveryService from "../../services/deliveryService";
 import { toast } from "react-hot-toast";
 
+// Fix for Leaflet default icon issues
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png",
+  iconUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png",
+  shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
+});
+
+// Custom Icons
+const userIcon = new L.Icon({
+  iconUrl: "https://cdn-icons-png.flaticon.com/512/3603/3603850.png", // Example user/truck icon
+  iconSize: [35, 35],
+  iconAnchor: [17, 35],
+  popupAnchor: [0, -35],
+});
+
+const storeIcon = new L.Icon({
+  iconUrl: "https://cdn-icons-png.flaticon.com/512/447/447031.png", // Example store icon
+  iconSize: [30, 30],
+  iconAnchor: [15, 30],
+  popupAnchor: [0, -30],
+});
+
 const DispatcherDeliveries = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -33,6 +59,8 @@ const DispatcherDeliveries = () => {
   const [loading, setLoading] = useState(true);
   const [locationSharing, setLocationSharing] = useState(false);
   const [lastLocationUpdate, setLastLocationUpdate] = useState(null);
+  const [currentLocation, setCurrentLocation] = useState(null);
+  const [arrivedAtStore, setArrivedAtStore] = useState(false);
 
   useEffect(() => {
     fetchMyActiveTrips();
@@ -74,6 +102,11 @@ const DispatcherDeliveries = () => {
   };
 
   const startLocationSharing = async () => {
+    // Initial location fetch for map even before sharing is started
+    deliveryService.getCurrentLocation()
+      .then(loc => setCurrentLocation(loc))
+      .catch(err => console.log("Init location error", err));
+
     if (!activeTrip) {
       toast.error("No active trip to share location for");
       return;
@@ -116,8 +149,28 @@ const DispatcherDeliveries = () => {
         } else {
           console.error("Location update failed:", result.error);
         }
+
+        // Update local state for map and geofencing
+        if (result.location) {
+          setCurrentLocation({
+            latitude: result.location.latitude,
+            longitude: result.location.longitude
+          });
+
+          // Check Geofence
+          const currentStop = getCurrentStop();
+          if (currentStop) {
+            checkGeofence(
+              result.location.latitude,
+              result.location.longitude,
+              currentStop.storeLatitude,
+              currentStop.storeLongitude,
+              currentStop.storeName
+            );
+          }
+        }
       },
-      30000 // Update every 30 seconds
+      5000 // Update every 5 seconds for smoother tracking/geofencing
     );
 
     // Store stop function to call on component unmount
@@ -145,6 +198,22 @@ const DispatcherDeliveries = () => {
         {config.label}
       </Badge>
     );
+  };
+
+  const checkGeofence = (lat, lng, storeLat, storeLng, storeName) => {
+    if (!storeLat || !storeLng) return;
+
+    if (deliveryService.isNearStore(lat, lng, storeLat, storeLng)) {
+      if (!arrivedAtStore) { // Check state to prevent spamming
+        setArrivedAtStore(true);
+        toast.success(`You have arrived at ${storeName}!`, {
+          duration: 5000,
+          icon: "📍"
+        });
+      }
+    } else {
+      setArrivedAtStore(false); // Reset if they leave the area
+    }
   };
 
   const getCurrentStop = () => {
@@ -214,6 +283,50 @@ const DispatcherDeliveries = () => {
             Refresh
           </Button>
         </div>
+
+        {/* Map Section */}
+        {activeTrip && (
+          <Card>
+            <CardContent className="p-0 h-[300px] relative z-0">
+              {currentLocation ? (
+                <MapContainer
+                  center={[currentLocation.latitude, currentLocation.longitude]}
+                  zoom={15}
+                  style={{ height: "100%", width: "100%", borderRadius: "0.5rem" }}
+                >
+                  <TileLayer
+                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                  />
+                  {/* User Marker */}
+                  <Marker position={[currentLocation.latitude, currentLocation.longitude]} icon={userIcon}>
+                    <Popup>Your Location</Popup>
+                  </Marker>
+
+                  {/* Current Stop Marker */}
+                  {currentStop && currentStop.storeLatitude && currentStop.storeLongitude && (
+                    <Marker
+                      position={[currentStop.storeLatitude, currentStop.storeLongitude]}
+                      icon={storeIcon}
+                    >
+                      <Popup>
+                        <b>{currentStop.storeName}</b><br />
+                        Stop #{currentStop.sequenceNo}
+                      </Popup>
+                    </Marker>
+                  )}
+                </MapContainer>
+              ) : (
+                <div className="h-full flex items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-lg">
+                  <div className="text-center">
+                    <LoadingSpinner size="md" />
+                    <p className="mt-2 text-sm text-gray-500">Acquiring GPS location...</p>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
         {loading ? (
           <div className="flex items-center justify-center py-12">
@@ -412,13 +525,20 @@ const DispatcherDeliveries = () => {
                       <Button
                         variant="outline"
                         onClick={() => {
-                          // Open maps app with store location
-                          window.open(
-                            `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-                              currentStop.storeName
-                            )}`,
-                            "_blank"
-                          );
+                          if (currentStop.storeLatitude && currentStop.storeLongitude) {
+                            window.open(
+                              `https://www.google.com/maps/dir/?api=1&destination=${currentStop.storeLatitude},${currentStop.storeLongitude}`,
+                              "_blank"
+                            );
+                          } else {
+                            // Fallback to search query
+                            window.open(
+                              `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+                                currentStop.storeName
+                              )}`,
+                              "_blank"
+                            );
+                          }
                         }}
                         className="w-full"
                       >
