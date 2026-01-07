@@ -1,13 +1,25 @@
 // src/pages/admin/AdminPerformance.jsx
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import DashboardLayout from "../../components/layouts/DashboardLayout";
-import { Card, CardContent } from "../../components/ui/Card";
+import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/Card";
 import { Button } from "../../components/ui/Button";
 import { LoadingSpinner } from "../../components/ui/Loading";
 import { ArrowLeft, Download, Calendar, TrendingUp } from "lucide-react";
 import reportService from "../../services/reportService";
 import { toast } from "react-hot-toast";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  LineChart,
+  Line
+} from 'recharts';
 
 export const AdminPerformance = () => {
   const navigate = useNavigate();
@@ -19,6 +31,23 @@ export const AdminPerformance = () => {
 
   const [fromDate, setFromDate] = useState(firstDay.toISOString().split("T")[0]);
   const [toDate, setToDate] = useState(today.toISOString().split("T")[0]);
+  const [chartData, setChartData] = useState([]);
+
+  useEffect(() => {
+    generateMockData();
+  }, [fromDate, toDate]);
+
+  const generateMockData = () => {
+    // Generate mock performance data
+    const drivers = ["Driver A", "Driver B", "Driver C", "Driver D", "Driver E"];
+    const mock = drivers.map(driver => ({
+      name: driver,
+      onTime: Math.floor(Math.random() * 50) + 20,
+      late: Math.floor(Math.random() * 10),
+      failed: Math.floor(Math.random() * 2)
+    }));
+    setChartData(mock);
+  };
 
   const handleGenerate = async () => {
     if (!fromDate || !toDate) {
@@ -75,69 +104,72 @@ export const AdminPerformance = () => {
           </div>
         </div>
 
-        <div className="max-w-2xl mx-auto">
-          <Card>
-            <CardContent className="p-8">
-              <div className="flex flex-col items-center text-center space-y-6">
-                <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-full">
-                  <TrendingUp className="h-12 w-12 text-green-600 dark:text-green-400" />
+        {/* Filters */}
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex flex-col md:flex-row md:items-end gap-4 justify-between">
+              <div className="flex gap-4 w-full md:w-auto">
+                <div className="space-y-2 flex-1 md:flex-none">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Start Date
+                  </label>
+                  <input
+                    type="date"
+                    value={fromDate}
+                    onChange={(e) => setFromDate(e.target.value)}
+                    className="w-full pl-3 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  />
                 </div>
-
-                <div className="space-y-2">
-                  <h3 className="text-lg font-medium text-gray-900 dark:text-white">
-                    Select Date Range
-                  </h3>
-                  <p className="text-sm text-gray-500 max-w-sm">
-                    Choose the period for analysis. The report calculates metrics based on deliveries completed within this range.
-                  </p>
-                </div>
-
-                <div className="w-full max-w-sm space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2 text-left">
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Start Date
-                      </label>
-                      <div className="relative">
-                        <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                        <input
-                          type="date"
-                          value={fromDate}
-                          onChange={(e) => setFromDate(e.target.value)}
-                          className="w-full pl-9 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                        />
-                      </div>
-                    </div>
-                    <div className="space-y-2 text-left">
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                        End Date
-                      </label>
-                      <div className="relative">
-                        <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                        <input
-                          type="date"
-                          value={toDate}
-                          onChange={(e) => setToDate(e.target.value)}
-                          className="w-full pl-9 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  <Button
-                    onClick={handleGenerate}
-                    disabled={loading}
-                    className="w-full flex items-center justify-center gap-2"
-                  >
-                    {loading ? (
-                      <LoadingSpinner size="sm" color="white" />
-                    ) : (
-                      <Download className="h-4 w-4" />
-                    )}
-                    {loading ? "Generating..." : "Download Report"}
-                  </Button>
+                <div className="space-y-2 flex-1 md:flex-none">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    End Date
+                  </label>
+                  <input
+                    type="date"
+                    value={toDate}
+                    onChange={(e) => setToDate(e.target.value)}
+                    className="w-full pl-3 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  />
                 </div>
               </div>
+              <Button
+                onClick={handleGenerate}
+                disabled={loading}
+                className="flex items-center gap-2"
+              >
+                {loading ? (
+                  <LoadingSpinner size="sm" color="white" />
+                ) : (
+                  <Download className="h-4 w-4" />
+                )}
+                {loading ? "Generating..." : "Download Excel"}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Charts */}
+        <div className="grid grid-cols-1 gap-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Dispatcher Performance</CardTitle>
+            </CardHeader>
+            <CardContent className="h-[400px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={chartData}
+                  margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend />
+                  <Bar dataKey="onTime" name="On Time" fill="#10b981" />
+                  <Bar dataKey="late" name="Late" fill="#f59e0b" />
+                  <Bar dataKey="failed" name="Failed" fill="#ef4444" />
+                </BarChart>
+              </ResponsiveContainer>
             </CardContent>
           </Card>
         </div>

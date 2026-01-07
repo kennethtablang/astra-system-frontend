@@ -1,69 +1,19 @@
 // src/pages/admin/AdminReports.jsx
-import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import DashboardLayout from "../../components/layouts/DashboardLayout";
 import { Card, CardContent } from "../../components/ui/Card";
-import { LoadingSpinner } from "../../components/ui/Loading";
 import {
-  BarChart3,
-  TrendingUp,
-  Package,
   Truck,
   Users,
   Banknote,
-  FileBarChart,
   ArrowRight,
-  Calendar,
   Warehouse,
-  AlertCircle
+  AlertCircle,
+  Package
 } from "lucide-react";
-import reportService from "../../services/reportService";
-import { toast } from "react-hot-toast";
 
 export const AdminReports = () => {
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState(null);
-
-  useEffect(() => {
-    fetchStats();
-  }, []);
-
-  const fetchStats = async () => {
-    try {
-      setLoading(true);
-      const result = await reportService.getDashboardStats();
-      if (result.success) {
-        setStats(result.data);
-      }
-    } catch (error) {
-      console.error("Failed to fetch dashboard stats:", error);
-      toast.error("Failed to load dashboard statistics");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat("en-PH", {
-      style: "currency",
-      currency: "PHP",
-    }).format(amount || 0);
-  };
-
-  const formatPercent = (value) => {
-    return `${((value || 0) * 100).toFixed(1)}%`;
-  };
-
-  if (loading) {
-    return (
-      <DashboardLayout>
-        <div className="flex items-center justify-center min-h-[60vh]">
-          <LoadingSpinner size="lg" />
-        </div>
-      </DashboardLayout>
-    );
-  }
 
   const reports = [
     {
@@ -88,10 +38,17 @@ export const AdminReports = () => {
       path: "/admin/reports/custom?type=agent",
     },
     {
+      title: "Fast Moving Products",
+      description: "Top selling products and volume analysis.",
+      icon: Package,
+      color: "orange",
+      path: "/admin/reports/products",
+    },
+    {
       title: "Stock Movement",
       description: "Track inventory changes and warehouse transfers.",
       icon: Warehouse,
-      color: "orange",
+      color: "red",
       path: "/admin/reports/custom?type=stock",
     },
   ];
@@ -107,84 +64,6 @@ export const AdminReports = () => {
           <p className="text-gray-600 dark:text-gray-400 mt-1">
             System performance overview and downloadable reports
           </p>
-        </div>
-
-        {/* Stats Overview */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex justify-between items-start">
-                <div>
-                  <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                    Total Revenue
-                  </p>
-                  <h3 className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
-                    {formatCurrency(stats?.totalRevenue)}
-                  </h3>
-                </div>
-                <div className="p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                  <Banknote className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex justify-between items-start">
-                <div>
-                  <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                    On-Time Delivery
-                  </p>
-                  <h3 className="text-2xl font-bold text-green-600 dark:text-green-400 mt-1">
-                    {formatPercent(stats?.onTimeDeliveryRate)}
-                  </h3>
-                </div>
-                <div className="p-2 bg-green-50 dark:bg-green-900/20 rounded-lg">
-                  <TrendingUp className="h-5 w-5 text-green-600 dark:text-green-400" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex justify-between items-start">
-                <div>
-                  <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                    Active Trips
-                  </p>
-                  <h3 className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
-                    {stats?.activeTrips || 0}
-                  </h3>
-                </div>
-                <div className="p-2 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
-                  <Truck className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex justify-between items-start">
-                <div>
-                  <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                    Detailed Stats
-                  </p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                    {stats?.totalOrders} Orders
-                  </p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    {stats?.deliveredToday} Delivered Today
-                  </p>
-                </div>
-                <div className="p-2 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
-                  <Package className="h-5 w-5 text-orange-600 dark:text-orange-400" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
         </div>
 
         {/* Report Generation Section */}
