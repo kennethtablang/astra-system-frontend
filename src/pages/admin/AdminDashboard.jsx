@@ -89,21 +89,21 @@ const AdminDashboard = () => {
           .get("/inventory", {
             params: {
               pageSize: 5,
-              lowStock: true,
+              status: "Low Stock",
             },
           })
           .catch(() => ({ data: { data: { items: [] } } }));
 
         // Fetch top products
         const topProductsPromise = api
-          .get("/product", {
+          .get("/reports/top-products", {
             params: {
-              pageSize: 5,
-              sortBy: "totalSold",
-              sortDescending: true,
+              limit: 5,
+              from: dateRange.from,
+              to: dateRange.to
             },
           })
-          .catch(() => ({ data: { data: { items: [] } } }));
+          .catch(() => ({ data: { data: [] } }));
 
         // Fetch recent activities/notifications
         const activitiesPromise = api
@@ -360,8 +360,8 @@ const AdminDashboard = () => {
               stats?.orderGrowth > 0
                 ? "up"
                 : stats?.orderGrowth < 0
-                ? "down"
-                : null
+                  ? "down"
+                  : null
             }
             trendValue={
               stats?.orderGrowth
@@ -390,8 +390,8 @@ const AdminDashboard = () => {
               stats?.revenueGrowth > 0
                 ? "up"
                 : stats?.revenueGrowth < 0
-                ? "down"
-                : null
+                  ? "down"
+                  : null
             }
             trendValue={
               stats?.revenueGrowth
@@ -687,21 +687,21 @@ const AdminDashboard = () => {
                         <div>
                           <p className="text-sm font-medium text-gray-900 dark:text-white">
                             {product.productName ||
-                              product.product?.name ||
+                              product.name ||
                               "Unknown Product"}
                           </p>
                           <p className="text-xs text-gray-500 dark:text-gray-400">
-                            SKU: {product.sku || product.product?.sku || "N/A"}
+                            SKU: {product.productSku || product.sku || "N/A"}
                           </p>
                         </div>
                       </div>
                       <div className="text-right">
                         <p className="text-sm font-semibold text-red-600">
-                          {product.quantity || product.currentStock || 0} left
+                          {product.stockLevel || product.quantity || 0} left
                         </p>
                         <p className="text-xs text-gray-500 dark:text-gray-400">
                           Min:{" "}
-                          {product.reorderLevel || product.minimumStock || 10}
+                          {product.reorderLevel || 10}
                         </p>
                       </div>
                     </div>
