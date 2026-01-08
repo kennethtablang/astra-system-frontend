@@ -37,16 +37,33 @@ import {
 } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
 import { useTheme } from "../../contexts/ThemeContext";
+import api from "../../api/axios";
+import { getImageUrl } from "../../utils/imageUrl";
 
 const DashboardLayout = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [logoUrl, setLogoUrl] = useState(null);
   const { user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
   const userMenuRef = useRef(null);
   const prevLocationRef = useRef(location.pathname);
+
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const response = await api.get("/settings");
+        if (response.data.success && response.data.data.CompanyLogo) {
+          setLogoUrl(response.data.data.CompanyLogo);
+        }
+      } catch (error) {
+        console.error("Failed to load settings", error);
+      }
+    };
+    fetchSettings();
+  }, []);
 
   const navigation = {
     Admin: [
@@ -433,12 +450,22 @@ const DashboardLayout = ({ children }) => {
           {/* Logo */}
           <div className="flex items-center justify-between h-16 px-6 border-b border-gray-200 dark:border-gray-700">
             <div className="flex items-center space-x-3">
-              <div className="h-8 w-8 bg-blue-600 dark:bg-blue-500 rounded-lg flex items-center justify-center">
-                <span className="text-white text-lg font-bold">A</span>
-              </div>
-              <span className="text-xl font-bold text-gray-900 dark:text-white">
-                ASTRA
-              </span>
+              {logoUrl ? (
+                <img
+                  src={getImageUrl(logoUrl)}
+                  alt="Company Logo"
+                  className="h-10 w-auto object-contain"
+                />
+              ) : (
+                <div className="h-8 w-8 bg-blue-600 dark:bg-blue-500 rounded-lg flex items-center justify-center">
+                  <span className="text-white text-lg font-bold">A</span>
+                </div>
+              )}
+              {!logoUrl && (
+                <span className="text-xl font-bold text-gray-900 dark:text-white">
+                  ASTRA
+                </span>
+              )}
             </div>
             <button
               onClick={() => setSidebarOpen(false)}
