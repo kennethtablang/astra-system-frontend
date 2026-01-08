@@ -46,8 +46,10 @@ export const ProductEditModal = ({
         isBarcoded: selectedProduct.isBarcoded || false,
         barcode: selectedProduct.barcode || "",
       });
+
       // Set initial preview from existing product image
-      setImagePreview(selectedProduct.imageUrl ? getImageUrl(selectedProduct.imageUrl) : null);
+      const imageUrlToUse = selectedProduct.imageUrl ? getImageUrl(selectedProduct.imageUrl) : null;
+      setImagePreview(imageUrlToUse);
       setSelectedImage(null);
       setRemoveImage(false);
       fetchCategories();
@@ -183,9 +185,14 @@ export const ProductEditModal = ({
             <div className="w-32 h-32 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center bg-gray-50 dark:bg-gray-700/50 overflow-hidden">
               {imagePreview ? (
                 <img
+                  key={imagePreview}
                   src={imagePreview}
-                  alt="Preview"
+                  alt="Product"
                   className="w-full h-full object-cover"
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src = "https://placehold.co/400x400?text=No+Image";
+                  }}
                 />
               ) : (
                 <div className="text-center p-2">
