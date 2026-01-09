@@ -264,15 +264,83 @@ const DashboardLayout = ({ children }) => {
       },
       {
         name: "Orders",
-        href: "/distributor/orders",
         icon: ShoppingCart,
-        type: "single",
+        type: "group",
+        key: "orders",
+        items: [
+          {
+            name: "Create Order",
+            href: "/distributor/orders/create",
+            icon: ShoppingBag,
+          },
+          { name: "All Orders", href: "/distributor/orders", icon: ShoppingCart },
+          { name: "Pending", href: "/distributor/orders/pending", icon: Clock },
+          { name: "History", href: "/distributor/orders/history", icon: FileText },
+        ],
+      },
+      {
+        name: "Finance",
+        icon: DollarSign,
+        type: "group",
+        key: "finance",
+        items: [
+          { name: "Overview", href: "/distributor/finance", icon: DollarSign },
+          {
+            name: "Payments",
+            href: "/distributor/finance/payments",
+            icon: CreditCard,
+          },
+          { name: "Invoices", href: "/distributor/finance/invoices", icon: FileText },
+          {
+            name: "Remittance",
+            href: "/distributor/finance/remittance",
+            icon: Users,
+          },
+          {
+            name: "Transactions",
+            href: "/distributor/finance/transactions",
+            icon: Activity,
+          },
+        ],
       },
       {
         name: "Reports",
-        href: "/distributor/reports",
         icon: BarChart3,
-        type: "single",
+        type: "group",
+        key: "reports",
+        items: [
+          { name: "Dashboard", href: "/distributor/reports", icon: BarChart3 },
+          {
+            name: "Sales Reports",
+            href: "/distributor/reports/sales",
+            icon: TrendingUp,
+          },
+          {
+            name: "Performance",
+            href: "/distributor/reports/performance",
+            icon: Activity,
+          },
+          {
+            name: "Custom Reports",
+            href: "/distributor/reports/custom",
+            icon: FileSpreadsheet,
+          },
+        ],
+      },
+      {
+        name: "Settings",
+        icon: Settings,
+        type: "group",
+        key: "settings",
+        items: [
+          { name: "General", href: "/distributor/settings/general", icon: Settings },
+          {
+            name: "Notifications",
+            href: "/distributor/settings/notifications",
+            icon: Bell,
+          },
+          { name: "Security", href: "/distributor/settings/security", icon: Shield },
+        ],
       },
     ],
     Agent: [
@@ -312,32 +380,7 @@ const DashboardLayout = ({ children }) => {
         type: "single",
       },
     ],
-    Accountant: [
-      {
-        name: "Dashboard",
-        href: "/accountant/dashboard",
-        icon: Home,
-        type: "single",
-      },
-      {
-        name: "Payments",
-        href: "/accountant/payments",
-        icon: DollarSign,
-        type: "single",
-      },
-      {
-        name: "Invoices",
-        href: "/accountant/invoices",
-        icon: FileText,
-        type: "single",
-      },
-      {
-        name: "Reports",
-        href: "/accountant/reports",
-        icon: FileText,
-        type: "single",
-      },
-    ],
+
   };
 
   const userNavigation = navigation[user?.role] || [];
