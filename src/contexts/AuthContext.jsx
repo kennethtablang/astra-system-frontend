@@ -69,7 +69,6 @@ export const AuthProvider = ({ children }) => {
       DistributorAdmin: "/distributor/dashboard",
       Agent: "/agent/dashboard",
       Dispatcher: "/dispatcher/dashboard",
-      Accountant: "/accountant/dashboard",
     };
     return routes[role] || "/dashboard";
   };
