@@ -251,16 +251,49 @@ const DashboardLayout = ({ children }) => {
         type: "single",
       },
       {
-        name: "Inventory",
-        href: "/distributor/inventory",
-        icon: Package,
+        name: "Stores",
+        href: "/distributor/stores",
+        icon: Store,
         type: "single",
       },
       {
+        name: "Products",
+        icon: Package,
+        type: "group",
+        key: "products",
+        items: [
+          {
+            name: "Product Management",
+            href: "/distributor/products",
+            icon: Package,
+          },
+          { name: "Categories", href: "/distributor/products/categories", icon: Tag },
+          {
+            name: "Inventory",
+            href: "/distributor/inventory",
+            icon: Warehouse,
+          },
+        ],
+      },
+
+      {
         name: "Trips",
-        href: "/distributor/trips",
         icon: Truck,
-        type: "single",
+        type: "group",
+        key: "trips",
+        items: [
+          { name: "All Trips", href: "/distributor/trips", icon: Truck },
+          {
+            name: "Active Trips",
+            href: "/distributor/trips/active",
+            icon: TrendingUp,
+          },
+          {
+            name: "Trip History",
+            href: "/distributor/trips/history",
+            icon: FileText,
+          },
+        ],
       },
       {
         name: "Orders",
