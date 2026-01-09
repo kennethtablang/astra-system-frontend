@@ -275,7 +275,22 @@ const DashboardLayout = ({ children }) => {
           },
         ],
       },
-
+      {
+        name: "Orders",
+        icon: ShoppingCart,
+        type: "group",
+        key: "orders",
+        items: [
+          {
+            name: "Create Order",
+            href: "/distributor/orders/create",
+            icon: ShoppingBag,
+          },
+          { name: "All Orders", href: "/distributor/orders", icon: ShoppingCart },
+          { name: "Pending", href: "/distributor/orders/pending", icon: Clock },
+          { name: "History", href: "/distributor/orders/history", icon: FileText },
+        ],
+      },
       {
         name: "Trips",
         icon: Truck,
@@ -293,22 +308,6 @@ const DashboardLayout = ({ children }) => {
             href: "/distributor/trips/history",
             icon: FileText,
           },
-        ],
-      },
-      {
-        name: "Orders",
-        icon: ShoppingCart,
-        type: "group",
-        key: "orders",
-        items: [
-          {
-            name: "Create Order",
-            href: "/distributor/orders/create",
-            icon: ShoppingBag,
-          },
-          { name: "All Orders", href: "/distributor/orders", icon: ShoppingCart },
-          { name: "Pending", href: "/distributor/orders/pending", icon: Clock },
-          { name: "History", href: "/distributor/orders/history", icon: FileText },
         ],
       },
       {
@@ -358,21 +357,6 @@ const DashboardLayout = ({ children }) => {
             href: "/distributor/reports/custom",
             icon: FileSpreadsheet,
           },
-        ],
-      },
-      {
-        name: "Settings",
-        icon: Settings,
-        type: "group",
-        key: "settings",
-        items: [
-          { name: "General", href: "/distributor/settings/general", icon: Settings },
-          {
-            name: "Notifications",
-            href: "/distributor/settings/notifications",
-            icon: Bell,
-          },
-          { name: "Security", href: "/distributor/settings/security", icon: Shield },
         ],
       },
     ],
