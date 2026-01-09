@@ -2,6 +2,7 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import ProtectedRoute from "../components/common/ProtectedRoute";
 import { useAuth } from "../contexts/AuthContext";
+import RoleBasedRedirect from "../components/common/RoleBasedRedirect";
 
 // Auth Pages
 import Login from "../pages/auth/Login";
@@ -91,11 +92,15 @@ const AppRoutes = () => {
 
   return (
     <Routes>
+
+
+      // ...
+
       {/* Public Routes */}
       <Route
         path="/login"
         element={
-          !isAuthenticated ? <Login /> : <Navigate to="/admin/dashboard" />
+          !isAuthenticated ? <Login /> : <RoleBasedRedirect />
         }
       />
       <Route path="/register" element={<Register />} />
