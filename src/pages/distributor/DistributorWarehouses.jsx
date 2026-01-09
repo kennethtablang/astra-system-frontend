@@ -17,12 +17,16 @@ import { LoadingSpinner } from "../../components/ui/Loading";
 import { warehouseService } from "../../services/warehouseService";
 import { toast } from "react-hot-toast";
 import { useAuth } from "../../contexts/AuthContext";
+import WarehouseModal from "../../components/modals/DistributorWarehouse/WarehouseModal";
 
 const DistributorWarehouses = () => {
     const { user } = useAuth();
     const [loading, setLoading] = useState(true);
     const [warehouses, setWarehouses] = useState([]);
     const [searchTerm, setSearchTerm] = useState("");
+
+    const [selectedWarehouse, setSelectedWarehouse] = useState(null);
+    const [isModalOpen, setIsModalOpen] = useState(false);
 
     useEffect(() => {
         fetchWarehouses();
@@ -40,6 +44,48 @@ const DistributorWarehouses = () => {
             toast.error("Failed to load warehouses");
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleAddWarehouse = () => {
+        setSelectedWarehouse(null);
+        setIsModalOpen(true);
+    };
+
+    const handleEditWarehouse = (warehouse) => {
+        setSelectedWarehouse(warehouse);
+        setIsModalOpen(true);
+    };
+
+    const handleSaveWarehouse = async (data) => {
+        try {
+            if (selectedWarehouse) {
+                // Edit
+                const result = await warehouseService.updateWarehouse(selectedWarehouse.id, {
+                    ...data,
+                    id: selectedWarehouse.id,
+                    distributorId: user.distributorId,
+                });
+                if (result.success) {
+                    toast.success("Warehouse updated successfully");
+                    fetchWarehouses();
+                    setIsModalOpen(false);
+                }
+            } else {
+                // Create
+                const result = await warehouseService.createWarehouse({
+                    ...data,
+                    distributorId: user.distributorId,
+                });
+                if (result.success) {
+                    toast.success("Warehouse created successfully");
+                    fetchWarehouses();
+                    setIsModalOpen(false);
+                }
+            }
+        } catch (error) {
+            console.error("Error saving warehouse:", error);
+            toast.error("Failed to save warehouse");
         }
     };
 
@@ -71,7 +117,7 @@ const DistributorWarehouses = () => {
                             Manage your distributor warehouses
                         </p>
                     </div>
-                    <Button className="flex items-center gap-2">
+                    <Button className="flex items-center gap-2" onClick={handleAddWarehouse}>
                         <Plus className="h-4 w-4" />
                         Add Warehouse
                     </Button>
@@ -127,7 +173,10 @@ const DistributorWarehouses = () => {
                                                 </Badge>
                                             </div>
                                         </div>
-                                        <button className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors">
+                                        <button
+                                            className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+                                            onClick={() => handleEditWarehouse(warehouse)}
+                                        >
                                             <Edit className="h-4 w-4" />
                                         </button>
                                     </div>
@@ -156,6 +205,13 @@ const DistributorWarehouses = () => {
                         ))}
                     </div>
                 )}
+
+                <WarehouseModal
+                    isOpen={isModalOpen}
+                    onClose={() => setIsModalOpen(false)}
+                    warehouse={selectedWarehouse}
+                    onSave={handleSaveWarehouse}
+                />
             </div>
         </DashboardLayout>
     );

@@ -1,159 +1,132 @@
-// src/pages/distributor/DistributorTrips.jsx
+// src/pages/distributor/DistributorTripsHistory.jsx
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-    Truck,
-    Plus,
-    Edit,
-    Trash2,
+    FileText,
     Search,
-    MapPin,
     Calendar,
     User,
     Package,
     DollarSign,
-    FileText,
-    Navigation,
-    Play,
+    CheckCircle,
+    MapPin,
+    Download,
     Eye,
 } from "lucide-react";
 import DashboardLayout from "../../components/layouts/DashboardLayout";
-import { CreateTripModal } from "../../components/modals/AdminTrip/CreateTripModal";
-import { TripDetailsModal } from "../../components/modals/AdminTrip/TripDetailsModal";
-import { EditTripModal } from "../../components/modals/AdminTrip/EditTripModal";
-import { UpdateTripStatusModal } from "../../components/modals/AdminTrip/UpdateTripStatusModal";
 import { Card, CardContent } from "../../components/ui/Card";
 import { Badge } from "../../components/ui/Badge";
 import { Button } from "../../components/ui/Button";
 import { Select } from "../../components/ui/Select";
 import { LoadingSpinner } from "../../components/ui/Loading";
 import tripService from "../../services/tripService";
-import { warehouseService } from "../../services/warehouseService";
 import { toast } from "react-hot-toast";
 
-const DistributorTrips = () => {
+const DistributorTripsHistory = () => {
     const navigate = useNavigate();
 
-    // State
     const [trips, setTrips] = useState([]);
-    const [warehouses, setWarehouses] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
     const [filterStatus, setFilterStatus] = useState("All");
-    const [filterWarehouse, setFilterWarehouse] = useState("All");
+    const [filterDateRange, setFilterDateRange] = useState("All");
     const [currentPage, setCurrentPage] = useState(1);
     const [pageSize, setPageSize] = useState(10);
     const [totalTrips, setTotalTrips] = useState(0);
-    const [showCreateModal, setShowCreateModal] = useState(false);
-    const [showDetailsModal, setShowDetailsModal] = useState(false);
-    const [selectedTripId, setSelectedTripId] = useState(null);
-    const [showEditModal, setShowEditModal] = useState(false);
-    const [showStatusModal, setShowStatusModal] = useState(false);
-    const [selectedTrip, setSelectedTrip] = useState(null);
-    const [editTripId, setEditTripId] = useState(null);
     const [stats, setStats] = useState({
         totalTrips: 0,
-        inProgress: 0,
-        completed: 0,
+        totalStops: 0,
         totalValue: 0,
+        avgSuccessRate: 0,
     });
 
     useEffect(() => {
-        fetchTrips();
-        fetchWarehouses();
-    }, [currentPage, pageSize, filterStatus, filterWarehouse]);
+        fetchTripHistory();
+    }, [currentPage, pageSize, filterStatus, filterDateRange]);
 
-    const fetchTrips = async () => {
+    const fetchTripHistory = async () => {
         try {
             setLoading(true);
+
             const params = {
                 pageNumber: currentPage,
                 pageSize: pageSize,
+                sortBy: "departureAt",
+                sortDescending: true,
             };
 
-            if (filterStatus !== "All") {
+            // Filter by status
+            if (filterStatus === "All") {
+                params.status = "Completed";
+            } else {
                 params.status = filterStatus;
             }
 
-            if (filterWarehouse !== "All") {
-                params.warehouseId = parseInt(filterWarehouse);
+            // Filter by date range
+            if (filterDateRange !== "All") {
+                const now = new Date();
+                let fromDate;
+
+                if (filterDateRange === "Today") {
+                    fromDate = new Date(now.setHours(0, 0, 0, 0));
+                } else if (filterDateRange === "Week") {
+                    fromDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+                } else if (filterDateRange === "Month") {
+                    fromDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+                }
+
+                if (fromDate) {
+                    params.departureFrom = fromDate.toISOString();
+                }
             }
 
             const result = await tripService.getTrips(params);
 
             if (result.success) {
-                setTrips(result.data.items || []);
+                const tripsData = result.data.items || [];
+                setTrips(tripsData);
                 setTotalTrips(result.data.totalCount || 0);
-
-                // Calculate stats
-                calculateStats(result.data.items || []);
+                calculateStats(tripsData);
+            } else {
+                toast.error("Failed to load trip history");
             }
         } catch (error) {
-            console.error("Failed to fetch trips:", error);
-            toast.error("Failed to load trips");
+            console.error("Failed to fetch trip history:", error);
+            toast.error("Failed to load trip history");
         } finally {
             setLoading(false);
         }
     };
 
-    const fetchWarehouses = async () => {
-        try {
-            const result = await warehouseService.getWarehouses();
-            if (result.success) {
-                setWarehouses(result.data || []);
-            }
-        } catch (error) {
-            console.error("Failed to fetch warehouses:", error);
-        }
-    };
-
     const calculateStats = (tripsData) => {
-        // Filter for today's trips
-        const today = new Date().toISOString().split("T")[0];
-        const todaysTrips = tripsData.filter((t) => {
-            const date = t.departureAt || t.createdAt;
-            return date && date.startsWith(today);
-        });
-
         const stats = {
-            totalTrips: tripsData.length,
-            inProgress: tripsData.filter(
-                (t) => t.status === "Started" || t.status === "InProgress"
-            ).length,
-            completed: tripsData.filter((t) => t.status === "Completed").length,
-            totalValue: todaysTrips.reduce((sum, t) => sum + (t.totalValue || 0), 0),
+            totalTrips: tripsData.filter((t) => t.status === "Completed").length,
+            totalStops: tripsData.reduce((sum, t) => sum + (t.orderCount || 0), 0),
+            totalValue: tripsData.reduce(
+                (sum, t) =>
+                    t.status === "Completed" ? sum + (t.totalValue || 0) : sum,
+                0
+            ),
+            avgSuccessRate: 0,
         };
+
+        // Calculate average success rate
+        if (tripsData.length > 0) {
+            const completedTrips = tripsData.filter((t) => t.status === "Completed");
+            if (completedTrips.length > 0) {
+                stats.avgSuccessRate = Math.round(
+                    (completedTrips.length / tripsData.length) * 100
+                );
+            }
+        }
+
         setStats(stats);
     };
 
-    const handleCancelTrip = async (tripId) => {
-        if (
-            !window.confirm(
-                "Are you sure you want to cancel this trip? Orders will be returned to packed status."
-            )
-        ) {
-            return;
-        }
-
-        try {
-            const result = await tripService.cancelTrip(tripId, "Cancelled by distributor admin");
-            if (result.success) {
-                toast.success("Trip cancelled successfully");
-                fetchTrips();
-            } else {
-                toast.error(result.message || "Failed to cancel trip");
-            }
-        } catch (error) {
-            console.error("Error cancelling trip:", error);
-            toast.error("Failed to cancel trip");
-        }
-    };
-
-    const handleGenerateManifest = async (tripId) => {
+    const handleDownloadManifest = async (tripId) => {
         try {
             const pdfBlob = await tripService.generateTripManifestPdf(tripId);
 
-            // Create download link
             const url = window.URL.createObjectURL(new Blob([pdfBlob]));
             const link = document.createElement("a");
             link.href = url;
@@ -165,21 +138,17 @@ const DistributorTrips = () => {
 
             toast.success("Manifest downloaded successfully");
         } catch (error) {
-            console.error("Error generating manifest:", error);
-            toast.error("Failed to generate manifest");
+            console.error("Error downloading manifest:", error);
+            toast.error("Failed to download manifest");
         }
     };
 
     const getStatusBadge = (status) => {
         const statusMap = {
-            Created: { variant: "default", label: "Created" },
-            Assigned: { variant: "info", label: "Assigned" },
-            Started: { variant: "info", label: "Started" },
-            InProgress: { variant: "info", label: "In Progress" },
             Completed: { variant: "success", label: "Completed" },
             Cancelled: { variant: "danger", label: "Cancelled" },
         };
-        const config = statusMap[status] || statusMap.Created;
+        const config = statusMap[status] || statusMap.Completed;
         return <Badge variant={config.variant}>{config.label}</Badge>;
     };
 
@@ -190,12 +159,20 @@ const DistributorTrips = () => {
         }).format(amount);
     };
 
-    const formatDateTime = (date) => {
-        if (!date) return "Not set";
-        return new Date(date).toLocaleString("en-PH", {
+    const formatDate = (date) => {
+        if (!date) return "N/A";
+        return new Date(date).toLocaleDateString("en-PH", {
             month: "short",
             day: "numeric",
             year: "numeric",
+        });
+    };
+
+    const formatDateTime = (date) => {
+        if (!date) return "N/A";
+        return new Date(date).toLocaleString("en-PH", {
+            month: "short",
+            day: "numeric",
             hour: "2-digit",
             minute: "2-digit",
         });
@@ -206,9 +183,10 @@ const DistributorTrips = () => {
         if (!searchTerm) return true;
         const search = searchTerm.toLowerCase();
         return (
+            trip.id.toString().includes(search) ||
             trip.dispatcherName?.toLowerCase().includes(search) ||
             trip.vehicle?.toLowerCase().includes(search) ||
-            trip.id.toString().includes(search)
+            trip.warehouseName?.toLowerCase().includes(search)
         );
     });
 
@@ -219,20 +197,15 @@ const DistributorTrips = () => {
 
     const statusOptions = [
         { value: "All", label: "All Status" },
-        { value: "Created", label: "Created" },
-        { value: "Assigned", label: "Assigned" },
-        { value: "Started", label: "Started" },
-        { value: "InProgress", label: "In Progress" },
         { value: "Completed", label: "Completed" },
         { value: "Cancelled", label: "Cancelled" },
     ];
 
-    const warehouseOptions = [
-        { value: "All", label: "All Warehouses" },
-        ...warehouses.map((w) => ({
-            value: w.id.toString(),
-            label: w.name,
-        })),
+    const dateRangeOptions = [
+        { value: "All", label: "All Time" },
+        { value: "Today", label: "Today" },
+        { value: "Week", label: "Last 7 Days" },
+        { value: "Month", label: "Last 30 Days" },
     ];
 
     const pageSizeOptions = [
@@ -248,19 +221,15 @@ const DistributorTrips = () => {
                 <div className="flex justify-between items-center">
                     <div>
                         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                            Trip Management
+                            Trip History
                         </h1>
                         <p className="text-gray-600 dark:text-gray-400 mt-1">
-                            Manage delivery trips and routes
+                            View completed and cancelled trips
                         </p>
                     </div>
-                    <Button
-                        size="sm"
-                        onClick={() => setShowCreateModal(true)}
-                        className="flex items-center gap-2"
-                    >
-                        <Plus className="h-4 w-4" />
-                        Create
+                    <Button className="flex items-center gap-2">
+                        <Download className="h-4 w-4" />
+                        Export Report
                     </Button>
                 </div>
 
@@ -271,13 +240,13 @@ const DistributorTrips = () => {
                             <div className="flex items-center justify-between">
                                 <div>
                                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                                        Total Trips
+                                        Completed Trips
                                     </p>
                                     <p className="text-2xl font-bold text-gray-900 dark:text-white">
                                         {stats.totalTrips}
                                     </p>
                                 </div>
-                                <Truck className="h-8 w-8 text-blue-600" />
+                                <CheckCircle className="h-8 w-8 text-green-600" />
                             </div>
                         </CardContent>
                     </Card>
@@ -287,13 +256,13 @@ const DistributorTrips = () => {
                             <div className="flex items-center justify-between">
                                 <div>
                                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                                        In Progress
+                                        Total Deliveries
                                     </p>
                                     <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                                        {stats.inProgress}
+                                        {stats.totalStops}
                                     </p>
                                 </div>
-                                <Navigation className="h-8 w-8 text-orange-600" />
+                                <Package className="h-8 w-8 text-blue-600" />
                             </div>
                         </CardContent>
                     </Card>
@@ -303,29 +272,29 @@ const DistributorTrips = () => {
                             <div className="flex items-center justify-between">
                                 <div>
                                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                                        Completed
-                                    </p>
-                                    <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                                        {stats.completed}
-                                    </p>
-                                </div>
-                                <Package className="h-8 w-8 text-green-600" />
-                            </div>
-                        </CardContent>
-                    </Card>
-
-                    <Card>
-                        <CardContent className="pt-6">
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                                        Total Value (Today)
+                                        Total Value
                                     </p>
                                     <p className="text-2xl font-bold text-gray-900 dark:text-white">
                                         {formatCurrency(stats.totalValue)}
                                     </p>
                                 </div>
                                 <DollarSign className="h-8 w-8 text-purple-600" />
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    <Card>
+                        <CardContent className="pt-6">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                                        Success Rate
+                                    </p>
+                                    <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                                        {stats.avgSuccessRate}%
+                                    </p>
+                                </div>
+                                <FileText className="h-8 w-8 text-orange-600" />
                             </div>
                         </CardContent>
                     </Card>
@@ -339,7 +308,7 @@ const DistributorTrips = () => {
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                                 <input
                                     type="text"
-                                    placeholder="Search by dispatcher, vehicle, or trip ID..."
+                                    placeholder="Search by trip ID, dispatcher, vehicle, or warehouse..."
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
                                     className="w-full pl-9 pr-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
@@ -354,23 +323,23 @@ const DistributorTrips = () => {
                                         setCurrentPage(1);
                                     }}
                                     options={statusOptions}
-                                    className="w-40"
+                                    className="w-36"
                                 />
                                 <Select
-                                    value={filterWarehouse}
+                                    value={filterDateRange}
                                     onChange={(e) => {
-                                        setFilterWarehouse(e.target.value);
+                                        setFilterDateRange(e.target.value);
                                         setCurrentPage(1);
                                     }}
-                                    options={warehouseOptions}
-                                    className="w-48"
+                                    options={dateRangeOptions}
+                                    className="w-40"
                                 />
                             </div>
                         </div>
                     </CardContent>
                 </Card>
 
-                {/* Trips Table */}
+                {/* Trips History Table */}
                 <Card>
                     <CardContent className="p-0">
                         {loading ? (
@@ -379,25 +348,17 @@ const DistributorTrips = () => {
                             </div>
                         ) : filteredTrips.length === 0 ? (
                             <div className="text-center py-12">
-                                <Truck className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                                <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                                 <h3 className="text-lg font-medium text-gray-900 dark:text-white">
-                                    No trips found
+                                    No trip history found
                                 </h3>
                                 <p className="text-gray-500 dark:text-gray-400 mt-2">
                                     {searchTerm ||
                                         filterStatus !== "All" ||
-                                        filterWarehouse !== "All"
+                                        filterDateRange !== "All"
                                         ? "Try adjusting your search or filters"
-                                        : "Get started by creating your first trip"}
+                                        : "Completed trips will appear here"}
                                 </p>
-                                <Button
-                                    size="sm"
-                                    onClick={() => setShowCreateModal(true)}
-                                    className="mt-4"
-                                >
-                                    <Plus className="h-4 w-4 mr-2" />
-                                    Create
-                                </Button>
                             </div>
                         ) : (
                             <>
@@ -412,13 +373,13 @@ const DistributorTrips = () => {
                                                     Dispatcher
                                                 </th>
                                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 dark:text-gray-300 uppercase">
-                                                    Departure
+                                                    Date
                                                 </th>
                                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 dark:text-gray-300 uppercase">
                                                     Orders
                                                 </th>
                                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 dark:text-gray-300 uppercase">
-                                                    Total Value
+                                                    Value
                                                 </th>
                                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 dark:text-gray-300 uppercase">
                                                     Status
@@ -436,8 +397,8 @@ const DistributorTrips = () => {
                                                 >
                                                     <td className="px-6 py-4 whitespace-nowrap">
                                                         <div className="flex items-center gap-3">
-                                                            <div className="h-10 w-10 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center flex-shrink-0">
-                                                                <Truck className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                                                            <div className="h-10 w-10 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
+                                                                <FileText className="h-5 w-5 text-gray-600 dark:text-gray-400" />
                                                             </div>
                                                             <div>
                                                                 <p className="font-medium text-gray-900 dark:text-white">
@@ -449,7 +410,7 @@ const DistributorTrips = () => {
                                                                 </div>
                                                                 {trip.vehicle && (
                                                                     <div className="text-xs text-gray-500 dark:text-gray-400">
-                                                                        Vehicle: {trip.vehicle}
+                                                                        {trip.vehicle}
                                                                     </div>
                                                                 )}
                                                             </div>
@@ -459,23 +420,26 @@ const DistributorTrips = () => {
                                                         <div className="flex items-center gap-2">
                                                             <User className="h-4 w-4 text-gray-400" />
                                                             <span className="text-sm text-gray-900 dark:text-white">
-                                                                {trip.dispatcherName || "Not assigned"}
+                                                                {trip.dispatcherName || "N/A"}
                                                             </span>
                                                         </div>
                                                     </td>
                                                     <td className="px-6 py-4 whitespace-nowrap">
-                                                        <div className="flex items-center gap-2">
-                                                            <Calendar className="h-4 w-4 text-gray-400" />
-                                                            <span className="text-sm text-gray-600 dark:text-gray-400">
+                                                        <div className="text-sm">
+                                                            <div className="flex items-center gap-1 text-gray-900 dark:text-white">
+                                                                <Calendar className="h-4 w-4 text-gray-400" />
+                                                                {formatDate(trip.departureAt)}
+                                                            </div>
+                                                            <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                                                                 {formatDateTime(trip.departureAt)}
-                                                            </span>
+                                                            </div>
                                                         </div>
                                                     </td>
                                                     <td className="px-6 py-4 whitespace-nowrap">
                                                         <div className="flex items-center gap-2">
                                                             <Package className="h-4 w-4 text-gray-400" />
                                                             <span className="font-medium text-gray-900 dark:text-white">
-                                                                {trip.orderCount}
+                                                                {trip.orderCount || 0}
                                                             </span>
                                                         </div>
                                                     </td>
@@ -489,71 +453,22 @@ const DistributorTrips = () => {
                                                     </td>
                                                     <td className="px-6 py-4 whitespace-nowrap">
                                                         <div className="flex items-center justify-end gap-2">
-                                                            {(trip.status === "Created" ||
-                                                                trip.status === "Assigned" ||
-                                                                trip.status === "Started" ||
-                                                                trip.status === "InProgress") && (
-                                                                    <button
-                                                                        onClick={() => {
-                                                                            setSelectedTrip(trip);
-                                                                            setShowStatusModal(true);
-                                                                        }}
-                                                                        className="p-2 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors"
-                                                                        title="Update status"
-                                                                    >
-                                                                        <Play className="h-4 w-4" />
-                                                                    </button>
-                                                                )}
                                                             <button
-                                                                onClick={() => {
-                                                                    setSelectedTripId(trip.id);
-                                                                    setShowDetailsModal(true);
-                                                                }}
+                                                                onClick={() =>
+                                                                    navigate(`/distributor/trips/${trip.id}`)
+                                                                }
                                                                 className="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
                                                                 title="View details"
                                                             >
                                                                 <Eye className="h-4 w-4" />
                                                             </button>
                                                             <button
-                                                                onClick={() => handleGenerateManifest(trip.id)}
-                                                                className="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+                                                                onClick={() => handleDownloadManifest(trip.id)}
+                                                                className="p-2 text-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors"
                                                                 title="Download manifest"
                                                             >
-                                                                <FileText className="h-4 w-4" />
+                                                                <Download className="h-4 w-4" />
                                                             </button>
-                                                            {(trip.status === "Started" ||
-                                                                trip.status === "InProgress") && (
-                                                                    <button
-                                                                        onClick={() =>
-                                                                            navigate(`/distributor/trips/${trip.id}/track`)
-                                                                        }
-                                                                        className="p-2 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors"
-                                                                        title="Track trip"
-                                                                    >
-                                                                        <Navigation className="h-4 w-4" />
-                                                                    </button>
-                                                                )}
-                                                            {trip.status === "Created" && (
-                                                                <>
-                                                                    <button
-                                                                        onClick={() => {
-                                                                            setEditTripId(trip.id);
-                                                                            setShowEditModal(true);
-                                                                        }}
-                                                                        className="p-2 text-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                                                                        title="Edit trip"
-                                                                    >
-                                                                        <Edit className="h-4 w-4" />
-                                                                    </button>
-                                                                    <button
-                                                                        onClick={() => handleCancelTrip(trip.id)}
-                                                                        className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                                                                        title="Cancel trip"
-                                                                    >
-                                                                        <Trash2 className="h-4 w-4" />
-                                                                    </button>
-                                                                </>
-                                                            )}
                                                         </div>
                                                     </td>
                                                 </tr>
@@ -610,8 +525,8 @@ const DistributorTrips = () => {
                                                             key={pageNum}
                                                             onClick={() => setCurrentPage(pageNum)}
                                                             className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${currentPage === pageNum
-                                                                ? "bg-blue-600 text-white"
-                                                                : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                                                                    ? "bg-blue-600 text-white"
+                                                                    : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                                                                 }`}
                                                         >
                                                             {pageNum}
@@ -640,50 +555,8 @@ const DistributorTrips = () => {
                     </CardContent>
                 </Card>
             </div>
-            <CreateTripModal
-                isOpen={showCreateModal}
-                onClose={() => setShowCreateModal(false)}
-                onSuccess={() => {
-                    fetchTrips();
-                    setShowCreateModal(false);
-                }}
-            />
-
-            <UpdateTripStatusModal
-                isOpen={showStatusModal}
-                onClose={() => {
-                    setShowStatusModal(false);
-                    setSelectedTrip(null);
-                }}
-                trip={selectedTrip}
-                onSuccess={() => {
-                    fetchTrips(); // Refresh the trips list
-                }}
-            />
-
-            <EditTripModal
-                isOpen={showEditModal}
-                onClose={() => {
-                    setShowEditModal(false);
-                    setEditTripId(null);
-                }}
-                tripId={editTripId}
-                onSuccess={() => {
-                    fetchTrips();
-                    setShowEditModal(false);
-                }}
-            />
-
-            <TripDetailsModal
-                isOpen={showDetailsModal}
-                onClose={() => {
-                    setShowDetailsModal(false);
-                    setSelectedTripId(null);
-                }}
-                tripId={selectedTripId}
-            />
         </DashboardLayout>
     );
 };
 
-export default DistributorTrips;
+export default DistributorTripsHistory;

@@ -71,16 +71,15 @@ import AgentProfile from "../pages/agent/AgentProfile";
 // DistributorAdmin Pages
 import DistributorDashboard from "../pages/distributor/DistributorDashboard";
 import DistributorWarehouses from "../pages/distributor/DistributorWarehouses";
+import DistributorProducts from "../pages/distributor/DistributorProducts";
+import DistributorProductCategories from "../pages/distributor/DistributorProductCategories";
 import DistributorInventory from "../pages/distributor/DistributorInventory";
+import DistributorStores from "../pages/distributor/DistributorStores";
 import DistributorTrips from "../pages/distributor/DistributorTrips";
-import DistributorOrders from "../pages/distributor/DistributorOrders";
-import DistributorReports from "../pages/distributor/DistributorReports";
-
-// Accountant Pages
-import AccountantDashboard from "../pages/accountant/AccountantDashboard";
-import AccountantPayments from "../pages/accountant/AccountantPayments";
-import AccountantInvoices from "../pages/accountant/AccountantInvoices";
-import AccountantReports from "../pages/accountant/AccountantReports";
+import DistributorTripsActive from "../pages/distributor/DistributorTripsActive";
+import DistributorTripsHistory from "../pages/distributor/DistributorTripsHistory";
+import DistributorTripDetails from "../pages/distributor/DistributorTripDetails";
+import DistributorTripTracking from "../pages/distributor/DistributorTripTracking";
 
 // Dispatcher Pages (Actual dispatcher role)
 import DispatcherDashboard from "../pages/dispatcher/DispatcherDashboard";
@@ -208,14 +207,46 @@ const AppRoutes = () => {
         />
       </Route>
 
-      {/* DistributorAdmin Routes */}
       <Route element={<ProtectedRoute allowedRoles={["DistributorAdmin"]} />}>
-        <Route path="/distributor/dashboard" element={<DistributorDashboard />} />
+        {/* Core Operations - Using Admin pages */}
+        <Route path="/distributor/dashboard" element={<AdminDashboard />} />
         <Route path="/distributor/warehouses" element={<DistributorWarehouses />} />
+
+        {/* Products Management */}
+        <Route path="/distributor/products" element={<DistributorProducts />} />
+        <Route path="/distributor/products/categories" element={<DistributorProductCategories />} />
         <Route path="/distributor/inventory" element={<DistributorInventory />} />
+
+        {/* Store Management */}
+        <Route path="/distributor/stores" element={<DistributorStores />} />
+
         <Route path="/distributor/trips" element={<DistributorTrips />} />
-        <Route path="/distributor/orders" element={<DistributorOrders />} />
-        <Route path="/distributor/reports" element={<DistributorReports />} />
+        <Route path="/distributor/trips/active" element={<DistributorTripsActive />} />
+        <Route path="/distributor/trips/history" element={<DistributorTripsHistory />} />
+        <Route path="/distributor/trips/:id" element={<DistributorTripDetails />} />
+        <Route path="/distributor/trips/:id/track" element={<DistributorTripTracking />} />
+        <Route path="/distributor/orders" element={<AdminOrders />} />
+        <Route path="/distributor/orders/pending" element={<AdminOrdersPending />} />
+        <Route path="/distributor/orders/history" element={<AdminOrdersHistory />} />
+        <Route path="/distributor/orders/create" element={<AdminOrderCreate />} />
+
+        {/* Finance Routes - Reusing Admin pages */}
+        <Route path="/distributor/finance" element={<AdminFinance />} />
+        <Route path="/distributor/finance/payments" element={<AdminPayments />} />
+        <Route path="/distributor/finance/invoices" element={<AdminInvoices />} />
+        <Route path="/distributor/finance/remittance" element={<AdminRemittance />} />
+        <Route path="/distributor/finance/transactions" element={<AdminTransactions />} />
+
+        {/* Reports Routes - Reusing Admin pages */}
+        <Route path="/distributor/reports" element={<AdminReports />} />
+        <Route path="/distributor/reports/sales" element={<AdminSalesReports />} />
+        <Route path="/distributor/reports/performance" element={<AdminPerformance />} />
+        <Route path="/distributor/reports/custom" element={<AdminCustomReports />} />
+
+        {/* Settings Routes - Reusing Admin pages */}
+        <Route path="/distributor/settings/general" element={<AdminSettingsGeneral />} />
+        <Route path="/distributor/settings/notifications" element={<AdminSettingsNotifications />} />
+        <Route path="/distributor/settings/security" element={<AdminSettingsSecurity />} />
       </Route>
 
       {/* Agent Routes */}
@@ -244,13 +275,7 @@ const AppRoutes = () => {
         />
       </Route>
 
-      {/* Accountant Routes */}
-      <Route element={<ProtectedRoute allowedRoles={["Accountant"]} />}>
-        <Route path="/accountant/dashboard" element={<AccountantDashboard />} />
-        <Route path="/accountant/payments" element={<AccountantPayments />} />
-        <Route path="/accountant/invoices" element={<AccountantInvoices />} />
-        <Route path="/accountant/reports" element={<AccountantReports />} />
-      </Route>
+
 
       {/* Fallback Routes */}
       <Route path="/" element={<Navigate to="/login" />} />
