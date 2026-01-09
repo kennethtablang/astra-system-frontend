@@ -15,7 +15,7 @@ import DashboardLayout from "../../components/layouts/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/Card";
 import { Badge } from "../../components/ui/Badge";
 import { LoadingSpinner } from "../../components/ui/Loading";
-import { warehouseService, distributorService } from "../../services/warehouseService";
+import { warehouseService } from "../../services/warehouseService";
 import inventoryService from "../../services/inventoryService";
 import reportService from "../../services/reportService";
 import { toast } from "react-hot-toast";
@@ -34,7 +34,7 @@ const DistributorDashboard = () => {
     });
     const [warehouses, setWarehouses] = useState([]);
     const [lowStockAlerts, setLowStockAlerts] = useState([]);
-    const [recentActivity, setRecentActivity] = useState([]);
+    // const [recentActivity, setRecentActivity] = useState([]);
 
     useEffect(() => {
         fetchDashboardData();
