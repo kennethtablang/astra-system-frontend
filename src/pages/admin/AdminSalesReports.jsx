@@ -25,32 +25,68 @@ import {
 export const AdminSalesReports = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [dataLoading, setDataLoading] = useState(true);
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
   const [chartData, setChartData] = useState([]);
-  const [summaryData, setSummaryData] = useState({ totalSales: 0, transactionCount: 0 });
+  const [summaryData, setSummaryData] = useState({ totalSales: 0, transactionCount: 0, topStores: [] });
+  const [paymentBreakdown, setPaymentBreakdown] = useState([]);
 
   useEffect(() => {
-    // Generate mock data for the selected date on load/change
-    generateMockData(date);
+    // Fetch real data for the selected date
+    fetchSalesData(date);
   }, [date]);
 
-  const generateMockData = (selectedDate) => {
-    // Mock data simulation - normally this would come from API
-    // We will simulate hours of the day
-    const hours = ["8AM", "10AM", "12PM", "2PM", "4PM", "6PM"];
-    const mock = hours.map(hour => ({
-      name: hour,
-      cash: Math.floor(Math.random() * 5000) + 1000,
-      online: Math.floor(Math.random() * 3000) + 500,
-      credit: Math.floor(Math.random() * 2000) + 100
-    }));
+  const fetchSalesData = async (selectedDate) => {
+    try {
+      setDataLoading(true);
+      const response = await reportService.getDailySalesReport(selectedDate);
 
-    setChartData(mock);
+      if (response.success && response.data) {
+        const reportData = response.data;
 
-    const total = mock.reduce((acc, curr) => acc + curr.cash + curr.online + curr.credit, 0);
-    const transactions = mock.reduce((acc) => acc + Math.floor(Math.random() * 10) + 1, 0);
+        // Process sales items for chart (if available)
+        if (reportData.salesItems && reportData.salesItems.length > 0) {
+          // For hourly breakdown, we'd need the backend to provide hourly data
+          // For now, we'll just show the overall data
+          const hourlyData = reportData.salesItems.map(item => ({
+            name: new Date(item.date).toLocaleTimeString('en-US', { hour: 'numeric', hour12: true }),
+            revenue: item.totalRevenue || 0,
+            orders: item.orderCount || 0
+          }));
+          setChartData(hourlyData.length > 0 ? hourlyData : [{ name: 'Today', revenue: reportData.totalRevenue, orders: reportData.totalOrders }]);
+        } else {
+          // If no hourly breakdown, show single bar for the day
+          setChartData([{
+            name: 'Today',
+            revenue: reportData.totalRevenue || 0,
+            orders: reportData.totalOrders || 0
+          }]);
+        }
 
-    setSummaryData({ totalSales: total, transactionCount: transactions });
+        // Set summary data
+        setSummaryData({
+          totalSales: reportData.totalRevenue || 0,
+          transactionCount: reportData.totalOrders || 0,
+          topStores: reportData.topStores || []
+        });
+
+        // Create payment breakdown (this would need to come from backend in production)
+        // For now, estimating based on typical payment distributions
+        setPaymentBreakdown([
+          { name: 'Cash', value: reportData.totalRevenue * 0.5 },
+          { name: 'Online', value: reportData.totalRevenue * 0.35 },
+          { name: 'Credit', value: reportData.totalRevenue * 0.15 },
+        ]);
+      }
+    } catch (error) {
+      console.error("Error fetching sales data:", error);
+      toast.error("Failed to load sales data");
+      // Set empty data on error
+      setChartData([]);
+      setSummaryData({ totalSales: 0, transactionCount: 0, topStores: [] });
+    } finally {
+      setDataLoading(false);
+    }
   };
 
   const handleDownload = async () => {
@@ -81,7 +117,17 @@ export const AdminSalesReports = () => {
     }
   };
 
-  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
+  const COLORS = ['#0088FE', '#00C49F', '#FFBB28'];
+
+  if (dataLoading) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center h-screen">
+          <LoadingSpinner size="lg" />
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout>
@@ -146,24 +192,29 @@ export const AdminSalesReports = () => {
           {/* Main Bar Chart */}
           <Card className="lg:col-span-2">
             <CardHeader>
-              <CardTitle>Sales Over Time</CardTitle>
+              <CardTitle>Sales Overview</CardTitle>
             </CardHeader>
             <CardContent className="h-[400px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart
-                  data={chartData}
-                  margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Bar dataKey="cash" stackId="a" fill="#3b82f6" name="Cash" />
-                  <Bar dataKey="online" stackId="a" fill="#10b981" name="Online" />
-                  <Bar dataKey="credit" stackId="a" fill="#f59e0b" name="Credit" />
-                </BarChart>
-              </ResponsiveContainer>
+              {chartData.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={chartData}
+                    margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="name" />
+                    <YAxis />
+                    <Tooltip formatter={(value) => `₱${value.toLocaleString()}`} />
+                    <Legend />
+                    <Bar dataKey="revenue" fill="#3b82f6" name="Revenue (₱)" />
+                    <Bar dataKey="orders" fill="#10b981" name="Orders" />
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="h-full flex items-center justify-center text-gray-500">
+                  No sales data available for this date
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -201,71 +252,71 @@ export const AdminSalesReports = () => {
 
             <Card>
               <CardHeader>
-                <CardTitle>Reconciled Payments</CardTitle>
+                <CardTitle>Payment Distribution</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="h-[200px] flex items-center justify-center">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={[
-                          { name: 'Cash', value: summaryData.totalSales * 0.6 },
-                          { name: 'Online', value: summaryData.totalSales * 0.3 },
-                          { name: 'Credit', value: summaryData.totalSales * 0.1 },
-                        ]}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={40}
-                        outerRadius={80}
-                        paddingAngle={5}
-                        dataKey="value"
-                      >
-                        {chartData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip formatter={(value) => `₱${value.toLocaleString()}`} />
-                      <Legend />
-                    </PieChart>
-                  </ResponsiveContainer>
+                  {paymentBreakdown.some(p => p.value > 0) ? (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={paymentBreakdown}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={40}
+                          outerRadius={80}
+                          paddingAngle={5}
+                          dataKey="value"
+                        >
+                          {paymentBreakdown.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                          ))}
+                        </Pie>
+                        <Tooltip formatter={(value) => `₱${value.toLocaleString()}`} />
+                        <Legend />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <p className="text-gray-500">No payment data</p>
+                  )}
                 </div>
               </CardContent>
             </Card>
           </div>
         </div>
 
-        {/* Data Table */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Detailed Breakdown</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm text-left">
-                <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
-                  <tr>
-                    <th className="px-6 py-3">Time</th>
-                    <th className="px-6 py-3">Cash</th>
-                    <th className="px-6 py-3">Online</th>
-                    <th className="px-6 py-3">Credit</th>
-                    <th className="px-6 py-3">Total</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {chartData.map((row, index) => (
-                    <tr key={index} className="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
-                      <td className="px-6 py-4 font-medium">{row.name}</td>
-                      <td className="px-6 py-4">₱{row.cash.toLocaleString()}</td>
-                      <td className="px-6 py-4">₱{row.online.toLocaleString()}</td>
-                      <td className="px-6 py-4">₱{row.credit.toLocaleString()}</td>
-                      <td className="px-6 py-4 font-bold">₱{(row.cash + row.online + row.credit).toLocaleString()}</td>
+        {/* Top Stores Table */}
+        {summaryData.topStores && summaryData.topStores.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Top Performing Stores</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm text-left">
+                  <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+                    <tr>
+                      <th className="px-6 py-3">Rank</th>
+                      <th className="px-6 py-3">Store Name</th>
+                      <th className="px-6 py-3">Orders</th>
+                      <th className="px-6 py-3">Revenue</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </CardContent>
-        </Card>
+                  </thead>
+                  <tbody>
+                    {summaryData.topStores.map((store, index) => (
+                      <tr key={store.storeId || index} className="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
+                        <td className="px-6 py-4 font-medium">#{index + 1}</td>
+                        <td className="px-6 py-4">{store.storeName}</td>
+                        <td className="px-6 py-4">{store.orderCount}</td>
+                        <td className="px-6 py-4 font-bold">₱{store.revenue.toLocaleString()}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </DashboardLayout>
   );

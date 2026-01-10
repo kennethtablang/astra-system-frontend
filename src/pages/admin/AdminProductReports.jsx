@@ -5,7 +5,7 @@ import DashboardLayout from "../../components/layouts/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/Card";
 import { Button } from "../../components/ui/Button";
 import { LoadingSpinner } from "../../components/ui/Loading";
-import { ArrowLeft, Download, Package, TrendingUp } from "lucide-react";
+import { ArrowLeft, Download, Package, TrendingUp, Calendar } from "lucide-react";
 import reportService from "../../services/reportService";
 import { toast } from "react-hot-toast";
 import {
@@ -21,32 +21,43 @@ import {
 
 export const AdminProductReports = () => {
     const navigate = useNavigate();
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(true);
     const [chartData, setChartData] = useState([]);
+    const [dateRange, setDateRange] = useState({
+        from: new Date(new Date().setDate(new Date().getDate() - 30)).toISOString().split("T")[0],
+        to: new Date().toISOString().split("T")[0],
+    });
 
     useEffect(() => {
-        generateMockData();
-    }, []);
+        fetchProductData();
+    }, [dateRange]);
 
-    const generateMockData = () => {
-        // Generate mock fast moving products data
-        const categories = ["Beverages", "Snacks", "Canned Goods", "Household", "Personal Care"];
-        const products = [
-            { name: "Coke 1.5L", category: "Beverages", sales: 1200 },
-            { name: "SkyFlakes", category: "Snacks", sales: 950 },
-            { name: "Century Tuna", category: "Canned Goods", sales: 850 },
-            { name: "Sprite 1.5L", category: "Beverages", sales: 800 },
-            { name: "Head & Shoulders", category: "Personal Care", sales: 720 },
-            { name: "Piattos", category: "Snacks", sales: 650 },
-            { name: "Surf Powder", category: "Household", sales: 600 },
-            { name: "Nature Spring", category: "Beverages", sales: 550 },
-        ];
-        setChartData(products);
+    const fetchProductData = async () => {
+        try {
+            setLoading(true);
+            const response = await reportService.getTopSellingProducts(10, dateRange.from, dateRange.to);
+
+            if (response.success && response.data) {
+                // Transform data for the chart
+                const products = response.data.map(product => ({
+                    name: product.name,
+                    category: product.categoryName,
+                    sales: product.unitsSold,
+                    revenue: product.totalRevenue
+                }));
+                setChartData(products);
+            }
+        } catch (error) {
+            console.error("Error fetching product data:", error);
+            toast.error("Failed to load product data");
+            setChartData([]);
+        } finally {
+            setLoading(false);
+        }
     };
 
     const handleDownload = async () => {
-        toast.success("Feature coming soon: Download Product Report");
-        // Implement report generation logic here later or use existing stock report
+        toast.info("Export feature: Please use 'View Reports' for detailed exports");
     };
 
     return (
@@ -66,7 +77,7 @@ export const AdminProductReports = () => {
                             Product Performance Report
                         </h1>
                         <p className="text-gray-600 dark:text-gray-400 mt-1">
-                            Top selling products and category performance
+                            Top-selling products and category performance
                         </p>
                     </div>
                 </div>
@@ -75,13 +86,32 @@ export const AdminProductReports = () => {
                 <Card>
                     <CardContent className="p-6">
                         <div className="flex flex-col md:flex-row md:items-end gap-4 justify-between">
-                            <div className="flex items-center gap-2 text-gray-600">
-                                <TrendingUp className="h-5 w-5" />
-                                <span className="text-sm font-medium">Top Moving Items (Last 30 Days)</span>
+                            <div className="flex gap-4">
+                                <div className="space-y-2">
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                        From Date
+                                    </label>
+                                    <input
+                                        type="date"
+                                        value={dateRange.from}
+                                        onChange={(e) => setDateRange(prev => ({ ...prev, from: e.target.value }))}
+                                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                        To Date
+                                    </label>
+                                    <input
+                                        type="date"
+                                        value={dateRange.to}
+                                        onChange={(e) => setDateRange(prev => ({ ...prev, to: e.target.value }))}
+                                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                                    />
+                                </div>
                             </div>
                             <Button
                                 onClick={handleDownload}
-                                disabled={loading}
                                 className="flex items-center gap-2"
                             >
                                 <Download className="h-4 w-4" />
@@ -95,25 +125,76 @@ export const AdminProductReports = () => {
                 <div className="grid grid-cols-1 gap-6">
                     <Card>
                         <CardHeader>
-                            <CardTitle>Fast Moving Products (By Volume)</CardTitle>
+                            <CardTitle>Top Selling Products (By Volume)</CardTitle>
                         </CardHeader>
                         <CardContent className="h-[500px]">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <BarChart
-                                    layout="vertical"
-                                    data={chartData}
-                                    margin={{ top: 20, right: 30, left: 40, bottom: 5 }}
-                                >
-                                    <CartesianGrid strokeDasharray="3 3" />
-                                    <XAxis type="number" />
-                                    <YAxis dataKey="name" type="category" width={100} />
-                                    <Tooltip formatter={(value) => `${value} units`} />
-                                    <Legend />
-                                    <Bar dataKey="sales" name="Units Sold" fill="#8884d8" radius={[0, 4, 4, 0]} />
-                                </BarChart>
-                            </ResponsiveContainer>
+                            {loading ? (
+                                <div className="h-full flex items-center justify-center">
+                                    <LoadingSpinner size="lg" />
+                                </div>
+                            ) : chartData.length > 0 ? (
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <BarChart
+                                        layout="vertical"
+                                        data={chartData}
+                                        margin={{ top: 20, right: 30, left: 120, bottom: 5 }}
+                                    >
+                                        <CartesianGrid strokeDasharray="3 3" />
+                                        <XAxis type="number" />
+                                        <YAxis dataKey="name" type="category" width={110} />
+                                        <Tooltip
+                                            formatter={(value, name) => {
+                                                if (name === 'Units Sold') return `${value} units`;
+                                                return `₱${value.toLocaleString()}`;
+                                            }}
+                                        />
+                                        <Legend />
+                                        <Bar dataKey="sales" name="Units Sold" fill="#8884d8" radius={[0, 4, 4, 0]} />
+                                        <Bar dataKey="revenue" name="Revenue (₱)" fill="#82ca9d" radius={[0, 4, 4, 0]} />
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            ) : (
+                                <div className="h-full flex items-center justify-center text-gray-500">
+                                    No product data available for the selected period
+                                </div>
+                            )}
                         </CardContent>
                     </Card>
+
+                    {/* Product Details Table */}
+                    {chartData.length > 0 && (
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Product Details</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-sm text-left">
+                                        <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+                                            <tr>
+                                                <th className="px-6 py-3">Rank</th>
+                                                <th className="px-6 py-3">Product Name</th>
+                                                <th className="px-6 py-3">Category</th>
+                                                <th className="px-6 py-3">Units Sold</th>
+                                                <th className="px-6 py-3">Revenue</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {chartData.map((product, index) => (
+                                                <tr key={index} className="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
+                                                    <td className="px-6 py-4 font-medium">#{index + 1}</td>
+                                                    <td className="px-6 py-4 font-medium">{product.name}</td>
+                                                    <td className="px-6 py-4">{product.category}</td>
+                                                    <td className="px-6 py-4">{product.sales.toLocaleString()} units</td>
+                                                    <td className="px-6 py-4 font-bold text-green-600">₱{product.revenue.toLocaleString()}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    )}
                 </div>
             </div>
         </DashboardLayout>

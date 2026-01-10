@@ -352,11 +352,11 @@ const DashboardLayout = ({ children }) => {
             href: "/distributor/reports/performance",
             icon: Activity,
           },
-          {
-            name: "Custom Reports",
-            href: "/distributor/reports/custom",
-            icon: FileSpreadsheet,
-          },
+          // {
+          //   name: "Custom Reports",
+          //   href: "/distributor/reports/custom",
+          //   icon: FileSpreadsheet,
+          // },
         ],
       },
     ],

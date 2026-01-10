@@ -19,7 +19,6 @@ import { Badge } from "../../components/ui/Badge";
 import { Button } from "../../components/ui/Button";
 import { LoadingSpinner } from "../../components/ui/Loading";
 import deliveryService from "../../services/deliveryService";
-import tripService from "../../services/tripService";
 import { toast } from "react-hot-toast";
 
 const AdminTripTracking = () => {

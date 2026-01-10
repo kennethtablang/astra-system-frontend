@@ -63,6 +63,78 @@ const reportService = {
         } catch (error) {
             throw error.response?.data || error;
         }
+    },
+
+    // NEW: Get daily sales report data
+    async getDailySalesReport(date) {
+        try {
+            const { data } = await api.get('/reports/sales/daily', {
+                params: { date }
+            });
+            return data;
+        } catch (error) {
+            throw error.response?.data || error;
+        }
+    },
+
+    // NEW: Get monthly sales report data
+    async getMonthlySalesReport(year, month) {
+        try {
+            const { data } = await api.get('/reports/sales/monthly', {
+                params: { year, month }
+            });
+            return data;
+        } catch (error) {
+            throw error.response?.data || error;
+        }
+    },
+
+    // NEW: Get quarterly sales report data
+    async getQuarterlySalesReport(year, quarter) {
+        try {
+            const { data } = await api.get('/reports/sales/quarterly', {
+                params: { year, quarter }
+            });
+            return data;
+        } catch (error) {
+            throw error.response?.data || error;
+        }
+    },
+
+    // NEW: Get delivery performance data
+    async getDeliveryPerformanceData(from, to) {
+        try {
+            const { data } = await api.get('/reports/delivery-performance-data', {
+                params: { from, to }
+            });
+            return data;
+        } catch (error) {
+            throw error.response?.data || error;
+        }
+    },
+
+    // NEW: Get fast moving products by category
+    async getFastMovingProducts(from, to, limit = 5) {
+        try {
+            const { data } = await api.get('/reports/fast-moving-products', {
+                params: { from, to, limit }
+            });
+            return data;
+        } catch (error) {
+            throw error.response?.data || error;
+        }
+    },
+
+    // NEW: Get top selling products
+    async getTopSellingProducts(limit = 5, from, to) {
+        try {
+            const { data } = await api.get('/reports/top-products', {
+                params: { limit, from, to }
+            });
+            return data;
+        } catch (error) {
+            throw error.response?.data || error;
+        }
     }
 };
 
