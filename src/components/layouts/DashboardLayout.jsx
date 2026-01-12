@@ -34,6 +34,7 @@ import {
   CreditCard,
   Activity,
   FileSpreadsheet,
+  Database,
 } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
 import { useTheme } from "../../contexts/ThemeContext";
@@ -222,11 +223,22 @@ const DashboardLayout = ({ children }) => {
         ],
       },
       {
+        name: "Master Data",
+        icon: Database,
+        type: "group",
+        key: "master-data",
+        items: [
+          { name: "Locations", href: "/admin/master-data/locations", icon: MapPin },
+          { name: "Categories", href: "/admin/master-data/categories", icon: Tag },
+        ]
+      },
+      {
         name: "Settings",
         icon: Settings,
         type: "group",
         key: "settings",
         items: [
+          { name: "System Settings", href: "/admin/settings", icon: Settings },
           { name: "General", href: "/admin/settings/general", icon: Settings },
           {
             name: "Notifications",
