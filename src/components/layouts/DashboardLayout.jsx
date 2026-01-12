@@ -165,7 +165,6 @@ const DashboardLayout = ({ children }) => {
             href: "/admin/products",
             icon: Package,
           },
-          { name: "Categories", href: "/admin/products/categories", icon: Tag },
           {
             name: "Inventory",
             href: "/admin/products/inventory",
