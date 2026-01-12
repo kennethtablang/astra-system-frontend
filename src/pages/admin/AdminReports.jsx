@@ -27,8 +27,9 @@ export const AdminReports = () => {
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
             Sales Performance
           </h2>
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <SalesReportCard period="daily" />
+            <SalesReportCard period="weekly" />
             <SalesReportCard period="monthly" />
             <SalesReportCard period="quarterly" />
           </div>
