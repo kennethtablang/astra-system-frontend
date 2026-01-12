@@ -104,51 +104,19 @@ export const DeliveryLocationHistoryModal = ({ isOpen, onClose, tripId }) => {
         setTracking(trackingResult.data);
       }
 
-      // In a real implementation, you would fetch location history from an endpoint
-      // For now, we'll simulate it with the current tracking data
-      // TODO: Implement actual location history endpoint
-      const mockHistory = generateMockLocationHistory(trackingResult.data);
-      setLocationHistory(mockHistory);
+      // Fetch location history from backend
+      const historyResult = await deliveryService.getTripLocationHistory(tripId);
+      if (historyResult.success) {
+        setLocationHistory(historyResult.data);
+      } else {
+        setLocationHistory([]);
+      }
     } catch (error) {
       console.error("Error fetching location history:", error);
       toast.error("Failed to load location history");
     } finally {
       setLoading(false);
     }
-  };
-
-  // Generate mock location history based on current tracking
-  const generateMockLocationHistory = (trackingData) => {
-    if (!trackingData || !trackingData.currentLatitude) {
-      return [];
-    }
-
-    const history = [];
-    const now = new Date();
-
-    // Generate hourly location updates for the last 8 hours
-    for (let i = 8; i >= 0; i--) {
-      const timestamp = new Date(now.getTime() - i * 60 * 60 * 1000);
-      const lat = trackingData.currentLatitude + (Math.random() - 0.5) * 0.01;
-      const lng = trackingData.currentLongitude + (Math.random() - 0.5) * 0.01;
-
-      history.push({
-        id: i,
-        latitude: lat,
-        longitude: lng,
-        timestamp: timestamp.toISOString(),
-        speed: Math.random() * 60, // 0-60 km/h
-        accuracy: 5 + Math.random() * 10, // 5-15 meters
-        event:
-          i === 0
-            ? "Current Location"
-            : i % 3 === 0
-            ? "Stop Completed"
-            : "In Transit",
-      });
-    }
-
-    return history.reverse();
   };
 
   const formatDateTime = (date) => {
@@ -333,13 +301,12 @@ export const DeliveryLocationHistoryModal = ({ isOpen, onClose, tripId }) => {
                       {/* Timeline indicator */}
                       <div className="flex flex-col items-center">
                         <div
-                          className={`w-3 h-3 rounded-full ${
-                            isFirst
+                          className={`w-3 h-3 rounded-full ${isFirst
                               ? "bg-green-600"
                               : isLast
-                              ? "bg-blue-600"
-                              : "bg-gray-400"
-                          }`}
+                                ? "bg-blue-600"
+                                : "bg-gray-400"
+                            }`}
                         />
                         {!isLast && (
                           <div className="w-0.5 h-full bg-gray-300 dark:bg-gray-600 mt-1" />
@@ -348,11 +315,10 @@ export const DeliveryLocationHistoryModal = ({ isOpen, onClose, tripId }) => {
 
                       {/* Location details */}
                       <div
-                        className={`flex-1 pb-4 ${
-                          selectedLocation?.id === location.id
+                        className={`flex-1 pb-4 ${selectedLocation?.id === location.id
                             ? "bg-blue-50 dark:bg-blue-900/20"
                             : ""
-                        } p-3 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors`}
+                          } p-3 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors`}
                         onClick={() => setSelectedLocation(location)}
                       >
                         <div className="flex items-start justify-between gap-4">
