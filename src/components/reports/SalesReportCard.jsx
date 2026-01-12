@@ -25,6 +25,8 @@ const SalesReportCard = ({ period = "daily" }) => {
 
             if (period === "daily") {
                 response = await reportService.getDailySalesReport(selectedDate);
+            } else if (period === "weekly") {
+                response = await reportService.getWeeklySalesReport(selectedDate);
             } else if (period === "monthly") {
                 response = await reportService.getMonthlySalesReport(selectedYear, selectedMonth);
             } else if (period === "quarterly") {
@@ -78,7 +80,7 @@ const SalesReportCard = ({ period = "daily" }) => {
                     </div>
 
                     {/* Date Selector */}
-                    {period === "daily" && (
+                    {(period === "daily" || period === "weekly") && (
                         <input
                             type="date"
                             value={selectedDate}
