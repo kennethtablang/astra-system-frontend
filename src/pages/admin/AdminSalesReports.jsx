@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import DashboardLayout from "../../components/layouts/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/Card";
 import { Button } from "../../components/ui/Button";
+import { Select } from "../../components/ui/Select";
 import { LoadingSpinner } from "../../components/ui/Loading";
 import { ArrowLeft, Download, Calendar, Banknote } from "lucide-react";
 import reportService from "../../services/reportService";
@@ -26,38 +27,52 @@ export const AdminSalesReports = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [dataLoading, setDataLoading] = useState(true);
+  const [reportType, setReportType] = useState("Daily"); // 'Daily', 'Weekly'
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
   const [chartData, setChartData] = useState([]);
   const [summaryData, setSummaryData] = useState({ totalSales: 0, transactionCount: 0, topStores: [] });
   const [paymentBreakdown, setPaymentBreakdown] = useState([]);
 
   useEffect(() => {
-    // Fetch real data for the selected date
-    fetchSalesData(date);
-  }, [date]);
+    // Fetch real data for the selected date/type
+    fetchSalesData(date, reportType);
+  }, [date, reportType]);
 
-  const fetchSalesData = async (selectedDate) => {
+  const fetchSalesData = async (selectedDate, type) => {
     try {
       setDataLoading(true);
-      const response = await reportService.getDailySalesReport(selectedDate);
+      let response;
+
+      if (type === "Weekly") {
+        response = await reportService.getWeeklySalesReport(selectedDate);
+      } else {
+        response = await reportService.getDailySalesReport(selectedDate);
+      }
 
       if (response.success && response.data) {
         const reportData = response.data;
 
-        // Process sales items for chart (if available)
+        // Process sales items for chart
         if (reportData.salesItems && reportData.salesItems.length > 0) {
-          // For hourly breakdown, we'd need the backend to provide hourly data
-          // For now, we'll just show the overall data
-          const hourlyData = reportData.salesItems.map(item => ({
-            name: new Date(item.date).toLocaleTimeString('en-US', { hour: 'numeric', hour12: true }),
-            revenue: item.totalRevenue || 0,
-            orders: item.orderCount || 0
-          }));
-          setChartData(hourlyData.length > 0 ? hourlyData : [{ name: 'Today', revenue: reportData.totalRevenue, orders: reportData.totalOrders }]);
+          if (type === "Weekly") {
+            const dailyData = reportData.salesItems.map(item => ({
+              name: new Date(item.date).toLocaleDateString('en-US', { weekday: 'short' }),
+              revenue: item.revenue || 0,
+              orders: item.orderCount || 0
+            }));
+            setChartData(dailyData);
+          } else {
+            // Daily logic (Time based)
+            const hourlyData = reportData.salesItems.map(item => ({
+              name: new Date(item.date).toLocaleTimeString('en-US', { hour: 'numeric', hour12: true }),
+              revenue: item.revenue || 0,
+              orders: item.orderCount || 0
+            }));
+            setChartData(hourlyData.length > 0 ? hourlyData : [{ name: 'Today', revenue: reportData.totalRevenue, orders: reportData.totalOrders }]);
+          }
         } else {
-          // If no hourly breakdown, show single bar for the day
           setChartData([{
-            name: 'Today',
+            name: type === "Weekly" ? 'This Week' : 'Today',
             revenue: reportData.totalRevenue || 0,
             orders: reportData.totalOrders || 0
           }]);
@@ -70,8 +85,7 @@ export const AdminSalesReports = () => {
           topStores: reportData.topStores || []
         });
 
-        // Create payment breakdown (this would need to come from backend in production)
-        // For now, estimating based on typical payment distributions
+        // Simulating payment breakdown
         setPaymentBreakdown([
           { name: 'Cash', value: reportData.totalRevenue * 0.5 },
           { name: 'Online', value: reportData.totalRevenue * 0.35 },
@@ -81,7 +95,6 @@ export const AdminSalesReports = () => {
     } catch (error) {
       console.error("Error fetching sales data:", error);
       toast.error("Failed to load sales data");
-      // Set empty data on error
       setChartData([]);
       setSummaryData({ totalSales: 0, transactionCount: 0, topStores: [] });
     } finally {
@@ -143,7 +156,7 @@ export const AdminSalesReports = () => {
           </Button>
           <div>
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-              Daily Sales Report
+              {reportType} Sales Report
             </h1>
             <p className="text-gray-600 dark:text-gray-400 mt-1">
               Sales breakdown by payment method and time
@@ -155,6 +168,19 @@ export const AdminSalesReports = () => {
         <Card>
           <CardContent className="p-6">
             <div className="flex flex-col md:flex-row md:items-end gap-4 justify-between">
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Report Type
+                </label>
+                <Select
+                  value={reportType}
+                  onChange={(e) => setReportType(e.target.value)}
+                  className="w-full md:w-40"
+                >
+                  <option value="Daily">Daily</option>
+                  <option value="Weekly">Weekly</option>
+                </Select>
+              </div>
               <div className="space-y-2">
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                   Select Date
