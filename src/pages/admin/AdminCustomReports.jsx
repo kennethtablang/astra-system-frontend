@@ -1,6 +1,6 @@
 // src/pages/admin/AdminCustomReports.jsx
 import { useState, useEffect } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import DashboardLayout from "../../components/layouts/DashboardLayout";
 import { Card, CardContent } from "../../components/ui/Card";
 import { Button } from "../../components/ui/Button";
@@ -13,7 +13,6 @@ import { warehouseService } from "../../services/warehouseService";
 import { toast } from "react-hot-toast";
 
 export const AdminCustomReports = () => {
-  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const reportType = searchParams.get("type") || "agent"; // 'agent' or 'stock'
 
