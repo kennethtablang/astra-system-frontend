@@ -24,10 +24,13 @@ import orderService from "../../services/orderService";
 import deliveryService from "../../services/deliveryService";
 import { RecordDeliveryPaymentModal } from "../../components/modals/AdminDelivery/RecordDeliveryPaymentModal";
 import { toast } from "react-hot-toast";
+import { useAuth } from "../../contexts/AuthContext";
+import { watermarkImage } from "../../utils/imageUtils";
 
 const DispatcherDeliveryDetails = () => {
   const { orderId } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const [order, setOrder] = useState(null);
   const [photos, setPhotos] = useState([]);
@@ -165,9 +168,50 @@ const DispatcherDeliveryDetails = () => {
     }
   };
 
-  const handleFileChange = (e, setter) => {
-    const files = Array.from(e.target.files || []);
-    setter(files);
+  // Import watermark utility (assume auto-import or manual if needed, but here we add the import at top)
+
+  const handleFileChange = async (e, setter) => {
+    const rawFiles = Array.from(e.target.files || []);
+    if (rawFiles.length === 0) return;
+
+    const toastId = toast.loading("Processing photos...");
+
+    try {
+      // Get current location for watermark
+      let location = null;
+      try {
+        location = await deliveryService.getCurrentLocation();
+      } catch (err) {
+        console.warn("Location fetch failed for watermark", err);
+      }
+
+      const processedFiles = await Promise.all(rawFiles.map(async (file) => {
+        try {
+          // If it's a delivery photo (not exception), add watermark
+          if (setter === setDeliveryPhotos) {
+            const metadata = {
+              lat: location?.latitude,
+              lng: location?.longitude,
+              address: `${order.storeBarangay || ''}, ${order.storeCity || ''}`.replace(/^, /, ''),
+              orderId: order.id,
+              dispatcherName: user?.fullName || 'Dispatcher',
+              storeName: order.storeName
+            };
+            return await watermarkImage(file, metadata);
+          }
+          return file;
+        } catch (err) {
+          console.error("Watermark failed", err);
+          return file; // Fallback to original
+        }
+      }));
+
+      setter(prev => [...prev, ...processedFiles]);
+      toast.success("Photos processed", { id: toastId });
+    } catch (error) {
+      console.error("Error processing photos:", error);
+      toast.error("Failed to process photos", { id: toastId });
+    }
   };
 
   const getStatusBadge = (status) => {
