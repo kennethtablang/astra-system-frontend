@@ -42,10 +42,20 @@ const userService = {
     }
   },
 
-  // Update user profile
-  async updateProfile(userId, profileData) {
+  // Update user profile (Self)
+  async updateProfile(profileData) {
     try {
       const { data } = await api.put('/user/profile', profileData);
+      return data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
+  },
+
+  // Update user profile (Admin)
+  async updateUserProfile(userId, profileData) {
+    try {
+      const { data } = await api.put(`/user/${userId}/profile`, profileData);
       return data;
     } catch (error) {
       throw error.response?.data || error;

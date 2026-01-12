@@ -77,6 +77,16 @@ const reportService = {
         }
     },
 
+    //  // Get weekly sales report
+    async getWeeklySalesReport(date) {
+        try {
+            const { data } = await api.get('/reports/sales/weekly', { params: { date } });
+            return data;
+        } catch (error) {
+            throw error.response?.data || error;
+        }
+    },
+
     // NEW: Get monthly sales report data
     async getMonthlySalesReport(year, month) {
         try {

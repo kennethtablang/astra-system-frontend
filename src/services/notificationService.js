@@ -131,12 +131,85 @@ export const reportService = {
     }
   },
 
+  // Move existing stock movement report here or keep it.
   // Generate stock movement report
   async generateStockMovementReport(warehouseId, from, to) {
     try {
       const { data } = await api.get(`/reports/stock-movement/${warehouseId}`, {
         params: { from, to },
         responseType: 'blob'
+      });
+      return data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
+  },
+
+  // Get top selling products (JSON)
+  async getTopSellingProducts(limit = 5, from = null, to = null) {
+    try {
+      const { data } = await api.get('/reports/top-products', {
+        params: { limit, from, to }
+      });
+      return data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
+  },
+
+  // Get daily sales report (JSON)
+  async getDailySalesReport(date = null) {
+    try {
+      const { data } = await api.get('/reports/sales/daily', {
+        params: { date }
+      });
+      return data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
+  },
+
+  // Get monthly sales report (JSON)
+  async getMonthlySalesReport(year = null, month = null) {
+    try {
+      const { data } = await api.get('/reports/sales/monthly', {
+        params: { year, month }
+      });
+      return data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
+  },
+
+  // Get quarterly sales report (JSON)
+  async getQuarterlySalesReport(year = null, quarter = null) {
+    try {
+      const { data } = await api.get('/reports/sales/quarterly', {
+        params: { year, quarter }
+      });
+      return data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
+  },
+
+  // Get delivery performance data (JSON)
+  async getDeliveryPerformanceData(from = null, to = null) {
+    try {
+      const { data } = await api.get('/reports/delivery-performance-data', {
+        params: { from, to }
+      });
+      return data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
+  },
+
+  // Get fast moving products (JSON)
+  async getFastMovingProducts(limit = 5, from = null, to = null) {
+    try {
+      const { data } = await api.get('/reports/fast-moving-products', {
+        params: { limit, from, to }
       });
       return data;
     } catch (error) {

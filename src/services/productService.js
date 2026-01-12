@@ -115,6 +115,31 @@ const productService = {
       throw error.response?.data || error;
     }
   },
+
+  // Upload product image (granular)
+  async uploadProductImage(productId, imageFile) {
+    try {
+      const formData = new FormData();
+      formData.append('image', imageFile);
+
+      const { data } = await api.post(`/product/${productId}/image`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      return data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
+  },
+
+  // Delete product image (granular)
+  async deleteProductImage(productId) {
+    try {
+      const { data } = await api.delete(`/product/${productId}/image`);
+      return data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
+  },
 };
 
 export default productService;

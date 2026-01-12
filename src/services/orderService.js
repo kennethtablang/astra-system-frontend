@@ -156,9 +156,9 @@ const orderService = {
   // Dispatch order (Assign to trip)
   async dispatchOrder(orderId, tripId) {
     try {
-      const { data } = await api.post(`/order/${orderId}/dispatch`, { 
-        orderId, 
-        tripId 
+      const { data } = await api.post(`/order/${orderId}/dispatch`, {
+        orderId,
+        tripId
       });
       return data;
     } catch (error) {
@@ -189,10 +189,30 @@ const orderService = {
   // Mark order delivered
   async markOrderDelivered(orderId, notes) {
     try {
-      const { data } = await api.post(`/order/${orderId}/delivered`, { 
+      const { data } = await api.post(`/order/${orderId}/delivered`, {
         orderId,
-        notes: notes || null 
+        notes: notes || null
       });
+      return data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
+  },
+
+  // Mark order as paid
+  async markOrderAsPaid(paymentData) {
+    try {
+      const { data } = await api.post(`/order/${paymentData.orderId}/mark-paid`, paymentData);
+      return data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
+  },
+
+  // Get order payment status
+  async getOrderPaymentStatus(orderId) {
+    try {
+      const { data } = await api.get(`/order/${orderId}/payment-status`);
       return data;
     } catch (error) {
       throw error.response?.data || error;
@@ -202,9 +222,9 @@ const orderService = {
   // Mark order returned
   async markOrderReturned(orderId, reason) {
     try {
-      const { data } = await api.post(`/order/${orderId}/returned`, { 
+      const { data } = await api.post(`/order/${orderId}/returned`, {
         orderId,
-        reason 
+        reason
       });
       return data;
     } catch (error) {
