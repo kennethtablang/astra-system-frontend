@@ -59,6 +59,9 @@ import { AdminSettingsGeneral } from "../pages/admin/AdminSettingsGeneral";
 import { AdminSettingsNotifications } from "../pages/admin/AdminSettingsNotifications";
 import { AdminSettingsSecurity } from "../pages/admin/AdminSettingsSecurity";
 import { AdminProfileSettings } from "../pages/admin/AdminProfileSettings";
+import AdminLocations from "../pages/admin/AdminLocations";
+import AdminCategories from "../pages/admin/AdminCategories";
+import AdminReportDashboard from "../pages/admin/AdminReportDashboard";
 
 // Agent Pages
 import AgentDashboard from "../pages/agent/AgentDashboard";
@@ -210,6 +213,13 @@ const AppRoutes = () => {
           path="/admin/settings/security"
           element={<AdminSettingsSecurity />}
         />
+
+        {/* Master Data */}
+        <Route path="/admin/master-data/locations" element={<AdminLocations />} />
+        <Route path="/admin/master-data/categories" element={<AdminCategories />} />
+
+        {/* Advanced Reports */}
+        <Route path="/admin/reports/dashboard" element={<AdminReportDashboard />} />
       </Route>
 
       <Route element={<ProtectedRoute allowedRoles={["DistributorAdmin"]} />}>
