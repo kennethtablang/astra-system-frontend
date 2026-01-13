@@ -669,7 +669,13 @@ const DashboardLayout = ({ children }) => {
                   <button
                     onClick={() => {
                       setUserMenuOpen(false);
-                      navigate("/admin/profile");
+                      const profilePaths = {
+                        Admin: "/admin/profile",
+                        Agent: "/agent/profile",
+                        Dispatcher: "/dispatcher/profile"
+                      };
+                      const path = profilePaths[user?.role] || "/admin/profile"; 
+                      navigate(path);
                     }}
                     className="flex items-center w-full px-4 py-3 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
                   >
