@@ -30,6 +30,24 @@ import tripService from "../../services/tripService";
 import orderService from "../../services/orderService";
 import { useAuth } from "../../contexts/AuthContext";
 import { toast } from "react-hot-toast";
+import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import "leaflet/dist/leaflet.css";
+import L from "leaflet";
+
+// Fix for Leaflet default icon issues
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png",
+  iconUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png",
+  shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
+});
+
+const storeIcon = new L.Icon({
+  iconUrl: "https://cdn-icons-png.flaticon.com/512/447/447031.png", // Example store icon
+  iconSize: [25, 25],
+  iconAnchor: [12, 25],
+  popupAnchor: [0, -25],
+});
 
 const DispatcherDashboard = () => {
   const navigate = useNavigate();
@@ -37,6 +55,7 @@ const DispatcherDashboard = () => {
 
   const [activeTrips, setActiveTrips] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [todaysOrders, setTodaysOrders] = useState([]);
   const [stats, setStats] = useState({
     activeTrips: 0,
     readyOrders: 0,
@@ -53,7 +72,6 @@ const DispatcherDashboard = () => {
       setLoading(true);
 
       // 1. Fetch Active Trips (Trips that are currently InProgress or Started)
-      // This helps the dispatcher know what is currently on the road
       const activeTripsResult = await tripService.getTrips({
         status: "Started,InProgress",
         pageSize: 5,
@@ -98,19 +116,36 @@ const DispatcherDashboard = () => {
         }
       }
 
-      // 4. Completed Today (Deliveries)
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const completedResult = await orderService.getOrders({
-        status: "Delivered",
-        updatedFrom: today.toISOString(),
-        pageSize: 1
+      // 4. Fetch Today's Orders for Map & Stats
+      // Fetching active/delivered orders for visualization
+      const todayOrdersResult = await orderService.getOrders({
+        pageSize: 100, // Limit for map performance
+        // You might want to filter by "ScheduledFor" today if API supports it, 
+        // or just active status (InTransit, Dispatched, Delivered today) via frontend filter or API
+        sortDescending: true
       });
 
-      if (completedResult.success) {
+      if (todayOrdersResult.success) {
+        const orders = todayOrdersResult.data.items || [];
+        const today = new Date();
+        today.setHours(0,0,0,0);
+        
+        // Filter for map: Orders that are relevant (active or delivered today)
+        // And ensure they have locations (simulated or real)
+        const relevantOrders = orders.filter(o => {
+           const isToday = new Date(o.updatedAt) >= today || new Date(o.scheduledFor) >= today;
+           // If lat/lng missing, we can't map them. For demo, we might need mock coords if backend doesn't provide.
+           // Assuming 'storeLatitude' and 'storeLongitude' come from order details (mapped in backend)
+           return isToday; 
+        });
+
+        setTodaysOrders(relevantOrders);
+        
+        // Update Delivered Today count from this list or specific call
+        const deliveredToday = orders.filter(o => o.status === 'Delivered' && new Date(o.updatedAt) >= today).length;
         setStats(prev => ({
           ...prev,
-          completedToday: completedResult.data.totalCount || 0
+          completedToday: deliveredToday
         }));
       }
 
@@ -144,6 +179,12 @@ const DispatcherDashboard = () => {
     );
   }
 
+  // Calculate Map Center (Average of points or default)
+  const mapCenter = todaysOrders.length > 0 && todaysOrders[0].storeLatitude
+    ? [todaysOrders.reduce((sum, o) => sum + (o.storeLatitude || 0), 0) / todaysOrders.length, 
+       todaysOrders.reduce((sum, o) => sum + (o.storeLongitude || 0), 0) / todaysOrders.length]
+    : [16.1504, 119.9858]; // Alaminos default
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -154,7 +195,7 @@ const DispatcherDashboard = () => {
               Dispatcher Dashboard
             </h1>
             <p className="text-gray-600 dark:text-gray-400 mt-1">
-              Overview of fleet operations and deliveries
+              Overview of fleet operations and today's delivery map
             </p>
           </div>
           <div className="flex gap-2">
@@ -201,6 +242,48 @@ const DispatcherDashboard = () => {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Map Section - New Feature */}
+          <Card className="lg:col-span-3">
+             <CardHeader>
+                <h3 className="text-lg font-medium text-gray-900 dark:text-white flex items-center gap-2">
+                    <MapPin className="h-5 w-5 text-blue-600" />
+                    Today's Delivery Map
+                </h3>
+             </CardHeader>
+             <CardContent className="h-[400px] p-0 relative z-0">
+                <MapContainer
+                  center={mapCenter}
+                  zoom={12}
+                  style={{ height: "100%", width: "100%", borderRadius: "0 0 0.5rem 0.5rem" }}
+                  scrollWheelZoom={false}
+                >
+                  <TileLayer
+                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                  />
+                  {todaysOrders.map((order) => (
+                    (order.storeLatitude && order.storeLongitude) ? (
+                        <Marker 
+                            key={order.id} 
+                            position={[order.storeLatitude, order.storeLongitude]}
+                            icon={storeIcon}
+                        >
+                            <Popup>
+                                <div className="p-1">
+                                    <h4 className="font-semibold">{order.storeName}</h4>
+                                    <p className="text-sm">Order #{order.id}</p>
+                                    <Badge variant={order.status === 'Delivered' ? 'success' : 'default'} className="mt-1">
+                                        {order.status}
+                                    </Badge>
+                                </div>
+                            </Popup>
+                        </Marker>
+                    ) : null
+                  ))}
+                </MapContainer>
+             </CardContent>
+          </Card>
+
           {/* Active Fleet Activity */}
           <Card className="lg:col-span-2">
             <CardHeader className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-4">
@@ -278,7 +361,7 @@ const DispatcherDashboard = () => {
             </CardContent>
           </Card>
 
-          {/* Quick Actions / Summary */}
+          {/* Quick Actions / KPI */}
           <div className="space-y-6">
             <Card>
               <CardHeader>
