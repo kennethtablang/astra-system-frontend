@@ -273,15 +273,42 @@ const DispatcherDeliveries = () => {
               Manage your current delivery route
             </p>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={fetchMyActiveTrips}
-            className="flex items-center gap-2"
-          >
-            <RefreshCw className="h-4 w-4" />
-            Refresh
-          </Button>
+          <div className="flex gap-2">
+             {activeTrip && (
+                 <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={async () => {
+                        try {
+                            // Call optimize endpoint
+                            const result = await tripService.optimizeTrip(activeTrip.id);
+                            if(result.success) {
+                                toast.success("Route optimized!");
+                                fetchMyActiveTrips(); // Refresh to get new sequence
+                            } else {
+                                toast.error(result.message || "Optimization failed");
+                            }
+                        } catch(err) {
+                            console.error(err);
+                            toast.error("Failed to optimize");
+                        }
+                    }}
+                    className="flex items-center gap-2 text-blue-600 border-blue-200 hover:bg-blue-50"
+                  >
+                    <Navigation className="h-4 w-4" />
+                    Optimize Route
+                  </Button>
+             )}
+            <Button
+                variant="outline"
+                size="sm"
+                onClick={fetchMyActiveTrips}
+                className="flex items-center gap-2"
+            >
+                <RefreshCw className="h-4 w-4" />
+                Refresh
+            </Button>
+          </div>
         </div>
 
         {/* Map Section */}
