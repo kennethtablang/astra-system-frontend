@@ -1,6 +1,6 @@
 // src/pages/admin/AdminPerformance.jsx
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+
 import DashboardLayout from "../../components/layouts/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/Card";
 import { Button } from "../../components/ui/Button";
@@ -20,7 +20,6 @@ import {
 } from 'recharts';
 
 export const AdminPerformance = () => {
-  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [dataLoading, setDataLoading] = useState(true);
 
@@ -116,22 +115,14 @@ export const AdminPerformance = () => {
     <DashboardLayout>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex items-center gap-4">
-          <Button
-            variant="ghost"
-            onClick={() => navigate("/admin/reports")}
-            className="p-2"
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <div>
+        {/* Header */}
+        <div>
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
               Delivery Performance Report
             </h1>
             <p className="text-gray-600 dark:text-gray-400 mt-1">
               Analyze dispatchers, success rates, and delivery times
             </p>
-          </div>
         </div>
 
         {/* Filters */}
