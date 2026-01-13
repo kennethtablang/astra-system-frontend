@@ -1,6 +1,6 @@
 // src/pages/admin/AdminSalesReports.jsx
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+
 import DashboardLayout from "../../components/layouts/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/Card";
 import { Button } from "../../components/ui/Button";
@@ -24,7 +24,6 @@ import {
 } from 'recharts';
 
 export const AdminSalesReports = () => {
-  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [dataLoading, setDataLoading] = useState(true);
   const [reportType, setReportType] = useState("Daily"); // 'Daily', 'Weekly'
@@ -146,53 +145,48 @@ export const AdminSalesReports = () => {
     <DashboardLayout>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex items-center gap-4">
-          <Button
-            variant="ghost"
-            onClick={() => navigate("/admin/reports")}
-            className="p-2"
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-              {reportType} Sales Report
-            </h1>
-            <p className="text-gray-600 dark:text-gray-400 mt-1">
-              Sales breakdown by payment method and time
-            </p>
-          </div>
+        {/* Header */}
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+            {reportType} Sales Report
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400 mt-1">
+            Sales breakdown by payment method and time
+          </p>
         </div>
 
         {/* Filters & Actions */}
         <Card>
           <CardContent className="p-6">
             <div className="flex flex-col md:flex-row md:items-end gap-4 justify-between">
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Report Type
-                </label>
-                <Select
-                  value={reportType}
-                  onChange={(e) => setReportType(e.target.value)}
-                  className="w-full md:w-40"
-                >
-                  <option value="Daily">Daily</option>
-                  <option value="Weekly">Weekly</option>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Select Date
-                </label>
-                <div className="relative w-full md:w-64">
-                  <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                  <input
-                    type="date"
-                    value={date}
-                    onChange={(e) => setDate(e.target.value)}
-                    className="w-full pl-9 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              <div className="flex flex-col md:flex-row gap-4">
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Report Type
+                  </label>
+                  <Select
+                    value={reportType}
+                    onChange={(e) => setReportType(e.target.value)}
+                    className="w-full md:w-40"
+                    options={[
+                      { value: "Daily", label: "Daily" },
+                      { value: "Weekly", label: "Weekly" }
+                    ]}
                   />
+                </div>
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Select Date
+                  </label>
+                  <div className="relative w-full md:w-64">
+                    <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <input
+                      type="date"
+                      value={date}
+                      onChange={(e) => setDate(e.target.value)}
+                      className="w-full pl-9 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    />
+                  </div>
                 </div>
               </div>
               <div>
