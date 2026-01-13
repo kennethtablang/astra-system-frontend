@@ -14,7 +14,11 @@ import {
   Navigation,
   Clock,
   Store as StoreIcon,
+  ExternalLink
 } from "lucide-react";
+import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import "leaflet/dist/leaflet.css";
+import L from "leaflet";
 import DashboardLayout from "../../components/layouts/DashboardLayout";
 import { Card, CardContent } from "../../components/ui/Card";
 import { Badge } from "../../components/ui/Badge";
@@ -26,6 +30,21 @@ import { RecordDeliveryPaymentModal } from "../../components/modals/AdminDeliver
 import { toast } from "react-hot-toast";
 import { useAuth } from "../../contexts/AuthContext";
 import { watermarkImage } from "../../utils/imageUtils";
+
+// Fix for Leaflet default icon issues (if not globally fixed)
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png",
+  iconUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png",
+  shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
+});
+
+const mapStoreIcon = new L.Icon({
+  iconUrl: "https://cdn-icons-png.flaticon.com/512/447/447031.png", 
+  iconSize: [25, 25],
+  iconAnchor: [12, 25],
+  popupAnchor: [0, -25],
+});
 
 const DispatcherDeliveryDetails = () => {
   const { orderId } = useParams();
@@ -333,20 +352,41 @@ const DispatcherDeliveryDetails = () => {
                       </p>
                     </div>
                   )}
+                  <div className="h-[200px] w-full rounded-lg overflow-hidden relative z-0 mt-4 border border-gray-200 dark:border-gray-700">
+                     {order.storeLatitude && order.storeLongitude ? (
+                        <MapContainer
+                          center={[order.storeLatitude, order.storeLongitude]}
+                          zoom={15}
+                          style={{ height: "100%", width: "100%" }}
+                          scrollWheelZoom={false}
+                        >
+                          <TileLayer
+                            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                          />
+                          <Marker position={[order.storeLatitude, order.storeLongitude]} icon={mapStoreIcon}>
+                            <Popup>{order.storeName}</Popup>
+                          </Marker>
+                        </MapContainer>
+                     ) : (
+                        <div className="flex items-center justify-center h-full bg-gray-100 dark:bg-gray-800 text-gray-500">
+                           Map location unavailable
+                        </div>
+                     )}
+                  </div>
+
                   <Button
                     variant="outline"
                     onClick={() => {
-                      window.open(
-                        `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-                          order.storeName
-                        )}`,
-                        "_blank"
-                      );
+                        const query = (order.storeLatitude && order.storeLongitude) 
+                            ? `${order.storeLatitude},${order.storeLongitude}` 
+                            : encodeURIComponent(order.storeName);
+                        window.open(`https://www.google.com/maps/dir/?api=1&destination=${query}`, "_blank");
                     }}
-                    className="w-full"
+                    className="w-full mt-2"
                   >
-                    <Navigation className="h-4 w-4 mr-2" />
-                    Get Directions
+                    <ExternalLink className="h-4 w-4 mr-2" />
+                    Open Navigation App
                   </Button>
                 </div>
               </CardContent>
