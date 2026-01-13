@@ -70,7 +70,7 @@ import AgentCreateOrder from "../pages/agent/AgentCreateOrder";
 import AgentOrderDetail from "../pages/agent/AgentOrderDetail";
 import AgentStoresList from "../pages/agent/AgentStoresList";
 import AgentProducts from "../pages/agent/AgentProducts";
-import AgentProfile from "../pages/agent/AgentProfile";
+import AgentProfileSettings from "../pages/agent/AgentProfileSettings";
 
 // DistributorAdmin Pages
 import DistributorDashboard from "../pages/distributor/DistributorDashboard";
@@ -89,6 +89,7 @@ import DistributorTripTracking from "../pages/distributor/DistributorTripTrackin
 import DispatcherDashboard from "../pages/dispatcher/DispatcherDashboard";
 import DispatcherTrips from "../pages/dispatcher/DispatcherTrips";
 import DispatcherOrders from "../pages/dispatcher/DispatcherOrders";
+import DispatcherProfileSettings from "../pages/dispatcher/DispatcherProfileSettings";
 
 const AppRoutes = () => {
   const { isAuthenticated } = useAuth();
@@ -272,7 +273,7 @@ const AppRoutes = () => {
         <Route path="/agent/orders/:id" element={<AgentOrderDetail />} />
         <Route path="/agent/stores" element={<AgentStoresList />} />
         <Route path="/agent/products" element={<AgentProducts />} />
-        <Route path="/agent/profile" element={<AgentProfile />} />
+        <Route path="/agent/profile" element={<AgentProfileSettings />} />
       </Route>
 
       {/* Dispatcher Routes - Actual dispatcher interface */}
@@ -288,6 +289,7 @@ const AppRoutes = () => {
           path="/dispatcher/deliveries/:orderId"
           element={<DispatcherDeliveryDetails />}
         />
+        <Route path="/dispatcher/profile" element={<DispatcherProfileSettings />} />
       </Route>
 
 
