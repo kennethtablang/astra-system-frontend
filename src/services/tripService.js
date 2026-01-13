@@ -117,6 +117,16 @@ const tripService = {
     }
   },
 
+  // Optimize trip route
+  async optimizeTrip(tripId) {
+    try {
+      const { data } = await api.post(`/trip/${tripId}/optimize`);
+      return data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
+  },
+
   // Get trip history (completed and cancelled trips)
   async getTripHistory(params = {}) {
     try {
