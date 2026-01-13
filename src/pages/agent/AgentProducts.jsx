@@ -21,10 +21,13 @@ import { Badge } from "../../components/ui/Badge";
 import { Button } from "../../components/ui/Button";
 import { Select } from "../../components/ui/Select";
 import { LoadingSpinner } from "../../components/ui/Loading";
-import { AgentProductAddModal } from "../../components/modals/AgentProduct/AgentProductAddModal";
-import { AgentProductEditModal } from "../../components/modals/AgentProduct/AgentProductEditModal";
+import { ProductAddModal } from "../../components/modals/AdminProduct/ProductAddModal";
+import { ProductEditModal } from "../../components/modals/AdminProduct/ProductEditModal";
+import { ProductDeleteModal } from "../../components/modals/AdminProduct/ProductDeleteModal";
 import api from "../../api/axios";
 import { toast } from "react-hot-toast";
+
+import { getImageUrl } from "../../utils/imageUrl";
 
 const AgentProducts = () => {
   // State Management
@@ -38,6 +41,7 @@ const AgentProducts = () => {
   const [totalProducts, setTotalProducts] = useState(0);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
 
   // Fetch Products
@@ -61,7 +65,6 @@ const AgentProducts = () => {
 
       if (data.success) {
         setProducts(data.data.items || []);
-        // Check if totalCount is available, otherwise default
         setTotalProducts(data.data.totalCount || 0);
       }
     } catch (error) {
@@ -86,11 +89,18 @@ const AgentProducts = () => {
   // Handle Add Product
   const handleAddProduct = async (formData) => {
     try {
-      const { data } = await api.post("/product", formData);
+      // Use multipart/form-data for file upload support
+      const config = {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      };
+
+      const { data } = await api.post("/product", formData, config);
 
       if (!data.success) {
         toast.error(data.message || "Failed to add product");
-        return;
+        throw new Error(data.message || "Failed to add product");
       }
 
       toast.success("Product added successfully");
@@ -99,17 +109,28 @@ const AgentProducts = () => {
     } catch (error) {
       console.error("Error adding product:", error);
       toast.error(error.response?.data?.message || "Failed to add product");
+      throw error;
     }
   };
 
   // Handle Edit Product
   const handleEditProduct = async (formData) => {
     try {
-      const { data } = await api.put(`/product/${formData.id}`, formData);
+      // Use multipart/form-data for file upload support
+      const config = {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      };
+
+      // Extract ID from FormData for the URL
+      const id = formData.get("id");
+
+      const { data } = await api.put(`/product/${id}`, formData, config);
 
       if (!data.success) {
         toast.error(data.message || "Failed to update product");
-        return;
+        throw new Error(data.message || "Failed to update product");
       }
 
       toast.success("Product updated successfully");
@@ -119,17 +140,14 @@ const AgentProducts = () => {
     } catch (error) {
       console.error("Error updating product:", error);
       toast.error(error.response?.data?.message || "Failed to update product");
+      throw error;
     }
   };
 
   // Handle Delete Product
-  const handleDeleteProduct = async (productId) => {
-    if (!window.confirm("Are you sure you want to delete this product?")) {
-      return;
-    }
-
+  const handleDeleteProduct = async () => {
     try {
-      const { data } = await api.delete(`/product/${productId}`);
+      const { data } = await api.delete(`/product/${selectedProduct.id}`);
 
       if (!data.success) {
         toast.error(data.message || "Failed to delete product");
@@ -137,6 +155,8 @@ const AgentProducts = () => {
       }
 
       toast.success("Product deleted successfully");
+      setShowDeleteModal(false);
+      setSelectedProduct(null);
       fetchProducts();
     } catch (error) {
       toast.error(error.response?.data?.message || "Failed to delete product");
@@ -144,9 +164,16 @@ const AgentProducts = () => {
     }
   };
 
+  // Open Edit Modal
   const openEditModal = (product) => {
     setSelectedProduct(product);
     setShowEditModal(true);
+  };
+
+  // Open Delete Modal
+  const openDeleteModal = (product) => {
+    setSelectedProduct(product);
+    setShowDeleteModal(true);
   };
 
   // Pagination Calculations
@@ -182,10 +209,10 @@ const AgentProducts = () => {
         <div className="flex justify-between items-center">
           <div>
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-              Product Catalog
+              Product Management
             </h1>
             <p className="text-gray-600 dark:text-gray-400 mt-1">
-              Manage your product inventory
+              Manage all products
             </p>
           </div>
           <Button
@@ -251,6 +278,7 @@ const AgentProducts = () => {
                 <div className="overflow-x-auto">
                   <Table>
                     <TableHeader>
+                      <TableHead>Image</TableHead>
                       <TableHead>SKU</TableHead>
                       <TableHead>Product Name</TableHead>
                       <TableHead>Category</TableHead>
@@ -263,6 +291,19 @@ const AgentProducts = () => {
                     <TableBody>
                       {products.map((product) => (
                         <TableRow key={product.id}>
+                          <TableCell>
+                            <div className="h-12 w-12 rounded-lg bg-gray-100 dark:bg-gray-700 overflow-hidden flex items-center justify-center border border-gray-200 dark:border-gray-600">
+                              {product.imageUrl ? (
+                                <img
+                                  src={getImageUrl(product.imageUrl)}
+                                  alt={product.name}
+                                  className="h-full w-full object-cover"
+                                />
+                              ) : (
+                                <Package className="h-6 w-6 text-gray-400" />
+                              )}
+                            </div>
+                          </TableCell>
                           <TableCell>
                             <span className="font-mono text-xs bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">
                               {product.sku}
@@ -286,8 +327,8 @@ const AgentProducts = () => {
                             </div>
                           </TableCell>
                           <TableCell>
-                            {product.category ? (
-                              <Badge variant="info">{product.category}</Badge>
+                            {product.categoryName ? (
+                              <Badge variant="info">{product.categoryName}</Badge>
                             ) : (
                               <span className="text-gray-400">—</span>
                             )}
@@ -326,7 +367,7 @@ const AgentProducts = () => {
                                 <Edit className="h-4 w-4" />
                               </button>
                               <button
-                                onClick={() => handleDeleteProduct(product.id)}
+                                onClick={() => openDeleteModal(product)}
                                 className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
                                 title="Delete product"
                               >
@@ -388,8 +429,8 @@ const AgentProducts = () => {
                               key={pageNum}
                               onClick={() => setCurrentPage(pageNum)}
                               className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${currentPage === pageNum
-                                  ? "bg-blue-600 text-white"
-                                  : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                                ? "bg-blue-600 text-white"
+                                : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                                 }`}
                             >
                               {pageNum}
@@ -417,24 +458,34 @@ const AgentProducts = () => {
             )}
           </CardContent>
         </Card>
-
-        {/* Modals */}
-        <AgentProductAddModal
-          isOpen={showAddModal}
-          onClose={() => setShowAddModal(false)}
-          onSubmit={handleAddProduct}
-        />
-
-        <AgentProductEditModal
-          isOpen={showEditModal}
-          onClose={() => {
-            setShowEditModal(false);
-            setSelectedProduct(null);
-          }}
-          onSubmit={handleEditProduct}
-          selectedProduct={selectedProduct}
-        />
       </div>
+
+      {/* Modals */}
+      <ProductAddModal
+        isOpen={showAddModal}
+        onClose={() => setShowAddModal(false)}
+        onSubmit={handleAddProduct}
+      />
+
+      <ProductEditModal
+        isOpen={showEditModal}
+        onClose={() => {
+          setShowEditModal(false);
+          setSelectedProduct(null);
+        }}
+        onSubmit={handleEditProduct}
+        selectedProduct={selectedProduct}
+      />
+
+      <ProductDeleteModal
+        isOpen={showDeleteModal}
+        onClose={() => {
+          setShowDeleteModal(false);
+          setSelectedProduct(null);
+        }}
+        onConfirm={handleDeleteProduct}
+        selectedProduct={selectedProduct}
+      />
     </DashboardLayout>
   );
 };
