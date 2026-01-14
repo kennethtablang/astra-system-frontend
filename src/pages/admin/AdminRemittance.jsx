@@ -17,6 +17,7 @@ import { Badge } from "../../components/ui/Badge";
 import { Button } from "../../components/ui/Button";
 import { LoadingSpinner } from "../../components/ui/Loading";
 import { ReconciliationModal } from "../../components/modals/AdminRemittance/ReconciliationModal";
+import { ViewOrderDetailsModal } from "../../components/modals/AdminOrder/ViewOrderDetailsModal";
 import { paymentService } from "../../services/paymentService";
 import { toast } from "react-hot-toast";
 
@@ -39,6 +40,10 @@ const AdminRemittance = () => {
     // Reconciliation modal
     const [reconcileModalOpen, setReconcileModalOpen] = useState(false);
     const [selectedDispatcher, setSelectedDispatcher] = useState(null);
+
+    // Order details modal  
+    const [viewOrderModalOpen, setViewOrderModalOpen] = useState(false);
+    const [selectedOrderId, setSelectedOrderId] = useState(null);
 
     useEffect(() => {
         fetchUnreconciledPayments();
@@ -101,8 +106,7 @@ const AdminRemittance = () => {
         return new Date(date).toLocaleString("en-PH", {
             month: "short",
             day: "numeric",
-            hour: "2-digit",
-            minute: "2-digit",
+            hour: "2-digit", minute: "2-digit", hour12: true,
         });
     };
 
@@ -299,9 +303,10 @@ const AdminRemittance = () => {
                                                                 </td>
                                                                 <td className="py-2">
                                                                     <button
-                                                                        onClick={() =>
-                                                                            navigate(`/admin/orders/${payment.orderId}`)
-                                                                        }
+                                                                        onClick={() => {
+                                                                            setSelectedOrderId(payment.orderId);
+                                                                            setViewOrderModalOpen(true);
+                                                                        }}
                                                                         className="text-blue-600 hover:underline"
                                                                     >
                                                                         Order #{payment.orderId}
@@ -347,6 +352,17 @@ const AdminRemittance = () => {
                     fetchUnreconciledPayments();
                     setSelectedDispatcher(null);
                 }}
+            />
+
+            {/* View Order Details Modal */}
+            <ViewOrderDetailsModal
+                isOpen={viewOrderModalOpen}
+                onClose={() => {
+                    setViewOrderModalOpen(false);
+                    setSelectedOrderId(null);
+                }}
+                orderId={selectedOrderId}
+                onSuccess={() => fetchUnreconciledPayments()}
             />
         </DashboardLayout>
     );
