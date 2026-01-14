@@ -84,6 +84,7 @@ import DistributorTripsActive from "../pages/distributor/DistributorTripsActive"
 import DistributorTripsHistory from "../pages/distributor/DistributorTripsHistory";
 import DistributorTripDetails from "../pages/distributor/DistributorTripDetails";
 import DistributorTripTracking from "../pages/distributor/DistributorTripTracking";
+import DistributorOrderCreate from "../pages/distributor/DistributorOrderCreate";
 
 // Dispatcher Pages (Actual dispatcher role)
 import DispatcherDashboard from "../pages/dispatcher/DispatcherDashboard";
@@ -244,7 +245,7 @@ const AppRoutes = () => {
         <Route path="/distributor/orders" element={<AdminOrders />} />
         <Route path="/distributor/orders/pending" element={<AdminOrdersPending />} />
         <Route path="/distributor/orders/history" element={<AdminOrdersHistory />} />
-        <Route path="/distributor/orders/create" element={<AdminOrderCreate />} />
+        <Route path="/distributor/orders/create" element={<DistributorOrderCreate />} />
 
         {/* Finance Routes - Reusing Admin pages */}
         <Route path="/distributor/finance" element={<AdminFinance />} />
