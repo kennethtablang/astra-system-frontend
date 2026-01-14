@@ -121,6 +121,8 @@ export const ViewOrderDetailsModal = ({
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
   const [photos, setPhotos] = useState([]);
   const [loadingPhotos, setLoadingPhotos] = useState(false);
+  const [exception, setException] = useState(null);
+  const [loadingException, setLoadingException] = useState(false);
 
   useEffect(() => {
     if (isOpen && orderId) {
@@ -148,8 +150,26 @@ export const ViewOrderDetailsModal = ({
   useEffect(() => {
     if (isOpen && orderId) {
       fetchDeliveryPhotos();
+      fetchExceptionDetails();
     }
   }, [isOpen, orderId]);
+
+  const fetchExceptionDetails = async () => {
+    try {
+      setLoadingException(true);
+      const result = await deliveryService.getDeliveryExceptions(orderId);
+      if (result.success && result.data && result.data.length > 0) {
+        // Assuming we show the most recent exception
+        setException(result.data[0]);
+      } else {
+        setException(null);
+      }
+    } catch (error) {
+      console.error("Error fetching exceptions:", error);
+    } finally {
+      setLoadingException(false);
+    }
+  };
 
   const fetchDeliveryPhotos = async () => {
     try {
@@ -445,6 +465,66 @@ export const ViewOrderDetailsModal = ({
                   Print the receipt and complete the delivery.
                 </p>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* Exception Details */}
+        {exception && (
+          <div className="bg-red-50 dark:bg-red-900/20 rounded-lg p-4 border border-red-100 dark:border-red-900">
+            <div className="flex items-center gap-2 mb-3">
+              <AlertCircle className="h-5 w-5 text-red-600" />
+              <h3 className="font-semibold text-gray-900 dark:text-white">
+                Delivery Exception
+              </h3>
+            </div>
+            
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                 <div>
+                    <span className="text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">Type</span>
+                    <p className="font-medium text-red-700 dark:text-red-300 mt-1">
+                        {exception.exceptionType?.replace(/([A-Z])/g, ' $1').trim()}
+                    </p>
+                 </div>
+                 <div>
+                    <span className="text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">Reported At</span>
+                    <p className="text-sm text-gray-700 dark:text-gray-300 mt-1">
+                        {formatDateTime(exception.createdAt)}
+                    </p>
+                 </div>
+              </div>
+
+              <div>
+                 <span className="text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">Description</span>
+                 <p className="text-sm text-gray-800 dark:text-gray-200 mt-1 bg-white dark:bg-gray-800 p-3 rounded-md border border-red-100 dark:border-red-900/30">
+                    {exception.description}
+                 </p>
+              </div>
+
+              {exception.photos && exception.photos.length > 0 && (
+                  <div>
+                    <span className="text-xs font-semibold uppercase text-gray-500 dark:text-gray-400 mb-2 block">Photos</span>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                      {exception.photos.map((photo) => (
+                        <a
+                          key={photo.id}
+                          href={getImageUrl(photo.url)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="block group relative aspect-square rounded-lg overflow-hidden bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-all"
+                        >
+                          <img
+                            src={getImageUrl(photo.url)}
+                            alt="Exception Proof"
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          />
+                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+              )}
             </div>
           </div>
         )}
