@@ -217,10 +217,17 @@ export const ViewOrderDetailsModal = ({
       const result = await receiptService.generateMobileThermalReceipt(orderId);
 
       if (result.success) {
-        // Try to print via browser's print dialog
-        const printWindow = window.open("", "_blank");
-        if (printWindow) {
-          printWindow.document.write(`
+        // Use a hidden iframe to print directly without opening a new window
+        const iframe = document.createElement("iframe");
+        iframe.style.position = "fixed";
+        iframe.style.right = "0";
+        iframe.style.bottom = "0";
+        iframe.style.width = "0";
+        iframe.style.height = "0";
+        iframe.style.border = "0";
+        document.body.appendChild(iframe);
+
+        const content = `
             <html>
               <head>
                 <title>Receipt - Order #${orderId}</title>
@@ -239,17 +246,26 @@ export const ViewOrderDetailsModal = ({
               </head>
               <body>
                 <pre>${atob(result.data.receiptData)}</pre>
-                <script>
-                  window.onload = function() {
-                    window.print();
-                    setTimeout(function() { window.close(); }, 100);
-                  }
-                </script>
               </body>
             </html>
-          `);
-          printWindow.document.close();
-        }
+        `;
+
+        const doc = iframe.contentWindow.document;
+        doc.open();
+        doc.write(content);
+        doc.close();
+
+        // Print after a short delay to ensure content rendering
+        setTimeout(() => {
+          if (iframe.contentWindow) {
+             iframe.contentWindow.focus();
+             iframe.contentWindow.print();
+          }
+          // Remove the iframe after a longer delay to allow print dialog to fully capture it
+          setTimeout(() => {
+            document.body.removeChild(iframe);
+          }, 2000);
+        }, 500);
 
         toast.success("Receipt sent to printer");
       } else {
@@ -317,9 +333,22 @@ export const ViewOrderDetailsModal = ({
       month: "short",
       day: "numeric",
       year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
+      hour: "2-digit", minute: "2-digit", hour12: true,
     });
+  };
+
+  const safeParseDescription = (description) => {
+    if (!description) return "No description provided.";
+    try {
+      // Check if it looks like JSON
+      if (description.trim().startsWith("{") && description.includes("Description")) {
+         const parsed = JSON.parse(description);
+         return parsed.Description || description;
+      }
+      return description;
+    } catch (e) {
+      return description;
+    }
   };
 
   if (loading) {
@@ -490,7 +519,7 @@ export const ViewOrderDetailsModal = ({
                  <div>
                     <span className="text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">Reported At</span>
                     <p className="text-sm text-gray-700 dark:text-gray-300 mt-1">
-                        {formatDateTime(exception.createdAt)}
+                        {formatDateTime(exception.reportedAt)}
                     </p>
                  </div>
               </div>
@@ -498,7 +527,7 @@ export const ViewOrderDetailsModal = ({
               <div>
                  <span className="text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">Description</span>
                  <p className="text-sm text-gray-800 dark:text-gray-200 mt-1 bg-white dark:bg-gray-800 p-3 rounded-md border border-red-100 dark:border-red-900/30">
-                    {exception.description}
+                    {safeParseDescription(exception.description)}
                  </p>
               </div>
 
@@ -772,14 +801,7 @@ export const ViewOrderDetailsModal = ({
             </h3>
           </div>
           <div className="space-y-2">
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-600 dark:text-gray-400">Subtotal</span>
-              <span className="font-medium text-gray-900 dark:text-white">
-                {formatCurrency(order.subTotal)}
-              </span>
-            </div>
-
-            <div className="pt-2 border-t border-gray-200 dark:border-gray-600 flex justify-between">
+            <div className="flex justify-between">
               <span className="font-semibold text-gray-900 dark:text-white">
                 Total
               </span>
@@ -787,33 +809,31 @@ export const ViewOrderDetailsModal = ({
                 {formatCurrency(order.total)}
               </span>
             </div>
-            {order.status === "Delivered" && (
-              <>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600 dark:text-gray-400">Paid</span>
-                  <span className="font-medium text-green-600 dark:text-green-400">
-                    {formatCurrency(order.totalPaid || 0)}
-                  </span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600 dark:text-gray-400">
-                    Balance
-                  </span>
-                  <span
-                    className={`font-bold ${(order.remainingBalance ||
-                      order.total - (order.totalPaid || 0)) > 0
-                      ? "text-red-600 dark:text-red-400"
-                      : "text-green-600 dark:text-green-400"
-                      }`}
-                  >
-                    {formatCurrency(
-                      order.remainingBalance ??
-                      order.total - (order.totalPaid || 0)
-                    )}
-                  </span>
-                </div>
-              </>
-            )}
+            
+            <div className="flex justify-between text-sm pt-2 border-t border-gray-200 dark:border-gray-600">
+              <span className="text-gray-600 dark:text-gray-400">Paid</span>
+              <span className="font-medium text-green-600 dark:text-green-400">
+                {formatCurrency(order.totalPaid || 0)}
+              </span>
+            </div>
+            
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-600 dark:text-gray-400">
+                Balance
+              </span>
+              <span
+                className={`font-bold ${(order.remainingBalance ||
+                  order.total - (order.totalPaid || 0)) > 0
+                  ? "text-red-600 dark:text-red-400"
+                  : "text-green-600 dark:text-green-400"
+                  }`}
+              >
+                {formatCurrency(
+                  order.remainingBalance ??
+                  order.total - (order.totalPaid || 0)
+                )}
+              </span>
+            </div>
           </div>
         </div>
 
