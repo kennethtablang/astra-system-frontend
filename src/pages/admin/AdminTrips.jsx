@@ -41,6 +41,7 @@ const AdminTrips = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("All");
+  const [filterDate, setFilterDate] = useState("All");
   const [filterWarehouse, setFilterWarehouse] = useState("All");
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -62,7 +63,7 @@ const AdminTrips = () => {
   useEffect(() => {
     fetchTrips();
     fetchWarehouses();
-  }, [currentPage, pageSize, filterStatus, filterWarehouse]);
+  }, [currentPage, pageSize, filterStatus, filterWarehouse, filterDate]);
 
   const fetchTrips = async () => {
     try {
@@ -78,6 +79,14 @@ const AdminTrips = () => {
 
       if (filterWarehouse !== "All") {
         params.warehouseId = parseInt(filterWarehouse);
+      }
+
+      if (filterDate === "Today") {
+          const today = new Date();
+          const startOfDay = new Date(today.setHours(0, 0, 0, 0)).toISOString();
+          const endOfDay = new Date(today.setHours(23, 59, 59, 999)).toISOString();
+          params.departureFrom = startOfDay;
+          params.departureTo = endOfDay;
       }
 
       const result = await tripService.getTrips(params);
@@ -197,8 +206,7 @@ const AdminTrips = () => {
       month: "short",
       day: "numeric",
       year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
+      hour: "2-digit", minute: "2-digit", hour12: true,
     });
   };
 
@@ -234,6 +242,11 @@ const AdminTrips = () => {
       value: w.id.toString(),
       label: w.name,
     })),
+  ];
+
+  const dateFilterOptions = [
+      { value: "All", label: "All Dates" },
+      { value: "Today", label: "Today Only" }
   ];
 
   const pageSizeOptions = [
@@ -365,6 +378,15 @@ const AdminTrips = () => {
                   }}
                   options={warehouseOptions}
                   className="w-48"
+                />
+                <Select
+                  value={filterDate}
+                  onChange={(e) => {
+                    setFilterDate(e.target.value);
+                    setCurrentPage(1);
+                  }}
+                  options={dateFilterOptions}
+                  className="w-40"
                 />
               </div>
             </div>

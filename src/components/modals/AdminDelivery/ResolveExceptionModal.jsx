@@ -203,8 +203,7 @@ export const ResolveExceptionModal = ({
       month: "short",
       day: "numeric",
       year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
+      hour: "2-digit", minute: "2-digit", hour12: true,
     });
   };
 
