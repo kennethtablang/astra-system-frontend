@@ -141,69 +141,67 @@ const AgentOrdersList = () => {
         // Decode base64 receipt data
         const receiptText = atob(result.data.receiptData);
 
-        // Open print window
-        const printWindow = window.open("", "_blank");
-        if (printWindow) {
-          printWindow.document.write(`
-            <html>
-              <head>
-                <title>Packing Receipt - Order #${orderId}</title>
-                <style>
-                  body {
-                    font-family: 'Courier New', monospace;
-                    font-size: 12px;
-                    max-width: 58mm;
-                    margin: 0 auto;
-                    padding: 10px;
-                    background: white;
-                  }
-                  @media print {
-                    body { 
-                      margin: 0; 
-                      padding: 5px;
-                    }
-                    .no-print {
-                      display: none;
-                    }
-                  }
-                  pre {
-                    margin: 0;
-                    white-space: pre-wrap;
-                    font-size: 11px;
-                    line-height: 1.3;
-                  }
-                  .print-button {
-                    position: fixed;
-                    top: 10px;
-                    right: 10px;
-                    padding: 10px 20px;
-                    background: #3b82f6;
-                    color: white;
-                    border: none;
-                    border-radius: 6px;
-                    cursor: pointer;
-                    font-size: 14px;
-                    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-                    z-index: 1000;
-                  }
-                  .print-button:hover {
-                    background: #2563eb;
-                  }
-                </style>
-              </head>
-              <body>
-                <button class="print-button no-print" onclick="window.print()">
-                  🖨️ Print Receipt
-                </button>
-                <pre>${receiptText}</pre>
-              </body>
-            </html>
-          `);
-          printWindow.document.close();
-          toast.success("Packing receipt opened successfully");
-        } else {
-          toast.error("Failed to open print window. Please allow pop-ups.");
-        }
+        // Create hidden iframe for printing
+        const iframe = document.createElement('iframe');
+        iframe.style.position = 'absolute';
+        iframe.style.width = '0';
+        iframe.style.height = '0';
+        iframe.style.border = 'none';
+        document.body.appendChild(iframe);
+
+        // Write receipt content to iframe
+        const iframeDoc = iframe.contentWindow.document;
+        iframeDoc.open();
+        iframeDoc.write(`
+          <html>
+            <head>
+              <title>Packing Receipt - Order #${orderId}</title>
+              <style>
+                @page {
+                  size: 58mm auto;
+                  margin: 0;
+                }
+                body {
+                  font-family: 'Courier New', monospace;
+                  font-size: 12px;
+                  max-width: 58mm;
+                  margin: 0;
+                  padding: 5px;
+                  background: white;
+                }
+                pre {
+                  margin: 0;
+                  white-space: pre-wrap;
+                  font-size: 11px;
+                  line-height: 1.3;
+                }
+              </style>
+            </head>
+            <body>
+              <pre>${receiptText}</pre>
+            </body>
+          </html>
+        `);
+        iframeDoc.close();
+
+        // Wait for content to load then print
+        iframe.onload = () => {
+          try {
+            iframe.contentWindow.focus();
+            iframe.contentWindow.print();
+            
+            // Remove iframe after printing
+            setTimeout(() => {
+              document.body.removeChild(iframe);
+            }, 1000);
+            
+            toast.success("Receipt sent to printer");
+          } catch (printError) {
+            console.error("Print error:", printError);
+            toast.error("Failed to send to printer");
+            document.body.removeChild(iframe);
+          }
+        };
       } else {
         toast.error(result.message || "Failed to generate packing receipt");
       }
@@ -525,6 +523,12 @@ const AgentOrdersList = () => {
                             <div className="flex items-start gap-1">
                               <MapPin className="h-3 w-3 text-gray-400 mt-0.5 flex-shrink-0" />
                               <div className="text-xs text-gray-600 dark:text-gray-400">
+                                {order.storeAddressLine1 && (
+                                  <div>{order.storeAddressLine1}</div>
+                                )}
+                                {order.storeAddressLine2 && (
+                                  <div>{order.storeAddressLine2}</div>
+                                )}
                                 {order.storeBarangay && (
                                   <div>{order.storeBarangay}</div>
                                 )}
@@ -533,7 +537,7 @@ const AgentOrdersList = () => {
                                     {order.storeCity}
                                   </div>
                                 )}
-                                {!order.storeBarangay && !order.storeCity && (
+                                {!order.storeAddressLine1 && !order.storeAddressLine2 && !order.storeBarangay && !order.storeCity && (
                                   <span>—</span>
                                 )}
                               </div>
