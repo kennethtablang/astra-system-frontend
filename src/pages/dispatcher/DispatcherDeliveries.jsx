@@ -1,5 +1,5 @@
 // src/pages/dispatcher/DispatcherDeliveries.jsx
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Package,
@@ -61,10 +61,23 @@ const DispatcherDeliveries = () => {
   const [lastLocationUpdate, setLastLocationUpdate] = useState(null);
   const [currentLocation, setCurrentLocation] = useState(null);
   const [arrivedAtStore, setArrivedAtStore] = useState(false);
+  const [rememberChoice, setRememberChoice] = useState(() => {
+    return localStorage.getItem("dispatcher_always_share_location") === "true";
+  });
+  const autoStartRef = useRef(false);
 
   useEffect(() => {
     fetchMyActiveTrips();
   }, [user]);
+
+  // Auto-start location sharing if preference is saved
+  useEffect(() => {
+    if (activeTrip && rememberChoice && !locationSharing && !autoStartRef.current) {
+      console.log("Auto-starting location sharing due to saved preference");
+      autoStartRef.current = true;
+      startLocationSharing();
+    }
+  }, [activeTrip, rememberChoice]);
 
   const fetchMyActiveTrips = async () => {
     try {
@@ -188,6 +201,7 @@ const DispatcherDeliveries = () => {
       InTransit: { variant: "warning", icon: Navigation, label: "In Transit" },
       AtStore: { variant: "info", icon: MapPin, label: "At Store" },
       Delivered: { variant: "success", icon: CheckCircle, label: "Delivered" },
+      Returned: { variant: "danger", icon: AlertCircle, label: "Returned" },
     };
     const config = statusMap[status] || statusMap.Dispatched;
     const Icon = config.icon;
@@ -240,6 +254,11 @@ const DispatcherDeliveries = () => {
     return tracking.stops.filter((s) => s.status === "Delivered");
   };
 
+  const getExceptionStops = () => {
+    if (!tracking || !tracking.stops) return [];
+    return tracking.stops.filter((s) => s.status === "Returned");
+  };
+
   const calculateProgress = () => {
     if (!tracking || tracking.totalStops === 0) return 0;
     return Math.round((tracking.completedStops / tracking.totalStops) * 100);
@@ -258,6 +277,7 @@ const DispatcherDeliveries = () => {
   const currentStop = getCurrentStop();
   const nextStops = getNextStops();
   const completedStops = getCompletedStops();
+  const exceptionStops = getExceptionStops();
   const progress = calculateProgress();
 
   return (
@@ -314,7 +334,7 @@ const DispatcherDeliveries = () => {
         {/* Map Section */}
         {activeTrip && (
           <Card>
-            <CardContent className="p-0 h-[300px] relative z-0">
+            <CardContent className="p-0 h-[600px] relative z-0">
               {currentLocation ? (
                 <MapContainer
                   center={[currentLocation.latitude, currentLocation.longitude]}
@@ -489,6 +509,22 @@ const DispatcherDeliveries = () => {
                             Location sharing off
                           </span>
                         </div>
+                        <div className="flex items-center space-x-2 px-1 pb-2">
+                          <input
+                            type="checkbox"
+                            id="rememberChoice"
+                            checked={rememberChoice}
+                            onChange={(e) => {
+                              const isChecked = e.target.checked;
+                              setRememberChoice(isChecked);
+                              localStorage.setItem("dispatcher_always_share_location", isChecked);
+                            }}
+                            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                          />
+                          <label htmlFor="rememberChoice" className="text-sm text-gray-700 dark:text-gray-300 cursor-pointer select-none">
+                            Always share location
+                          </label>
+                        </div>
                         <Button onClick={startLocationSharing} className="w-full">
                           <Navigation className="h-4 w-4 mr-2" />
                           Start Sharing Location
@@ -599,6 +635,41 @@ const DispatcherDeliveries = () => {
                             {stop.sequenceNo}
                           </span>
                         </div>
+                        <div className="flex-1">
+                          <p className="font-medium text-gray-900 dark:text-white">
+                            {stop.storeName}
+                          </p>
+                          <p className="text-sm text-gray-500 dark:text-gray-400">
+                            Order #{stop.orderId}
+                          </p>
+                        </div>
+                        {getStatusBadge(stop.status)}
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Delivery Exceptions */}
+            {exceptionStops.length > 0 && (
+              <Card className="border-red-200 dark:border-red-800">
+                <CardContent className="p-6">
+                  <h3 className="text-lg font-semibold text-red-700 dark:text-red-400 mb-4 flex items-center gap-2">
+                    <AlertCircle className="h-5 w-5" />
+                    Delivery Exceptions ({exceptionStops.length})
+                  </h3>
+                  <div className="space-y-2 max-h-60 overflow-y-auto">
+                    {exceptionStops.map((stop) => (
+                      <div
+                        key={stop.orderId}
+                        className="flex items-center gap-3 p-3 bg-red-50 dark:bg-red-900/20 rounded-lg"
+                      >
+                         <div className="flex-shrink-0 w-8 h-8 rounded-full bg-red-100 dark:bg-red-900 flex items-center justify-center">
+                            <span className="text-red-600 dark:text-red-400 font-bold text-xs">
+                                {stop.sequenceNo}
+                            </span>
+                         </div>
                         <div className="flex-1">
                           <p className="font-medium text-gray-900 dark:text-white">
                             {stop.storeName}
