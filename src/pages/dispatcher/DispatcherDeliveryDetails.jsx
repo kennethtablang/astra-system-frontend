@@ -16,7 +16,7 @@ import {
   Store as StoreIcon,
   ExternalLink
 } from "lucide-react";
-import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Popup, useMap, Polyline } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import DashboardLayout from "../../components/layouts/DashboardLayout";
@@ -26,10 +26,13 @@ import { Button } from "../../components/ui/Button";
 import { LoadingSpinner } from "../../components/ui/Loading";
 import orderService from "../../services/orderService";
 import deliveryService from "../../services/deliveryService";
+import tripService from "../../services/tripService";
+import storeService from "../../services/storeService";
 import { RecordDeliveryPaymentModal } from "../../components/modals/AdminDelivery/RecordDeliveryPaymentModal";
 import { toast } from "react-hot-toast";
 import { useAuth } from "../../contexts/AuthContext";
-import { watermarkImage } from "../../utils/imageUtils";
+import { watermarkImage, compressImage } from "../../utils/imageUtils";
+import { getImageUrl } from "../../utils/imageUrl";
 
 // Fix for Leaflet default icon issues (if not globally fixed)
 delete L.Icon.Default.prototype._getIconUrl;
@@ -46,6 +49,95 @@ const mapStoreIcon = new L.Icon({
   popupAnchor: [0, -25],
 });
 
+const mapOtherStoreIcon = new L.Icon({
+  iconUrl: "https://cdn-icons-png.flaticon.com/512/447/447031.png", // reusing for now, maybe change color via CSS filter or different URL if desired, currently using same icon but logic handles distinction
+  iconSize: [20, 20],
+  iconAnchor: [10, 20],
+  popupAnchor: [0, -20],
+  className: "grayscale opacity-70" // Make other stores grayscale to distinguish
+});
+
+
+
+// Helper component to update map bounds
+const MapBounds = ({ stops, currentStop }) => {
+  const map = useMap();
+  
+  useEffect(() => {
+    if (stops && stops.length > 0) {
+      if (stops.length === 1) {
+         map.setView([stops[0].lat, stops[0].lng], 15);
+      } else {
+        const bounds = L.latLngBounds(stops.map(s => [s.lat, s.lng]));
+        map.fitBounds(bounds, { padding: [50, 50] });
+      }
+    } else if (currentStop) {
+        map.setView([currentStop.lat, currentStop.lng], 15);
+    }
+  }, [stops, currentStop, map]);
+  
+  return null;
+};
+
+// Extracted Map Component for better performance and cleanliness
+const DeliveryMap = ({ stops }) => {
+    if (!stops || stops.length === 0) {
+        return (
+            <div className="flex items-center justify-center h-full bg-gray-100 dark:bg-gray-800 text-gray-500">
+               Map location unavailable
+            </div>
+        );
+    }
+
+    // Create polyline positions (route)
+    const polylinePositions = stops.map(stop => [stop.lat, stop.lng]);
+
+    return (
+        <MapContainer
+          center={[stops[0].lat, stops[0].lng]}
+          zoom={15}
+          style={{ height: "100%", width: "100%" }}
+          scrollWheelZoom={false}
+        >
+          <TileLayer
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          />
+          <MapBounds stops={stops} />
+          
+          {/* Draw route line if multiple stops */}
+          {stops.length > 1 && (
+              <Polyline 
+                positions={polylinePositions} 
+                color="#3b82f6" 
+                weight={3} 
+                opacity={0.7} 
+                dashArray="5, 10" 
+              />
+          )}
+
+          {stops.map((stop) => (
+              <Marker 
+                key={stop.id} 
+                position={[stop.lat, stop.lng]} 
+                icon={stop.isCurrent ? mapStoreIcon : mapOtherStoreIcon}
+                zIndexOffset={stop.isCurrent ? 1000 : 0}
+              >
+                <Popup>
+                    <div className="text-center">
+                        <p className="font-semibold">{stop.storeName}</p>
+                        {stop.isCurrent && <span className="text-xs text-blue-600 font-bold block">(Current Delivery)</span>}
+                        {stop.status === 'Delivered' && <span className="text-xs text-green-600 block">Delivered</span>}
+                        {stop.status === 'Returned' && <span className="text-xs text-red-600 block">Returned</span>}
+                        {stop.status === 'Pending' && <span className="text-xs text-yellow-600 block">Pending</span>}
+                    </div>
+                </Popup>
+              </Marker>
+          ))}
+        </MapContainer>
+    );
+};
+
 const DispatcherDeliveryDetails = () => {
   const { orderId } = useParams();
   const navigate = useNavigate();
@@ -57,6 +149,9 @@ const DispatcherDeliveryDetails = () => {
   const [markingDelivered, setMarkingDelivered] = useState(false);
   const [reportingException, setReportingException] = useState(false);
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
+
+  const [tripStops, setTripStops] = useState([]);
+  const [tripStatus, setTripStatus] = useState(null);
 
   // Form states for marking delivered
   const [recipientName, setRecipientName] = useState("");
@@ -80,7 +175,30 @@ const DispatcherDeliveryDetails = () => {
       const result = await orderService.getOrderById(orderId);
 
       if (result.success) {
-        setOrder(result.data);
+        console.log("Order Data:", result.data); // Debug log
+        
+        // Check if we need to fetch store coordinates explicitly
+        let orderData = result.data;
+        if ((!orderData.storeLatitude || !orderData.storeLongitude) && orderData.storeId) {
+             try {
+                 const storeResult = await storeService.getStoreById(orderData.storeId);
+                 if (storeResult.success && storeResult.data) {
+                     console.log("Fetched missing store coords:", storeResult.data);
+                     orderData = {
+                         ...orderData,
+                         storeLatitude: storeResult.data.latitude,
+                         storeLongitude: storeResult.data.longitude
+                     };
+                 }
+             } catch (err) {
+                 console.error("Failed to fetch store details for coordinates:", err);
+             }
+        }
+
+        setOrder(orderData);
+        if (orderData.tripId) {
+            await fetchTripDetails(orderData.tripId);
+        }
       } else {
         toast.error("Failed to load order details");
         navigate("/dispatcher/deliveries");
@@ -90,6 +208,32 @@ const DispatcherDeliveryDetails = () => {
       toast.error("Error loading order details");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchTripDetails = async (tripId) => {
+    try {
+        const result = await tripService.getTripById(tripId);
+        if (result.success) {
+            if (result.data.status) {
+                setTripStatus(result.data.status);
+            }
+            if (result.data.orders) {
+                const stops = result.data.orders
+                .filter(o => o.storeLatitude && o.storeLongitude)
+                .map(o => ({
+                    id: o.id,
+                    storeName: o.storeName,
+                    lat: parseFloat(o.storeLatitude), // Ensure float
+                    lng: parseFloat(o.storeLongitude), // Ensure float
+                    isCurrent: o.id === parseInt(orderId),
+                    status: o.status
+                }));
+            setTripStops(stops);
+        }
+      }
+    } catch (error) {
+        console.error("Error fetching trip details:", error);
     }
   };
 
@@ -176,6 +320,8 @@ const DispatcherDeliveryDetails = () => {
         setExceptionType("");
         setExceptionDescription("");
         setExceptionPhotos([]);
+        // Navigate back to deliveries list to proceed
+        navigate("/dispatcher/deliveries");
       } else {
         toast.error(result.message || "Failed to report exception");
       }
@@ -211,14 +357,17 @@ const DispatcherDeliveryDetails = () => {
             const metadata = {
               lat: location?.latitude,
               lng: location?.longitude,
-              address: `${order.storeBarangay || ''}, ${order.storeCity || ''}`.replace(/^, /, ''),
+              address: `${order.storeAddressLine1 || ''} ${order.storeAddressLine2 || ''} ${order.storeBarangay || ''}, ${order.storeCity || ''}`.trim().replace(/^, /, '').replace(/, $/, ''),
               orderId: order.id,
               dispatcherName: user?.fullName || 'Dispatcher',
               storeName: order.storeName
             };
-            return await watermarkImage(file, metadata);
+            // Compress first then watermark
+            const compressedFile = await compressImage(file);
+            return await watermarkImage(compressedFile, metadata);
           }
-          return file;
+          // Just compress for other photos
+          return await compressImage(file);
         } catch (err) {
           console.error("Watermark failed", err);
           return file; // Fallback to original
@@ -238,6 +387,7 @@ const DispatcherDeliveryDetails = () => {
       InTransit: { variant: "warning", label: "In Transit" },
       AtStore: { variant: "info", label: "At Store" },
       Delivered: { variant: "success", label: "Delivered" },
+      Returned: { variant: "danger", label: "Returned" },
     };
     const config = statusMap[status] || { variant: "default", label: status };
     return <Badge variant={config.variant}>{config.label}</Badge>;
@@ -322,6 +472,25 @@ const DispatcherDeliveryDetails = () => {
           </div>
         </div>
 
+
+
+        {/* Trip Status Warning */}
+        {tripStatus && tripStatus !== "InProgress" && (
+            <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-md shadow-sm">
+                <div className="flex">
+                    <div className="flex-shrink-0">
+                        <AlertCircle className="h-5 w-5 text-yellow-400" aria-hidden="true" />
+                    </div>
+                    <div className="ml-3">
+                        <p className="text-sm text-yellow-700">
+                            This trip is currently <strong>{tripStatus}</strong>.
+                            You must <span className="font-bold underline cursor-pointer" onClick={() => navigate('/dispatcher/trips')}>start the trip</span> (set to In Progress) before you can perform delivery actions.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        )}
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
@@ -347,47 +516,32 @@ const DispatcherDeliveryDetails = () => {
                         Address
                       </p>
                       <p className="text-gray-900 dark:text-white">
+                        {order.storeAddressLine1 && <span className="block">{order.storeAddressLine1}</span>}
+                        {order.storeAddressLine2 && <span className="block">{order.storeAddressLine2}</span>}
                         {order.storeBarangay && `${order.storeBarangay}, `}
                         {order.storeCity}
                       </p>
                     </div>
                   )}
-                  <div className="h-[200px] w-full rounded-lg overflow-hidden relative z-0 mt-4 border border-gray-200 dark:border-gray-700">
-                     {order.storeLatitude && order.storeLongitude ? (
-                        <MapContainer
-                          center={[order.storeLatitude, order.storeLongitude]}
-                          zoom={15}
-                          style={{ height: "100%", width: "100%" }}
-                          scrollWheelZoom={false}
-                        >
-                          <TileLayer
-                            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                          />
-                          <Marker position={[order.storeLatitude, order.storeLongitude]} icon={mapStoreIcon}>
-                            <Popup>{order.storeName}</Popup>
-                          </Marker>
-                        </MapContainer>
-                     ) : (
-                        <div className="flex items-center justify-center h-full bg-gray-100 dark:bg-gray-800 text-gray-500">
-                           Map location unavailable
-                        </div>
-                     )}
-                  </div>
+                  <div className="h-[400px] w-full rounded-lg overflow-hidden relative z-0 mt-4 border border-gray-200 dark:border-gray-700">
+                     {/* Determine stops to show: tripStops if available, else just current order */}
+                     {(() => {
+                        const effectiveStops = tripStops.length > 0 
+                            ? tripStops 
+                            : (order.storeLatitude && order.storeLongitude 
+                                ? [{ 
+                                    id: order.id, 
+                                    storeName: order.storeName, 
+                                    lat: parseFloat(order.storeLatitude), 
+                                    lng: parseFloat(order.storeLongitude), 
+                                    isCurrent: true,
+                                    status: order.status
+                                  }] 
+                                : []);
 
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                        const query = (order.storeLatitude && order.storeLongitude) 
-                            ? `${order.storeLatitude},${order.storeLongitude}` 
-                            : encodeURIComponent(order.storeName);
-                        window.open(`https://www.google.com/maps/dir/?api=1&destination=${query}`, "_blank");
-                    }}
-                    className="w-full mt-2"
-                  >
-                    <ExternalLink className="h-4 w-4 mr-2" />
-                    Open Navigation App
-                  </Button>
+                        return <DeliveryMap stops={effectiveStops} />;
+                     })()}
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -464,14 +618,38 @@ const DispatcherDeliveryDetails = () => {
             </Card>
 
             {/* Mark as Delivered */}
-            {(order.status === "InTransit" || order.status === "AtStore") && (
-              <Card>
+            {["InTransit", "AtStore", "Delivered", "Returned"].includes(order.status) && (
+              <Card className={order.status === "Returned" ? "opacity-60 grayscale pointer-events-none" : ""}>
                 <CardContent className="p-6">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                    <CheckCircle className="h-5 w-5 text-green-600" />
-                    Mark as Delivered
-                  </h3>
-                  <div className="space-y-4">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                      <CheckCircle className="h-5 w-5 text-green-600" />
+                      Mark as Delivered
+                    </h3>
+                    {tripStatus !== "InProgress" && (
+                         <Badge variant="warning">Trip Not In Progress</Badge>
+                    )}
+                    {order.status === "Returned" && (
+                         <Badge variant="warning">Exception Reported</Badge>
+                    )}
+                    {order.status === "Delivered" && (
+                         <Badge variant="success">Completed</Badge>
+                    )}
+                  </div>
+                  
+                  {tripStatus !== "InProgress" && (
+                    <div className="mb-4 p-3 bg-yellow-50 text-yellow-800 rounded-md text-sm border border-yellow-200">
+                        Actions are disabled because the trip is not In Progress.
+                    </div>
+                  )}
+
+                  {order.status === "Returned" && (
+                    <div className="mb-4 p-3 bg-yellow-50 text-yellow-800 rounded-md text-sm border border-yellow-200">
+                        Cannot mark as delivered because an exception has been reported.
+                    </div>
+                  )}
+
+                  <div className={`space-y-4 ${["Delivered", "Returned"].includes(order.status) || tripStatus !== "InProgress" ? "pointer-events-none opacity-80" : ""}`}>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Recipient Name (Optional)
@@ -594,14 +772,38 @@ const DispatcherDeliveryDetails = () => {
             )}
 
             {/* Report Exception */}
-            {(order.status === "InTransit" || order.status === "AtStore") && (
-              <Card>
+            {["InTransit", "AtStore", "Delivered", "Returned"].includes(order.status) && (
+              <Card className={order.status === "Delivered" ? "opacity-60 grayscale pointer-events-none" : ""}>
                 <CardContent className="p-6">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                    <AlertCircle className="h-5 w-5 text-red-600" />
-                    Report Delivery Exception
-                  </h3>
-                  <div className="space-y-4">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                      <AlertCircle className="h-5 w-5 text-red-600" />
+                      Report Delivery Exception
+                    </h3>
+                    {tripStatus !== "InProgress" && (
+                         <Badge variant="warning">Trip Not In Progress</Badge>
+                    )}
+                     {order.status === "Delivered" && (
+                         <Badge variant="success">Delivered</Badge>
+                    )}
+                    {order.status === "Returned" && (
+                         <Badge variant="warning">Reported</Badge>
+                    )}
+                  </div>
+
+                  {order.status === "Delivered" && (
+                    <div className="mb-4 p-3 bg-green-50 text-green-800 rounded-md text-sm border border-green-200">
+                        Cannot report exception because the order has been delivered.
+                    </div>
+                  )}
+
+                  {tripStatus !== "InProgress" && (
+                    <div className="mb-4 p-3 bg-yellow-50 text-yellow-800 rounded-md text-sm border border-yellow-200">
+                        Actions are disabled because the trip is not In Progress.
+                    </div>
+                  )}
+
+                  <div className={`space-y-4 ${["Delivered", "Returned"].includes(order.status) || tripStatus !== "InProgress" ? "pointer-events-none opacity-80" : ""}`}>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Exception Type *
@@ -740,14 +942,19 @@ const DispatcherDeliveryDetails = () => {
                     <Camera className="h-4 w-4" />
                     Delivery Photos ({photos.length})
                   </h3>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-1 gap-4">
                     {photos.map((photo) => (
-                      <img
-                        key={photo.id}
-                        src={photo.url}
-                        alt="Delivery proof"
-                        className="w-full h-24 object-cover rounded-lg"
-                      />
+                      <div key={photo.id} className="relative group">
+                        <img
+                          src={getImageUrl(photo.url)}
+                          alt="Delivery proof"
+                          className="w-full h-64 sm:h-96 object-cover rounded-lg shadow-sm border border-gray-200 dark:border-gray-700"
+                          onClick={() => window.open(getImageUrl(photo.url), '_blank')}
+                        />
+                        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/30 rounded-lg pointer-events-none">
+                            <span className="text-white text-sm font-medium bg-black/50 px-3 py-1 rounded-full">Click to open</span>
+                        </div>
+                      </div>
                     ))}
                   </div>
                 </CardContent>
