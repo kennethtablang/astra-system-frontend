@@ -286,6 +286,8 @@ export const ViewDeliveryDetailsModal = ({ isOpen, onClose, orderId }) => {
                   <div>
                     <p className="text-gray-500 dark:text-gray-400">Location</p>
                     <p className="text-gray-900 dark:text-white">
+                      {order.storeAddressLine1 && <span className="block">{order.storeAddressLine1}</span>}
+                      {order.storeAddressLine2 && <span className="block">{order.storeAddressLine2}</span>}
                       {order.storeBarangay && `${order.storeBarangay}, `}
                       {order.storeCity}
                     </p>
