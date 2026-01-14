@@ -1,6 +1,6 @@
 // src/pages/admin/AdminOrders.jsx
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { ViewOrderDetailsModal } from "../../components/modals/AdminOrder/ViewOrderDetailsModal";
 import { EditOrderModal } from "../../components/modals/AdminOrder/EditOrderModal";
 import { UpdateOrderStatusModal } from "../../components/modals/AdminOrder/UpdateOrderStatusModal";
@@ -41,12 +41,16 @@ import { toast } from "react-hot-toast";
 
 const AdminOrders = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const isDistributor = location.pathname.includes("/distributor");
+  const createOrderPath = isDistributor ? "/distributor/orders/create" : "/admin/orders/create";
 
   // State Management
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("All");
+  const [filterDate, setFilterDate] = useState("All");
   const [filterPriority, setFilterPriority] = useState("All");
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
@@ -70,7 +74,7 @@ const AdminOrders = () => {
   useEffect(() => {
     fetchOrders();
     fetchStats();
-  }, [currentPage, pageSize, searchTerm, filterStatus, filterPriority]);
+  }, [currentPage, pageSize, searchTerm, filterStatus, filterPriority, filterDate]);
 
   const fetchOrders = async () => {
     try {
@@ -84,6 +88,14 @@ const AdminOrders = () => {
       if (filterStatus !== "All") params.status = filterStatus;
       if (filterPriority !== "All")
         params.priority = filterPriority === "Priority";
+      
+      if (filterDate === "Today") {
+          const today = new Date();
+          const startOfDay = new Date(today.setHours(0, 0, 0, 0)).toISOString();
+          const endOfDay = new Date(today.setHours(23, 59, 59, 999)).toISOString();
+          params.createdFrom = startOfDay;
+          params.createdTo = endOfDay;
+      }
 
       const result = await orderService.getOrders(params);
 
@@ -141,69 +153,67 @@ const AdminOrders = () => {
         // Decode base64 receipt data
         const receiptText = atob(result.data.receiptData);
 
-        // Open print window
-        const printWindow = window.open("", "_blank");
-        if (printWindow) {
-          printWindow.document.write(`
-            <html>
-              <head>
-                <title>Packing Receipt - Order #${orderId}</title>
-                <style>
-                  body {
-                    font-family: 'Courier New', monospace;
-                    font-size: 12px;
-                    max-width: 58mm;
-                    margin: 0 auto;
-                    padding: 10px;
-                    background: white;
-                  }
-                  @media print {
-                    body { 
-                      margin: 0; 
-                      padding: 5px;
-                    }
-                    .no-print {
-                      display: none;
-                    }
-                  }
-                  pre {
-                    margin: 0;
-                    white-space: pre-wrap;
-                    font-size: 11px;
-                    line-height: 1.3;
-                  }
-                  .print-button {
-                    position: fixed;
-                    top: 10px;
-                    right: 10px;
-                    padding: 10px 20px;
-                    background: #3b82f6;
-                    color: white;
-                    border: none;
-                    border-radius: 6px;
-                    cursor: pointer;
-                    font-size: 14px;
-                    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-                    z-index: 1000;
-                  }
-                  .print-button:hover {
-                    background: #2563eb;
-                  }
-                </style>
-              </head>
-              <body>
-                <button class="print-button no-print" onclick="window.print()">
-                  🖨️ Print Receipt
-                </button>
-                <pre>${receiptText}</pre>
-              </body>
-            </html>
-          `);
-          printWindow.document.close();
-          toast.success("Packing receipt opened successfully");
-        } else {
-          toast.error("Failed to open print window. Please allow pop-ups.");
-        }
+        // Create hidden iframe for printing
+        const iframe = document.createElement('iframe');
+        iframe.style.position = 'absolute';
+        iframe.style.width = '0';
+        iframe.style.height = '0';
+        iframe.style.border = 'none';
+        document.body.appendChild(iframe);
+
+        // Write receipt content to iframe
+        const iframeDoc = iframe.contentWindow.document;
+        iframeDoc.open();
+        iframeDoc.write(`
+          <html>
+            <head>
+              <title>Packing Receipt - Order #${orderId}</title>
+              <style>
+                @page {
+                  size: 58mm auto;
+                  margin: 0;
+                }
+                body {
+                  font-family: 'Courier New', monospace;
+                  font-size: 12px;
+                  max-width: 58mm;
+                  margin: 0;
+                  padding: 5px;
+                  background: white;
+                }
+                pre {
+                  margin: 0;
+                  white-space: pre-wrap;
+                  font-size: 11px;
+                  line-height: 1.3;
+                }
+              </style>
+            </head>
+            <body>
+              <pre>${receiptText}</pre>
+            </body>
+          </html>
+        `);
+        iframeDoc.close();
+
+        // Wait for content to load then print
+        iframe.onload = () => {
+          try {
+            iframe.contentWindow.focus();
+            iframe.contentWindow.print();
+            
+            // Remove iframe after printing
+            setTimeout(() => {
+              document.body.removeChild(iframe);
+            }, 1000);
+            
+            toast.success("Receipt sent to printer");
+          } catch (printError) {
+            console.error("Print error:", printError);
+            toast.error("Failed to send to printer");
+            document.body.removeChild(iframe);
+          }
+        };
       } else {
         toast.error(result.message || "Failed to generate packing receipt");
       }
@@ -286,6 +296,11 @@ const AdminOrders = () => {
     { value: "Cancelled", label: "Cancelled" },
   ];
 
+  const dateFilterOptions = [
+      { value: "All", label: "All Dates" },
+      { value: "Today", label: "Today Only" }
+  ];
+
   const priorityOptions = [
     { value: "All", label: "All Priority" },
     { value: "Priority", label: "Priority Only" },
@@ -314,7 +329,7 @@ const AdminOrders = () => {
           </div>
           <div className="flex gap-2">
             <Button
-              onClick={() => navigate("/admin/orders/create")}
+              onClick={() => navigate(createOrderPath)}
               className="flex items-center gap-2"
             >
               <Plus className="h-4 w-4" />
@@ -454,6 +469,15 @@ const AdminOrders = () => {
                   options={priorityOptions}
                   className="w-40"
                 />
+                <Select
+                  value={filterDate}
+                  onChange={(e) => {
+                    setFilterDate(e.target.value);
+                    setCurrentPage(1);
+                  }}
+                  options={dateFilterOptions}
+                  className="w-40"
+                />
               </div>
             </div>
           </CardContent>
@@ -478,7 +502,7 @@ const AdminOrders = () => {
                     : "Get started by creating your first order"}
                 </p>
                 <Button
-                  onClick={() => navigate("/admin/orders/create")}
+                  onClick={() => navigate(createOrderPath)}
                   className="mt-4"
                 >
                   <Plus className="h-4 w-4 mr-2" />
@@ -502,7 +526,11 @@ const AdminOrders = () => {
                     </TableHeader>
                     <TableBody>
                       {orders.map((order) => (
-                        <TableRow key={order.id}>
+                        <TableRow 
+                            key={order.id} 
+                            onClick={() => handleViewOrder(order.id)}
+                            className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800"
+                        >
                           <TableCell>
                             <div className="flex items-center gap-2">
                               <div className="flex items-center gap-2">
@@ -525,6 +553,12 @@ const AdminOrders = () => {
                             <div className="flex items-start gap-1">
                               <MapPin className="h-3 w-3 text-gray-400 mt-0.5 flex-shrink-0" />
                               <div className="text-xs text-gray-600 dark:text-gray-400">
+                                {/* {order.storeAddressLine1 && (
+                                  <div>{order.storeAddressLine1}</div>
+                                )}
+                                {order.storeAddressLine2 && (
+                                  <div>{order.storeAddressLine2}</div>
+                                )} */}
                                 {order.storeBarangay && (
                                   <div>{order.storeBarangay}</div>
                                 )}
@@ -533,7 +567,7 @@ const AdminOrders = () => {
                                     {order.storeCity}
                                   </div>
                                 )}
-                                {!order.storeBarangay && !order.storeCity && (
+                                {!order.storeAddressLine1 && !order.storeAddressLine2 && !order.storeBarangay && !order.storeCity && (
                                   <span>—</span>
                                 )}
                               </div>
@@ -567,12 +601,13 @@ const AdminOrders = () => {
                                 order.status === "Packed" ||
                                 order.status === "Dispatched") && (
                                   <button
-                                    onClick={() =>
+                                    onClick={(e) => {
+                                      e.stopPropagation();
                                       handlePrintPackingReceipt(
                                         order.id,
                                         order.status
-                                      )
-                                    }
+                                      );
+                                    }}
                                     disabled={printing === order.id}
                                     className="p-2 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                     title="Print packing receipt"
@@ -585,21 +620,28 @@ const AdminOrders = () => {
                                   </button>
                                 )}
                               <button
-                                onClick={() => handleViewOrder(order.id)}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleViewOrder(order.id);
+                                }}
                                 className="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
                                 title="View details"
                               >
                                 <Eye className="h-4 w-4" />
                               </button>
                               <button
-                                onClick={() => handleEditOrder(order)}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleEditOrder(order);
+                                }}
                                 className="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
                                 title="Edit order"
                               >
                                 <Edit className="h-4 w-4" />
                               </button>
                               <button
-                                onClick={() => {
+                                onClick={(e) => {
+                                  e.stopPropagation();
                                   setSelectedOrder(order);
                                   setStatusModalOpen(true);
                                 }}
