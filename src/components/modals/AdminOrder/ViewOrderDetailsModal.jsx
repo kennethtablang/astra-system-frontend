@@ -19,6 +19,7 @@ import orderService from "../../../services/orderService";
 import receiptService from "../../../services/receiptService";
 import { RecordDeliveryPaymentModal } from "../AdminDelivery/RecordDeliveryPaymentModal";
 import deliveryService from "../../../services/deliveryService";
+import { getImageUrl } from "../../../utils/imageUrl";
 
 const Modal = ({ isOpen, onClose, title, children, size = "xl" }) => {
   if (!isOpen) return null;
@@ -475,6 +476,26 @@ export const ViewOrderDetailsModal = ({
                   </p>
                 </div>
                 <div className="ml-6 space-y-1">
+                  {order.storeAddressLine1 && (
+                    <div>
+                      <span className="text-gray-600 dark:text-gray-400">
+                        Address 1:{" "}
+                      </span>
+                      <span className="font-medium text-gray-900 dark:text-white">
+                        {order.storeAddressLine1}
+                      </span>
+                    </div>
+                  )}
+                  {order.storeAddressLine2 && (
+                    <div>
+                      <span className="text-gray-600 dark:text-gray-400">
+                         Address 2:{" "}
+                      </span>
+                      <span className="font-medium text-gray-900 dark:text-white">
+                        {order.storeAddressLine2}
+                      </span>
+                    </div>
+                  )}
                   {order.storeBarangay && (
                     <div>
                       <span className="text-gray-600 dark:text-gray-400">
@@ -495,7 +516,7 @@ export const ViewOrderDetailsModal = ({
                       </span>
                     </div>
                   )}
-                  {!order.storeBarangay && !order.storeCity && (
+                  {!order.storeAddressLine1 && !order.storeAddressLine2 && !order.storeBarangay && !order.storeCity && (
                     <span className="text-gray-500 dark:text-gray-400 italic">
                       No location information
                     </span>
@@ -583,13 +604,13 @@ export const ViewOrderDetailsModal = ({
                       {photos.map((photo) => (
                         <a
                           key={photo.id}
-                          href={photo.url}
+                          href={getImageUrl(photo.url)}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="block group relative aspect-square rounded-lg overflow-hidden bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-all"
                         >
                           <img
-                            src={photo.url}
+                            src={getImageUrl(photo.url)}
                             alt="Proof of Delivery"
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                           />
