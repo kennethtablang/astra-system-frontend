@@ -419,9 +419,11 @@ const AdminDeliveries = () => {
                               <p className="font-medium text-gray-900 dark:text-white">
                                 {delivery.storeName}
                               </p>
-                              {(delivery.storeBarangay ||
+                              {(delivery.storeAddressLine1 || delivery.storeAddressLine2 || delivery.storeBarangay ||
                                 delivery.storeCity) && (
                                   <p className="text-sm text-gray-500 dark:text-gray-400">
+                                    {delivery.storeAddressLine1 && <span className="block">{delivery.storeAddressLine1}</span>}
+                                    {delivery.storeAddressLine2 && <span className="block">{delivery.storeAddressLine2}</span>}
                                     {delivery.storeBarangay &&
                                       `${delivery.storeBarangay}, `}
                                     {delivery.storeCity}

@@ -440,8 +440,10 @@ export const CreateTripModal = ({ isOpen, onClose, onSuccess }) => {
                                 <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                                   {order.storeName}
                                 </p>
-                                {(order.storeBarangay || order.storeCity) && (
+                                {(order.storeAddressLine1 || order.storeAddressLine2 || order.storeBarangay || order.storeCity) && (
                                   <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
+                                    {order.storeAddressLine1 && <span className="block">{order.storeAddressLine1}</span>}
+                                    {order.storeAddressLine2 && <span className="block">{order.storeAddressLine2}</span>}
                                     {order.storeBarangay &&
                                       `${order.storeBarangay}, `}
                                     {order.storeCity}
