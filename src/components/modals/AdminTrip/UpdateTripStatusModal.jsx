@@ -111,6 +111,30 @@ export const UpdateTripStatusModal = ({ isOpen, onClose, trip, onSuccess }) => {
 
   const availableStatuses = getAvailableStatuses();
 
+  const validateTripCompletion = async () => {
+    try {
+      const result = await tripService.getTripById(trip.id);
+      if (result.success && result.data.orders) {
+        const pendingOrders = result.data.orders.filter(
+          (order) =>
+            !["Delivered", "Returned", "Cancelled"].includes(order.status)
+        );
+
+        if (pendingOrders.length > 0) {
+          toast.error(
+            "Cannot complete trip. There are still packages that are not delivered yet."
+          );
+          return false;
+        }
+      }
+      return true;
+    } catch (error) {
+      console.error("Error validating trip completion:", error);
+      toast.error("Failed to validate trip status");
+      return false;
+    }
+  };
+
   const handleSubmit = async () => {
     if (!selectedStatus) {
       toast.error("Please select a status");
@@ -119,6 +143,15 @@ export const UpdateTripStatusModal = ({ isOpen, onClose, trip, onSuccess }) => {
 
     setLoading(true);
     try {
+      // Validation for Completed status
+      if (selectedStatus === "Completed") {
+        const isValid = await validateTripCompletion();
+        if (!isValid) {
+          setLoading(false);
+          return;
+        }
+      }
+
       const result = await tripService.updateTripStatus({
         tripId: trip.id,
         newStatus: selectedStatus,
@@ -145,6 +178,15 @@ export const UpdateTripStatusModal = ({ isOpen, onClose, trip, onSuccess }) => {
   const handleQuickUpdate = async (status) => {
     setLoading(true);
     try {
+      // Validation for Completed status
+      if (status === "Completed") {
+        const isValid = await validateTripCompletion();
+        if (!isValid) {
+          setLoading(false);
+          return;
+        }
+      }
+
       const result = await tripService.updateTripStatus({
         tripId: trip.id,
         newStatus: status,
