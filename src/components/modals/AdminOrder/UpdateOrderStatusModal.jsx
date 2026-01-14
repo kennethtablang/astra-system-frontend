@@ -249,6 +249,28 @@ export const UpdateOrderStatusModal = ({
                   Delivery Location:
                 </p>
 
+                {order.storeAddressLine1 && (
+                  <div className="flex items-start gap-2">
+                    <span className="text-blue-700 dark:text-blue-300 font-medium min-w-[70px]">
+                      Address 1:
+                    </span>
+                    <span className="text-blue-900 dark:text-blue-100 font-semibold">
+                      {order.storeAddressLine1}
+                    </span>
+                  </div>
+                )}
+
+                {order.storeAddressLine2 && (
+                  <div className="flex items-start gap-2">
+                    <span className="text-blue-700 dark:text-blue-300 font-medium min-w-[70px]">
+                      Address 2:
+                    </span>
+                    <span className="text-blue-900 dark:text-blue-100 font-semibold">
+                      {order.storeAddressLine2}
+                    </span>
+                  </div>
+                )}
+
                 {order.storeBarangay && (
                   <div className="flex items-start gap-2">
                     <span className="text-blue-700 dark:text-blue-300 font-medium min-w-[70px]">
@@ -271,7 +293,7 @@ export const UpdateOrderStatusModal = ({
                   </div>
                 )}
 
-                {!order.storeBarangay && !order.storeCity && (
+                {!order.storeAddressLine1 && !order.storeAddressLine2 && !order.storeBarangay && !order.storeCity && (
                   <p className="text-blue-700 dark:text-blue-300 italic">
                     No location information available
                   </p>
