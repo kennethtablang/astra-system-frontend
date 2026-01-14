@@ -10,7 +10,9 @@ import {
     Calendar,
     Store,
     DollarSign,
+    Eye,
 } from "lucide-react";
+import { ViewOrderDetailsModal } from "../../components/modals/AdminOrder/ViewOrderDetailsModal";
 import DashboardLayout from "../../components/layouts/DashboardLayout";
 import { Card, CardContent } from "../../components/ui/Card";
 import {
@@ -32,6 +34,8 @@ const DistributorOrders = () => {
     const [orders, setOrders] = useState([]);
     const [searchTerm, setSearchTerm] = useState("");
     const [statusFilter, setStatusFilter] = useState("all");
+    const [selectedOrderId, setSelectedOrderId] = useState(null);
+    const [isViewModalOpen, setIsViewModalOpen] = useState(false);
 
     useEffect(() => {
         fetchOrders();
@@ -81,6 +85,11 @@ const DistributorOrders = () => {
         { value: "Delivered", label: "Delivered" },
         { value: "Cancelled", label: "Cancelled" },
     ];
+
+    const handleViewOrder = (orderId) => {
+        setSelectedOrderId(orderId);
+        setIsViewModalOpen(true);
+    };
 
     if (loading) {
         return (
@@ -203,8 +212,10 @@ const DistributorOrders = () => {
                                         <TableHead>Order #</TableHead>
                                         <TableHead>Store</TableHead>
                                         <TableHead>Date</TableHead>
+
                                         <TableHead className="text-right">Amount</TableHead>
                                         <TableHead>Status</TableHead>
+                                        <TableHead className="text-right">Actions</TableHead>
                                     </TableHeader>
                                     <TableBody>
                                         {filteredOrders.map((order) => {
@@ -239,6 +250,18 @@ const DistributorOrders = () => {
                                                             {order.status}
                                                         </Badge>
                                                     </TableCell>
+                                                    <TableCell className="text-right">
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                handleViewOrder(order.id);
+                                                            }}
+                                                            className="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+                                                            title="View details"
+                                                        >
+                                                            <Eye className="h-4 w-4" />
+                                                        </button>
+                                                    </TableCell>
                                                 </TableRow>
                                             );
                                         })}
@@ -249,6 +272,15 @@ const DistributorOrders = () => {
                     </CardContent>
                 </Card>
             </div>
+            
+            <ViewOrderDetailsModal
+                isOpen={isViewModalOpen}
+                onClose={() => {
+                    setIsViewModalOpen(false);
+                    setSelectedOrderId(null);
+                }}
+                orderId={selectedOrderId}
+            />
         </DashboardLayout>
     );
 };
