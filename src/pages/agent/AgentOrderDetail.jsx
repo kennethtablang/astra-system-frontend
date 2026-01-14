@@ -165,7 +165,9 @@ const AgentOrderDetail = () => {
                 <div>
                   <p className="text-sm text-gray-600">Location</p>
                   <p className="text-gray-900">
-                    {order.storeBarangay}, {order.storeCity}
+                    {order.storeAddressLine1 && <span className="block">{order.storeAddressLine1}</span>}
+                    {order.storeAddressLine2 && <span className="block">{order.storeAddressLine2}</span>}
+                    {order.storeBarangay && `${order.storeBarangay}, `}{order.storeCity}
                   </p>
                 </div>
                 {order.warehouseName && (

@@ -348,7 +348,11 @@ const AdminOrdersHistory = () => {
                     </TableHeader>
                     <TableBody>
                       {orders.map((order) => (
-                        <TableRow key={order.id}>
+                        <TableRow 
+                            key={order.id}
+                            onClick={() => handleViewOrder(order.id)}
+                            className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800"
+                        >
                           <TableCell>
                             <div className="flex items-center gap-2">
                               <span className="font-mono text-sm font-medium text-gray-900 dark:text-white">
@@ -366,6 +370,8 @@ const AdminOrdersHistory = () => {
                               </p>
                               {order.storeCity && (
                                 <p className="text-xs text-gray-500 dark:text-gray-400">
+                                  {order.storeAddressLine1 && <span className="block">{order.storeAddressLine1}</span>}
+                                  {order.storeAddressLine2 && <span className="block">{order.storeAddressLine2}</span>}
                                   {order.storeBarangay &&
                                     `${order.storeBarangay}, `}
                                   {order.storeCity}
@@ -400,7 +406,10 @@ const AdminOrdersHistory = () => {
                           <TableCell>
                             <div className="flex items-center justify-end gap-2">
                               <button
-                                onClick={() => handleViewOrder(order.id)}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleViewOrder(order.id);
+                                }}
                                 className="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
                                 title="View details"
                               >

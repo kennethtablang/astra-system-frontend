@@ -462,9 +462,13 @@ const DistributorTripDetails = () => {
                                                     <p className="text-sm text-gray-600 dark:text-gray-400">
                                                         {assignment.storeName}
                                                     </p>
-                                                    {(assignment.storeBarangay ||
+                                                    {(assignment.storeAddressLine1 ||
+                                                        assignment.storeAddressLine2 ||
+                                                        assignment.storeBarangay ||
                                                         assignment.storeCity) && (
                                                             <p className="text-xs text-gray-500 dark:text-gray-500">
+                                                                {assignment.storeAddressLine1 && <span className="block">{assignment.storeAddressLine1}</span>}
+                                                                {assignment.storeAddressLine2 && <span className="block">{assignment.storeAddressLine2}</span>}
                                                                 {assignment.storeBarangay &&
                                                                     `${assignment.storeBarangay}, `}
                                                                 {assignment.storeCity}

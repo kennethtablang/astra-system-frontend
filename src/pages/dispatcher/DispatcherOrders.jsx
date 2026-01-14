@@ -329,6 +329,12 @@ const DispatcherOrders = () => {
                                                         <div className="flex items-start gap-1">
                                                             <MapPin className="h-3 w-3 text-gray-400 mt-0.5 flex-shrink-0" />
                                                             <div className="text-xs text-gray-600 dark:text-gray-400">
+                                                                {/* {order.storeAddressLine1 && (
+                                                                    <div>{order.storeAddressLine1}</div>
+                                                                )}
+                                                                {order.storeAddressLine2 && (
+                                                                    <div>{order.storeAddressLine2}</div>
+                                                                )} */}
                                                                 {order.storeBarangay && (
                                                                     <div>{order.storeBarangay}</div>
                                                                 )}

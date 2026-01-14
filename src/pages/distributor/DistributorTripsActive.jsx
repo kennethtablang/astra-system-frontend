@@ -324,6 +324,8 @@ const DistributorTripsActive = () => {
                                                         {getStopStatusBadge(currentStop.status)}
                                                     </div>
                                                     <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                                        {currentStop.storeAddressLine1 && <span className="block">{currentStop.storeAddressLine1}</span>}
+                                                        {currentStop.storeAddressLine2 && <span className="block">{currentStop.storeAddressLine2}</span>}
                                                         {currentStop.storeBarangay &&
                                                             `${currentStop.storeBarangay}, `}
                                                         {currentStop.storeCity}
