@@ -672,7 +672,8 @@ const DashboardLayout = ({ children }) => {
                       const profilePaths = {
                         Admin: "/admin/profile",
                         Agent: "/agent/profile",
-                        Dispatcher: "/dispatcher/profile"
+                        Dispatcher: "/dispatcher/profile",
+                        DistributorAdmin: "/distributor/profile",
                       };
                       const path = profilePaths[user?.role] || "/admin/profile"; 
                       navigate(path);

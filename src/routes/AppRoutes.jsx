@@ -86,6 +86,7 @@ import DistributorTripsHistory from "../pages/distributor/DistributorTripsHistor
 import DistributorTripDetails from "../pages/distributor/DistributorTripDetails";
 import DistributorTripTracking from "../pages/distributor/DistributorTripTracking";
 import DistributorOrderCreate from "../pages/distributor/DistributorOrderCreate";
+import { DistributorProfileSettings } from "../pages/distributor/DistributorProfileSettings";
 
 // Dispatcher Pages (Actual dispatcher role)
 import DispatcherDashboard from "../pages/dispatcher/DispatcherDashboard";
@@ -229,6 +230,7 @@ const AppRoutes = () => {
       <Route element={<ProtectedRoute allowedRoles={["DistributorAdmin"]} />}>
         {/* Core Operations - Using Admin pages */}
         <Route path="/distributor/dashboard" element={<AdminDashboard />} />
+        <Route path="/distributor/profile" element={<DistributorProfileSettings />} />
         <Route path="/distributor/warehouses" element={<DistributorWarehouses />} />
 
         {/* Products Management */}
