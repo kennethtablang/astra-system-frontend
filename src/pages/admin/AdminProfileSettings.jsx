@@ -133,7 +133,7 @@ export const AdminProfileSettings = () => {
         email: formData.email, // Include email update
       };
 
-      const result = await userService.updateProfile(null, updateData);
+      const result = await userService.updateProfile(updateData);
 
       if (result.success) {
         toast.success("Profile updated successfully");

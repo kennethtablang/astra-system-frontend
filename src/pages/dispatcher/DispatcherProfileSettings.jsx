@@ -133,7 +133,7 @@ const DispatcherProfileSettings = () => {
         email: formData.email,
       };
 
-      const result = await userService.updateProfile(null, updateData);
+      const result = await userService.updateProfile(updateData);
 
       if (result.success) {
         toast.success("Profile updated successfully");
