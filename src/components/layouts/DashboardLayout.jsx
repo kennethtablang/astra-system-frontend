@@ -229,6 +229,7 @@ const DashboardLayout = ({ children }) => {
         items: [
           { name: "Locations", href: "/admin/master-data/locations", icon: MapPin },
           { name: "Categories", href: "/admin/master-data/categories", icon: Tag },
+          { name: "Warehouses", href: "/admin/warehouses", icon: Warehouse },
         ]
       },
       {

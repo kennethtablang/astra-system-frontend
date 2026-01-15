@@ -43,6 +43,7 @@ import AdminStoreBarangay from "../pages/admin/AdminStoreBarangay";
 import AdminProducts from "../pages/admin/AdminProducts";
 import AdminProductCategories from "../pages/admin/AdminProductCategories";
 import AdminInventory from "../pages/admin/AdminInventory";
+import AdminWarehouses from "../pages/admin/AdminWarehouses";
 import AdminDistributors from "../pages/admin/AdminDistributors";
 import AdminRoutes from "../pages/admin/AdminRoutes";
 import AdminFinance from "../pages/admin/AdminFinance";
@@ -176,6 +177,7 @@ const AppRoutes = () => {
           element={<AdminProductCategories />}
         />
         <Route path="/admin/products/inventory" element={<AdminInventory />} />
+        <Route path="/admin/warehouses" element={<AdminWarehouses />} />
 
         {/* Distributor & Routes */}
         <Route path="/admin/distributors" element={<AdminDistributors />} />
