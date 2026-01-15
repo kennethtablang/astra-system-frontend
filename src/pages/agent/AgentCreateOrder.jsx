@@ -24,10 +24,12 @@ import orderService from "../../services/orderService";
 import storeService from "../../services/storeService";
 import { toast } from "react-hot-toast";
 import { getImageUrl } from "../../utils/imageUrl";
+import { useAuth } from "../../contexts/AuthContext";
 
 const AgentCreateOrder = () => {
   const navigate = useNavigate();
   const searchInputRef = useRef(null);
+  const { user } = useAuth();
 
   // Modal States
   const [showStoreTypeModal, setShowStoreTypeModal] = useState(true);
@@ -307,6 +309,7 @@ const AgentCreateOrder = () => {
       // Prepare order data
       const orderData = {
         storeId: storeId,
+        distributorId: user?.distributorId || null,
         warehouseId: selectedWarehouse,
         priority: priority,
         scheduledFor: scheduledFor || null,
