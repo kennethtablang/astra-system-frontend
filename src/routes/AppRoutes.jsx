@@ -7,6 +7,7 @@ import RoleBasedRedirect from "../components/common/RoleBasedRedirect";
 // Auth Pages
 import Login from "../pages/auth/Login";
 import Register from "../pages/auth/Register";
+import ConfirmEmail from "../pages/auth/ConfirmEmail";
 import ForgotPassword from "../pages/auth/ForgotPassword";
 import ResetPassword from "../pages/auth/ResetPassword";
 import Unauthorized from "../pages/Unauthorized";
@@ -109,6 +110,7 @@ const AppRoutes = () => {
         }
       />
       <Route path="/register" element={<Register />} />
+      <Route path="/confirm-email" element={<ConfirmEmail />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/unauthorized" element={<Unauthorized />} />
