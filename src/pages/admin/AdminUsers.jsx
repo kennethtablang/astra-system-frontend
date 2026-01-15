@@ -100,29 +100,17 @@ const AdminUsers = () => {
           : null,
       };
 
-      // Register the user
-      const { data } = await api.post("/auth/register", registerData);
+      // Register the user via Admin Create User endpoint
+      const { data } = await api.post("/user", registerData);
 
       if (!data.success) {
         toast.error(data.message || "Failed to create user");
         throw new Error(data.message || "Failed to create user");
       }
 
-      // If auto-approve is enabled, approve the user
-      if (formData.isActive && data.data?.userId) {
-        try {
-          await api.post("/user/approve", {
-            userId: data.data.userId,
-            approve: true,
-            message: "Auto-approved by admin during user creation",
-          });
-        } catch (approveError) {
-          console.error("Failed to auto-approve user:", approveError);
-          toast.warning(
-            "User created but approval failed. Please approve manually."
-          );
-        }
-      }
+      // If success, user is already auto-approved by backend logic
+      // Email confirmation link is sent automatically
+
 
       toast.success("User added successfully");
       setShowAddModal(false);
