@@ -251,24 +251,6 @@ const Login = () => {
             </div>
           </form>
         )}
-
-        {/* Demo Credentials */}
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-          <p className="text-xs text-yellow-800 font-semibold mb-2">
-            Demo Credentials:
-          </p>
-          <div className="text-xs text-yellow-700 space-y-1">
-            <p>
-              <strong>Admin:</strong> admin@astra.local / Admin#123
-            </p>
-            <p>
-              <strong>Agent:</strong> agent1@demo.local / Admin#123
-            </p>
-            <p>
-              <strong>Dispatcher:</strong> dispatcher1@demo.local / Admin#123
-            </p>
-          </div>
-        </div>
       </div>
     </div>
   );
