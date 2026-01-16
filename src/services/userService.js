@@ -128,6 +128,15 @@ const userService = {
       const { data } = await api.delete(`/user/${userId}`);
       return data;
     } catch (error) {
+    }
+  },
+
+  // Set 2FA status
+  async setTwoFactorStatus(enabled) {
+    try {
+      const { data } = await api.post('/auth/2fa/status', { enabled });
+      return data;
+    } catch (error) {
       throw error.response?.data || error;
     }
   },

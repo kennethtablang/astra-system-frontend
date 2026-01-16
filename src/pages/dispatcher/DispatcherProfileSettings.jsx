@@ -41,7 +41,37 @@ const DispatcherProfileSettings = () => {
     email: "",
     phoneNumber: "",
     role: "",
+    twoFactorEnabled: false,
   });
+
+  const toggleTwoFactor = async () => {
+    try {
+      setLoading(true);
+      const newValue = !formData.twoFactorEnabled;
+      const result = await userService.setTwoFactorStatus(newValue);
+
+      if (result.success) {
+        setFormData((prev) => ({ ...prev, twoFactorEnabled: newValue }));
+        toast.success(
+          `Two-factor authentication ${newValue ? "enabled" : "disabled"}`
+        );
+        // Update context if needed
+        if (updateContextProfile) {
+          updateContextProfile({
+            ...authUser,
+            twoFactorEnabled: newValue,
+          });
+        }
+      } else {
+        toast.error("Failed to update two-factor status");
+      }
+    } catch (error) {
+      console.error("2FA toggle error:", error);
+      toast.error("An error occurred");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     fetchProfile();
@@ -61,6 +91,7 @@ const DispatcherProfileSettings = () => {
             email: result.data.email || "",
             phoneNumber: result.data.phoneNumber || "",
             role: result.data.role || result.data.roles?.[0] || "",
+            twoFactorEnabled: result.data.twoFactorEnabled || false,
           });
           return;
         }
@@ -77,6 +108,7 @@ const DispatcherProfileSettings = () => {
           email: authUser.email || "",
           phoneNumber: authUser.phoneNumber || "",
           role: authUser.role || "",
+          twoFactorEnabled: authUser.twoFactorEnabled || false,
         });
       }
     } finally {

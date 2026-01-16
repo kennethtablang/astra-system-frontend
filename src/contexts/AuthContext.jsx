@@ -43,6 +43,34 @@ export const AuthProvider = ({ children }) => {
       }
     } catch (error) {
       const message = error.response?.data?.message || "Login failed";
+      if (message !== "2FA_REQUIRED") {
+        toast.error(message);
+      }
+      return { success: false, error: message };
+    }
+  };
+
+  const verifyTwoFactor = async (email, code) => {
+    try {
+      const { data } = await api.post("/auth/2fa/verify", { email, code });
+
+      if (data.success) {
+        const { accessToken, refreshToken, ...userData } = data.data;
+
+        localStorage.setItem("accessToken", accessToken);
+        localStorage.setItem("refreshToken", refreshToken);
+        localStorage.setItem("user", JSON.stringify(userData));
+
+        setUser(userData);
+        toast.success("Login successful!");
+
+        const dashboardRoute = getRoleDashboard(userData.role);
+        navigate(dashboardRoute);
+
+        return { success: true };
+      }
+    } catch (error) {
+      const message = error.response?.data?.message || "Verification failed";
       toast.error(message);
       return { success: false, error: message };
     }
@@ -77,6 +105,7 @@ export const AuthProvider = ({ children }) => {
     user,
     loading,
     login,
+    verifyTwoFactor,
     logout,
     isAuthenticated: !!user,
   };

@@ -37,6 +37,7 @@ const AgentProfileSettings = () => {
         email: "",
         phoneNumber: "",
         address: "",
+        twoFactorEnabled: false,
     });
 
     const [passwordData, setPasswordData] = useState({
@@ -60,6 +61,7 @@ const AgentProfileSettings = () => {
                     email: result.data.email || "",
                     phoneNumber: result.data.phoneNumber || "",
                     address: result.data.address || "",
+                    twoFactorEnabled: result.data.twoFactorEnabled || false,
                 });
             }
         } catch (error) {
@@ -71,6 +73,7 @@ const AgentProfileSettings = () => {
                     email: user.email || "",
                     phoneNumber: user.phoneNumber || "",
                     address: user.address || "",
+                    twoFactorEnabled: user.twoFactorEnabled || false,
                 });
             }
         } finally {
@@ -110,6 +113,30 @@ const AgentProfileSettings = () => {
             toast.error("Failed to update profile");
         } finally {
             setSaving(false);
+        }
+    };
+
+    const toggleTwoFactor = async () => {
+        try {
+            setLoading(true);
+            const newValue = !profile.twoFactorEnabled;
+            // Using userService since that's where I added setTwoFactorStatus
+            const result = await userService.setTwoFactorStatus(newValue);
+
+            if (result.success) {
+                setProfile((prev) => ({ ...prev, twoFactorEnabled: newValue }));
+                toast.success(
+                    `Two-factor authentication ${newValue ? "enabled" : "disabled"}`
+                );
+                // No updateContextProfile in AgentProfile? Assuming user context updates on next fetch or handled elsewhere
+            } else {
+                toast.error("Failed to update two-factor status");
+            }
+        } catch (error) {
+            console.error("2FA toggle error:", error);
+            toast.error("An error occurred");
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -316,6 +343,40 @@ const AgentProfileSettings = () => {
                             >
                                 Change Password
                             </Button>
+                        </div>
+                        
+                        <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg mt-4">
+                            <div className="flex items-center gap-3">
+                                <Shield className="h-5 w-5 text-gray-400" />
+                                <div>
+                                    <p className="font-medium text-gray-900 dark:text-white">
+                                        Two-Factor Authentication
+                                    </p>
+                                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                                        Require a code during login
+                                    </p>
+                                </div>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={toggleTwoFactor}
+                                className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                                  profile.twoFactorEnabled
+                                    ? "bg-blue-600"
+                                    : "bg-gray-200 dark:bg-gray-600"
+                                }`}
+                                role="switch"
+                                aria-checked={profile.twoFactorEnabled}
+                            >
+                                <span
+                                  aria-hidden="true"
+                                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                                    profile.twoFactorEnabled
+                                      ? "translate-x-5"
+                                      : "translate-x-0"
+                                  }`}
+                                />
+                            </button>
                         </div>
                     </CardContent>
                 </Card>
