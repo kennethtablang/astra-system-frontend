@@ -475,7 +475,7 @@ const DispatcherDeliveryDetails = () => {
 
 
         {/* Trip Status Warning */}
-        {tripStatus && tripStatus !== "InProgress" && (
+        {tripStatus && !["InProgress", "Started"].includes(tripStatus) && (
             <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-md shadow-sm">
                 <div className="flex">
                     <div className="flex-shrink-0">
@@ -626,7 +626,7 @@ const DispatcherDeliveryDetails = () => {
                       <CheckCircle className="h-5 w-5 text-green-600" />
                       Mark as Delivered
                     </h3>
-                    {tripStatus !== "InProgress" && (
+                    {!["InProgress", "Started"].includes(tripStatus) && (
                          <Badge variant="warning">Trip Not In Progress</Badge>
                     )}
                     {order.status === "Returned" && (
@@ -637,7 +637,7 @@ const DispatcherDeliveryDetails = () => {
                     )}
                   </div>
                   
-                  {tripStatus !== "InProgress" && (
+                  {!["InProgress", "Started"].includes(tripStatus) && (
                     <div className="mb-4 p-3 bg-yellow-50 text-yellow-800 rounded-md text-sm border border-yellow-200">
                         Actions are disabled because the trip is not In Progress.
                     </div>
@@ -649,7 +649,7 @@ const DispatcherDeliveryDetails = () => {
                     </div>
                   )}
 
-                  <div className={`space-y-4 ${["Delivered", "Returned"].includes(order.status) || tripStatus !== "InProgress" ? "pointer-events-none opacity-80" : ""}`}>
+                  <div className={`space-y-4 ${["Delivered", "Returned"].includes(order.status) || !["InProgress", "Started"].includes(tripStatus) ? "pointer-events-none opacity-80" : ""}`}>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Recipient Name (Optional)
@@ -780,7 +780,7 @@ const DispatcherDeliveryDetails = () => {
                       <AlertCircle className="h-5 w-5 text-red-600" />
                       Report Delivery Exception
                     </h3>
-                    {tripStatus !== "InProgress" && (
+                    {!["InProgress", "Started"].includes(tripStatus) && (
                          <Badge variant="warning">Trip Not In Progress</Badge>
                     )}
                      {order.status === "Delivered" && (
@@ -797,13 +797,13 @@ const DispatcherDeliveryDetails = () => {
                     </div>
                   )}
 
-                  {tripStatus !== "InProgress" && (
+                  {!["InProgress", "Started"].includes(tripStatus) && (
                     <div className="mb-4 p-3 bg-yellow-50 text-yellow-800 rounded-md text-sm border border-yellow-200">
                         Actions are disabled because the trip is not In Progress.
                     </div>
                   )}
 
-                  <div className={`space-y-4 ${["Delivered", "Returned"].includes(order.status) || tripStatus !== "InProgress" ? "pointer-events-none opacity-80" : ""}`}>
+                  <div className={`space-y-4 ${["Delivered", "Returned"].includes(order.status) || !["InProgress", "Started"].includes(tripStatus) ? "pointer-events-none opacity-80" : ""}`}>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Exception Type *
