@@ -491,6 +491,14 @@ const DispatcherDeliveryDetails = () => {
             </div>
         )}
 
+        {/* DEBUG INFO - REMOVE AFTER FIXING */}
+        <div className="bg-blue-100 p-4 rounded-md mb-4 border border-blue-300 text-blue-800 font-mono text-xs">
+            <p><strong>DEBUG INFO:</strong></p>
+            <p>Order ID: {order?.id}</p>
+            <p>Trip ID from Order: {order?.tripId ? order.tripId : "NULL/UNDEFINED"}</p>
+            <p>Current Trip Status State: {tripStatus ? `"${tripStatus}"` : "NULL/UNDEFINED"}</p>
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
