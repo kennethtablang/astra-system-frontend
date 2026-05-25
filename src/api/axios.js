@@ -2,7 +2,7 @@ import axios from 'axios';
 import { toast } from 'react-hot-toast';
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL,
+  baseURL: 'http://localhost/api/api',
   headers: {
     'Content-Type': 'application/json',
   },
@@ -11,10 +11,23 @@ const api = axios.create({
 // Request interceptor - Add auth token
 api.interceptors.request.use(
   (config) => {
+    // Fix endpoint casing to match ASP.NET controllers
+    if (config.url) {
+      const parts = config.url.split('/').filter(Boolean);
+
+      if (parts.length > 0) {
+        parts[0] = parts[0].charAt(0).toUpperCase() + parts[0].slice(1);
+        config.url = '/' + parts.join('/');
+      }
+    }
+
+    // Add JWT token
     const token = localStorage.getItem('accessToken');
+
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+
     return config;
   },
   (error) => Promise.reject(error)
